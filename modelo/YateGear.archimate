@@ -204,10 +204,190 @@ Fuente: H-13; conversación E2E-06, CIE-01.</documentation>
         <documentation>Que la marina vea el yate por seguridad y el cliente vea su consumo de combustible para que el cobro sea claro.
 Fuente: H-12; conversación E2E-01, E2E-05.</documentation>
       </element>
+      <element xsi:type="archimate:ValueStream" name="Consultar yates" id="id-873afc6878f54a6f8b3bf86ca38f6aac">
+        <documentation>Etapa del flujo de valor en la que el cliente conoce los yates que puede arrendar en la marina más cercana.
+Supuesto: la etapa y su nombre los definió el equipo desde la perspectiva del cliente; el experto narró el proceso, no un flujo de valor.
+Fuente: H-08; conversación E2E-01, E2E-02.</documentation>
+      </element>
+      <element xsi:type="archimate:ValueStream" name="Reservar el yate" id="id-34551f1240514977b154b1ff53caa44d">
+        <documentation>Etapa del flujo de valor en la que el cliente solicita el yate, se evalúa el riesgo del arriendo y se firma el contrato.
+Supuesto: la etapa y su nombre los definió el equipo desde la perspectiva del cliente; el experto narró el proceso, no un flujo de valor.
+Fuente: H-07; conversación E2E-01, E2E-03.</documentation>
+      </element>
+      <element xsi:type="archimate:ValueStream" name="Pagar el arriendo" id="id-0e054f9ca9554405ac44f6404b425e73">
+        <documentation>Etapa del flujo de valor en la que el cliente paga el alquiler y el seguro y se le bloquea el depósito («bloqueo» en el sentido de Finanzas); con eso su reserva queda confirmada.
+Supuesto: la etapa y su nombre los definió el equipo desde la perspectiva del cliente; el experto narró el proceso, no un flujo de valor.
+Fuente: H-07, H-10; conversación E2E-04.</documentation>
+      </element>
+      <element xsi:type="archimate:ValueStream" name="Recibir el yate" id="id-ad983201e27643608caafd8400f73c88">
+        <documentation>Etapa del flujo de valor en la que se avisa al propietario y a la marina y el cliente recibe el yate («entrega» de la marina al cliente).
+Supuesto: la etapa y su nombre los definió el equipo desde la perspectiva del cliente; el experto narró el proceso, no un flujo de valor.
+Fuente: H-07, H-13, H-17; conversación E2E-01, E2E-03.</documentation>
+      </element>
+      <element xsi:type="archimate:ValueStream" name="Navegar con seguimiento" id="id-dd161e9736f44623b057a2eebc6365f8">
+        <documentation>Etapa del flujo de valor en la que el cliente navega el yate mientras se sigue su ubicación y su nivel de combustible.
+Supuesto: la etapa y su nombre los definió el equipo desde la perspectiva del cliente; el experto narró el proceso, no un flujo de valor.
+Fuente: H-12; conversación E2E-05.</documentation>
+      </element>
+      <element xsi:type="archimate:ValueStream" name="Devolver el yate" id="id-95ec05056d4a4e9a815c6faca63cf149">
+        <documentation>Etapa del flujo de valor en la que el cliente devuelve el yate en la marina y esta lo inspecciona.
+Supuesto: la etapa y su nombre los definió el equipo desde la perspectiva del cliente; el experto narró el proceso, no un flujo de valor.
+Fuente: H-13, H-14; conversación E2E-06.</documentation>
+      </element>
+      <element xsi:type="archimate:ValueStream" name="Cerrar el arriendo" id="id-5506ba4694f64bc0842d1985a32402cc">
+        <documentation>Etapa del flujo de valor en la que se hacen los ajustes de dinero, el arriendo queda cerrado y el cliente y el propietario se califican.
+Supuesto: la etapa y su nombre los definió el equipo desde la perspectiva del cliente; el experto narró el proceso, no un flujo de valor.
+Fuente: H-13, H-16; conversación E2E-06, E2E-07.</documentation>
+      </element>
     </folder>
   </folder>
   <folder name="Business" id="id-a4c0aa2a25e94d94bf22b596e4280fb3" type="business">
-    <folder name="Fase 1" id="id-1bf79c3728f6404ea6ba74e6c8539b46"/>
+    <folder name="Fase 1" id="id-1bf79c3728f6404ea6ba74e6c8539b46">
+      <element xsi:type="archimate:BusinessEvent" name="Cliente quiere arrendar un yate" id="id-bcea278f7f904fe2984b6a602655e824">
+        <documentation>Evento que inicia el proceso de punta a punta: un cliente necesita un yate para unas fechas.
+Supuesto: el experto no lo nombró como evento; se deduce de su relato («un cliente nos escribe … porque quiere un yate para tres días»).
+Fuente: conversación E2E-01.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessEvent" name="Reserva confirmada" id="id-e179c0a1b4c949269a8109f3e4e21918">
+        <documentation>La reserva queda confirmada. Solo ocurre con riesgo aceptable, contrato firmado y pagos hechos (alquiler, seguro y depósito bloqueado), y con la licencia de navegación vigente del cliente; la notificación al propietario y a la marina va después.
+Fuente: H-07, H-09; conversación E2E-03, E2E-08, REG-01.</documentation>
+        <property key="Etapa" value="Pagar el arriendo"/>
+      </element>
+      <element xsi:type="archimate:BusinessEvent" name="Arriendo no realizado por riesgo alto" id="id-3a163e12d2ff4c13b996aa5f37096eec">
+        <documentation>Fin alterno del proceso: la empresa evaluadora respondió que el riesgo es alto y el arriendo no se hace.
+Fuente: H-07; conversación E2E-03, E2E-08, REG-01.</documentation>
+        <property key="Etapa" value="Reservar el yate"/>
+      </element>
+      <element xsi:type="archimate:BusinessEvent" name="Pérdida de señal del yate" id="id-59c3b7a4d9704420b5421d4268a16863">
+        <documentation>El dispositivo del yate deja de enviar datos de ubicación y combustible mientras el yate está arrendado.
+Fuente: H-12; conversación E2E-05, EXC-01, INT-GPS.</documentation>
+        <property key="Etapa" value="Navegar con seguimiento"/>
+      </element>
+      <element xsi:type="archimate:BusinessEvent" name="Arriendo cerrado" id="id-84614b41e935485187186177fee17adc">
+        <documentation>El arriendo queda cerrado cuando terminan los ajustes de dinero (combustible, tiempo adicional y depósito); las calificaciones se hacen después.
+Supuesto: el experto dijo que con los ajustes «se cierra el arriendo» y que las calificaciones van «una vez se cierra el arriendo»; nombrarlo como evento es decisión del equipo.
+Fuente: H-11, H-16; conversación E2E-01, E2E-07.</documentation>
+        <property key="Etapa" value="Cerrar el arriendo"/>
+      </element>
+      <element xsi:type="archimate:BusinessEvent" name="Calificaciones registradas" id="id-50259e0b6bfc4263ac0427a073a16d8d">
+        <documentation>Evento que termina el proceso de punta a punta: el cliente y el propietario ya se calificaron.
+Supuesto: el experto no nombró un evento de fin; las calificaciones son el último paso del proceso que confirmó.
+Fuente: H-16; conversación E2E-07, E2E-08.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Habilitar o bloquear el yate" id="id-13369d829fda453b95792ab93f9b3ffd">
+        <documentation>El propietario decide si su yate está habilitado para arriendo o bloquea fechas; no puede bloquear fechas que ya tienen una reserva confirmada. «Bloquear»: sentido del propietario, cerrar fechas de su yate para que no se arriende (H-17).
+Fuente: H-08, H-17; conversación E2E-02, REG-02.</documentation>
+        <property key="Etapa" value="Consultar yates"/>
+        <property key="Alcance" value="A1"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Consultar yates disponibles en la marina más cercana" id="id-28f58751c0304bd9820b0e53f78eb0e6">
+        <documentation>El cliente consulta por su cuenta los yates de la marina que le queda más cerca y que están libres en sus fechas. «Disponible»: sentido comercial, yate habilitado por el propietario y sin reserva en esas fechas; no es el sentido de la marina, listo para entregar (H-17).
+Fuente: H-08, H-17; conversación E2E-02, E2E-08.</documentation>
+        <property key="Etapa" value="Consultar yates"/>
+        <property key="Alcance" value="A1"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Solicitar la reserva" id="id-dcde48dca4d2419eb47b339951eb3eec">
+        <documentation>El cliente elige el yate y las fechas y el asesor comercial registra la solicitud, con la licencia de navegación vigente del cliente y su autorización para el tratamiento de datos; la reserva todavía no está confirmada.
+Fuente: H-07, H-09, H-19; conversación E2E-01, E2E-03.</documentation>
+        <property key="Etapa" value="Reservar el yate"/>
+        <property key="Alcance" value="A2"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Evaluar el riesgo del arriendo" id="id-2ff5500910d348818c5ec5f881d67d70">
+        <documentation>El asesor comercial envía los datos del cliente a la empresa evaluadora de riesgo y recibe el nivel: bajo, medio o alto. La evaluación la hace ese tercero, que se modela en la interoperabilidad de la Fase 2.
+Alcance que lo justifica: A2 y la solicitud general (control del riesgo).
+Fuente: H-07; conversación E2E-03, INT-RIE.</documentation>
+        <property key="Etapa" value="Reservar el yate"/>
+        <property key="Alcance" value="A2"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Firmar el contrato de arriendo" id="id-02db697d32614fc2a19f35df724f6f47">
+        <documentation>El cliente firma con YateGear el contrato de ese arriendo cuando el riesgo es aceptable; sin contrato firmado no se confirma la reserva. El software controla esa condición; la gestión del contrato se resuelve por interoperabilidad con la gestión de contratos.
+Fuente: H-07; conversación E2E-03, INT-CON.</documentation>
+        <property key="Etapa" value="Reservar el yate"/>
+        <property key="Alcance" value="A2"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Cobrar alquiler y seguro y bloquear el depósito" id="id-4cd2844c0c2f4e67af4d4f06230ca418">
+        <documentation>Finanzas cobra por la pasarela de pagos el alquiler y el seguro del arriendo y bloquea el depósito para daños en la tarjeta del cliente. «Bloquear»: sentido de Finanzas, retener el depósito como garantía sin cobrarlo todavía (H-17).
+Fuente: H-07, H-10, H-17; conversación E2E-04, INT-PAG.</documentation>
+        <property key="Etapa" value="Pagar el arriendo"/>
+        <property key="Alcance" value="A3"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Notificar al propietario y a la marina" id="id-4691f571b9ba4fd0af65b6a747d59001">
+        <documentation>Con la reserva confirmada, se avisa al propietario y a la marina qué yate está arrendado, para qué fechas y a qué cliente se le entrega, para que lo preparen.
+Fuente: H-07; conversación E2E-03, INT-MAR.</documentation>
+        <property key="Etapa" value="Recibir el yate"/>
+        <property key="Alcance" value="A2"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Entregar el yate al cliente" id="id-dd85041f7da44152bcd73d3392cee3be">
+        <documentation>La marina entrega el yate al cliente el día acordado, con acta, fotos y tanque lleno. «Entrega»: la de la marina al cliente al inicio del arriendo, no la del propietario a YateGear cuando firma su contrato (H-17).
+Fuente: H-13, H-17; conversación E2E-01, INT-MAR.</documentation>
+        <property key="Etapa" value="Recibir el yate"/>
+        <property key="Alcance" value="A2"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Hacer seguimiento de ubicación y combustible" id="id-c6b5a3377bf34ee6a66f3e3a69ef1786">
+        <documentation>Mientras el cliente navega, se sigue en tiempo real la ubicación y el nivel de combustible del yate: la marina lo usa por seguridad y para saber si vuelve a tiempo, y el cliente para ver su consumo.
+Fuente: H-12; conversación E2E-05, INT-GPS.</documentation>
+        <property key="Etapa" value="Navegar con seguimiento"/>
+        <property key="Alcance" value="A4"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Contactar al cliente" id="id-8b05459a90324519ad48f1e81f0b5074">
+        <documentation>Cuando se pierde la señal del yate, la marina intenta contactar al cliente para saber cómo está. Queda fuera del alcance: es operación propia de la marina; el software solo detecta la pérdida de señal.
+Fuente: H-12; conversación E2E-01, EXC-01.</documentation>
+        <property key="Etapa" value="Navegar con seguimiento"/>
+        <property key="Alcance" value="Fuera del alcance"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Devolver e inspeccionar el yate" id="id-839c73220b274740884b3ec76f738b2e">
+        <documentation>El cliente devuelve el yate en la marina; la marina lo recibe, lo inspecciona con fotos, revisa el combustible y registra la hora en que volvió.
+Fuente: H-13, H-14; conversación E2E-06.</documentation>
+        <property key="Etapa" value="Devolver el yate"/>
+        <property key="Alcance" value="A5"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Hacer los ajustes de dinero" id="id-0d2d48f308344898b5f478e55acaad7b">
+        <documentation>Con la inspección de la marina, Finanzas cobra el combustible consumido y el tiempo adicional si lo hubo, y libera el depósito o descuenta de él los daños; si el daño supera el depósito, reclama la diferencia a la aseguradora. Todo cobro va con evidencia.
+Fuente: H-10, H-13, H-14, H-15; conversación E2E-04, E2E-06, EXC-02.</documentation>
+        <property key="Etapa" value="Cerrar el arriendo"/>
+        <property key="Alcance" value="A3 y A5"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Pagar mensualmente al propietario" id="id-2436b7f69f814e539e5d62b6168b8f70">
+        <documentation>Finanzas paga cada mes al propietario lo que le corresponde de sus arriendos, descontando la comisión. Queda fuera del alcance: no es un pago del arriendo del punto A3; es un proceso interno de Finanzas al que se le envía lo que corresponde por cada arriendo cerrado.
+Fuente: H-11; conversación CTX-01, E2E-04.</documentation>
+        <property key="Etapa" value="Cerrar el arriendo"/>
+        <property key="Alcance" value="Fuera del alcance"/>
+      </element>
+      <element xsi:type="archimate:BusinessProcess" name="Registrar las calificaciones mutuas" id="id-81a07e29f48848068193bbc2c85ad992">
+        <documentation>Una vez cerrado el arriendo, el cliente califica el yate y lo que se le ofreció, y el propietario califica el cuidado y la puntualidad del cliente.
+Fuente: H-16; conversación E2E-07.</documentation>
+        <property key="Etapa" value="Cerrar el arriendo"/>
+        <property key="Alcance" value="A6"/>
+      </element>
+      <element xsi:type="archimate:BusinessActor" name="Cliente" id="id-e9cdfa42e1e340e8be8c04d4979f9d44">
+        <documentation>Persona que arrienda un yate por días y lo navega ella misma: consulta, reserva, firma el contrato, paga, navega y devuelve el yate.
+Fuente: H-04; conversación ACT-01.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessActor" name="Propietario" id="id-df04bd240bd84d9baf82861436096a92">
+        <documentation>Dueño del yate: fija el precio por día y decide si su yate está habilitado o bloqueado para arriendo.
+Fuente: H-04; conversación ACT-01, CTX-01.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessActor" name="Marina" id="id-1ee9c918301349ffbb9d44e6828b02d4">
+        <documentation>Empresa aliada que guarda el yate, lo prepara, lo entrega al cliente, lo recibe y hace la inspección, con sus propios procesos y sistemas.
+Fuente: H-04; conversación ACT-01, CTX-03.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessActor" name="Asesor comercial" id="id-0837aa1208da425b9270464f9b2bcd28">
+        <documentation>Persona de Comercial que atiende al cliente, ofrece los yates y lleva la reserva hasta el contrato.
+Fuente: H-02; conversación CTX-02, ACT-01.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessActor" name="Coordinador de operaciones" id="id-b4544b3eae2a4554be78fbc9a48db866">
+        <documentation>Persona de Operaciones que avisa al propietario y a la marina y está pendiente de la entrega, el seguimiento y la devolución.
+Fuente: H-02; conversación CTX-02, ACT-01.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessActor" name="Analista de finanzas" id="id-6e6e67926ee748ef97c3ee84e2f12806">
+        <documentation>Persona de Finanzas que hace los cobros, maneja el depósito y le paga cada mes al propietario.
+Fuente: H-02; conversación CTX-02, ACT-01.</documentation>
+      </element>
+      <element xsi:type="archimate:BusinessActor" name="Servicio al cliente" id="id-ca7fe4f426194763a2ae835dcca64a28">
+        <documentation>Área que atiende los reclamos de los clientes, sobre todo por cobros de combustible y de daños.
+Fuente: H-02; conversación CTX-02, ACT-01.</documentation>
+      </element>
+    </folder>
   </folder>
   <folder name="Application" id="id-d4d30b01931f45d1804cce3550c6147f" type="application"/>
   <folder name="Technology &amp; Physical" id="id-db6fb539489c4cd2beef967116802793" type="technology"/>
@@ -369,6 +549,16 @@ Fuente: H-02; conversación CTX-02.</documentation>
         <documentation>Capacidades transversales que la empresa necesita para operar: jurídica, talento humano y tecnología.
 Supuesto: el experto no nombró esta área; se agrega para que el mapa represente la empresa completa.</documentation>
       </element>
+      <element xsi:type="archimate:Junction" name="Nivel de riesgo" id="id-f60a54e61bf34b4888b31e93e872f5c3">
+        <documentation>Unión O: según la respuesta de la empresa evaluadora, con riesgo aceptable el proceso sigue y con riesgo alto no se arrienda.
+Supuesto: «aceptable» es riesgo bajo o medio; el experto solo dijo que con riesgo alto no se arrienda.
+Fuente: H-07; conversación E2E-03, REG-01.</documentation>
+        <property key="Etapa" value="Reservar el yate"/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Alcance de la aplicación" id="id-a809e30bc99c4bc88d333242b7998f55">
+        <documentation>Delimita los procesos del arriendo que apoya el software (puntos A1 a A6 del alcance) y los eventos que el software detecta o registra. Fuera quedan los eventos que inician y terminan el proceso de punta a punta, porque marcan sus límites, y los procesos que el software no apoya: «Contactar al cliente» (operación de la marina) y «Pagar mensualmente al propietario» (proceso interno de Finanzas).
+Fuente: H-06, H-11, H-12; conversación MOT-05, CIE-01.</documentation>
+      </element>
     </folder>
   </folder>
   <folder name="Relations" id="id-ebcf19f99e3b4e13a1944eefa3ce8e43" type="relations">
@@ -485,6 +675,167 @@ Supuesto: el experto no nombró esta área; se agrega para que el mapa represent
     <element xsi:type="archimate:RealizationRelationship" id="id-658b99cb817d494d8baef776bbd263b0" source="id-6b40afd6c8664b6e981a4e277520458e" target="id-51586775745047d1a124b405821fe49c"/>
     <element xsi:type="archimate:RealizationRelationship" id="id-413bce2ad20c4d64a68356186df02a06" source="id-39442395f03e46d1904d191309ffbade" target="id-51586775745047d1a124b405821fe49c"/>
     <element xsi:type="archimate:RealizationRelationship" id="id-46fcd95e0495498ebc93dddb7d920b0d" source="id-39442395f03e46d1904d191309ffbade" target="id-58a48a584ec14cff98423a6dbc697a93"/>
+    <element xsi:type="archimate:FlowRelationship" id="id-72f152c0f14b476c9ac1a08e4a5d9ee1" source="id-873afc6878f54a6f8b3bf86ca38f6aac" target="id-34551f1240514977b154b1ff53caa44d">
+      <documentation>Supuesto: la secuencia de etapas la definió el equipo a partir del orden del proceso que confirmó el experto (conversación E2E-08).</documentation>
+    </element>
+    <element xsi:type="archimate:FlowRelationship" id="id-6429590cc32c47dd97fe4e5c94f8f2b2" source="id-34551f1240514977b154b1ff53caa44d" target="id-0e054f9ca9554405ac44f6404b425e73">
+      <documentation>Supuesto: la secuencia de etapas la definió el equipo a partir del orden del proceso que confirmó el experto (conversación E2E-08).</documentation>
+    </element>
+    <element xsi:type="archimate:FlowRelationship" id="id-e742597b635b40899352956e6bc59b4c" source="id-0e054f9ca9554405ac44f6404b425e73" target="id-ad983201e27643608caafd8400f73c88">
+      <documentation>Supuesto: la secuencia de etapas la definió el equipo a partir del orden del proceso que confirmó el experto (conversación E2E-08).</documentation>
+    </element>
+    <element xsi:type="archimate:FlowRelationship" id="id-5b4db347050c469d867b169c5819e5ff" source="id-ad983201e27643608caafd8400f73c88" target="id-dd161e9736f44623b057a2eebc6365f8">
+      <documentation>Supuesto: la secuencia de etapas la definió el equipo a partir del orden del proceso que confirmó el experto (conversación E2E-08).</documentation>
+    </element>
+    <element xsi:type="archimate:FlowRelationship" id="id-8d39c272196c4e5da970c442eea5ebc0" source="id-dd161e9736f44623b057a2eebc6365f8" target="id-95ec05056d4a4e9a815c6faca63cf149">
+      <documentation>Supuesto: la secuencia de etapas la definió el equipo a partir del orden del proceso que confirmó el experto (conversación E2E-08).</documentation>
+    </element>
+    <element xsi:type="archimate:FlowRelationship" id="id-d5337f9b5d944ea08e53485935e6bcdb" source="id-95ec05056d4a4e9a815c6faca63cf149" target="id-5506ba4694f64bc0842d1985a32402cc">
+      <documentation>Supuesto: la secuencia de etapas la definió el equipo a partir del orden del proceso que confirmó el experto (conversación E2E-08).</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-85605f5df3d140b4823e4fd6f42b3bdd" source="id-bcea278f7f904fe2984b6a602655e824" target="id-28f58751c0304bd9820b0e53f78eb0e6">
+      <documentation>La necesidad del cliente inicia el proceso.
+Supuesto: el evento de inicio lo dedujo el equipo.
+Fuente: conversación E2E-01.</documentation>
+    </element>
+    <element xsi:type="archimate:FlowRelationship" id="id-ac9ad7ce3f2d413db59985bbb97fce9d" source="id-13369d829fda453b95792ab93f9b3ffd" target="id-28f58751c0304bd9820b0e53f78eb0e6">
+      <documentation>Lo que decide el propietario (yate habilitado o fechas bloqueadas) alimenta la consulta: un yate se ofrece si está habilitado y sin reserva en esas fechas. No es una secuencia: el propietario decide cuando quiere.
+Fuente: H-08; conversación E2E-02.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-a89f00d465db4d828ec4c85759cbcabf" source="id-28f58751c0304bd9820b0e53f78eb0e6" target="id-dcde48dca4d2419eb47b339951eb3eec">
+      <documentation>Fuente: conversación E2E-01, E2E-08.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-4cff8cdc668349a9a74db3cc72d9b6cf" source="id-dcde48dca4d2419eb47b339951eb3eec" target="id-2ff5500910d348818c5ec5f881d67d70">
+      <documentation>Fuente: H-07; conversación E2E-01, E2E-03.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-900e99f9d08f484c937bedb2448d36db" source="id-2ff5500910d348818c5ec5f881d67d70" target="id-f60a54e61bf34b4888b31e93e872f5c3">
+      <documentation>Fuente: H-07; conversación E2E-03.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" name="Riesgo aceptable" id="id-be0a72e06ef2461d9ed8f85b283d891f" source="id-f60a54e61bf34b4888b31e93e872f5c3" target="id-02db697d32614fc2a19f35df724f6f47">
+      <documentation>Con riesgo aceptable el cliente firma el contrato.
+Supuesto: «aceptable» es riesgo bajo o medio.
+Fuente: H-07; conversación E2E-03.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" name="Riesgo alto" id="id-c0ec69667ad042369bd9f454144070ee" source="id-f60a54e61bf34b4888b31e93e872f5c3" target="id-3a163e12d2ff4c13b996aa5f37096eec">
+      <documentation>Si el riesgo es alto, no se arrienda y el proceso se detiene.
+Fuente: H-07; conversación E2E-03, E2E-08, REG-01.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-5a1fa3ccbb7d48ce9db48820bf48b718" source="id-02db697d32614fc2a19f35df724f6f47" target="id-4cd2844c0c2f4e67af4d4f06230ca418">
+      <documentation>Fuente: H-07, H-10; conversación E2E-01, E2E-04.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-cd0c5d8879dd4cb3b687c535e050bb26" source="id-4cd2844c0c2f4e67af4d4f06230ca418" target="id-e179c0a1b4c949269a8109f3e4e21918">
+      <documentation>Con los pagos hechos se cumple la tercera condición y la reserva queda confirmada.
+Fuente: H-07; conversación E2E-03, REG-01.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-3a94a0dc3f3544478124cb1511f280f9" source="id-e179c0a1b4c949269a8109f3e4e21918" target="id-4691f571b9ba4fd0af65b6a747d59001">
+      <documentation>La notificación va después de confirmar la reserva.
+Fuente: H-07; conversación E2E-03, E2E-08.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-fd8c6fd73d3e4f2d9531833cae69af83" source="id-4691f571b9ba4fd0af65b6a747d59001" target="id-dd85041f7da44152bcd73d3392cee3be">
+      <documentation>Fuente: conversación E2E-01, E2E-03.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-3223318909a24f778c47d36892822730" source="id-dd85041f7da44152bcd73d3392cee3be" target="id-c6b5a3377bf34ee6a66f3e3a69ef1786">
+      <documentation>El seguimiento va desde la entrega hasta la devolución.
+Fuente: H-12; conversación E2E-01, INT-GPS.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-268736b2d6e0424688647a7b5e76646e" source="id-c6b5a3377bf34ee6a66f3e3a69ef1786" target="id-59c3b7a4d9704420b5421d4268a16863">
+      <documentation>Camino alterno: el dispositivo deja de enviar datos.
+Fuente: H-12; conversación E2E-05, EXC-01.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-27bb01521d884dfe9d997d5b6fcfd4b0" source="id-59c3b7a4d9704420b5421d4268a16863" target="id-8b05459a90324519ad48f1e81f0b5074">
+      <documentation>Cuando se pierde la señal, la marina intenta contactar al cliente.
+Fuente: H-12; conversación E2E-01, EXC-01.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-75fb343937374de38cfc7ae8f9d5802c" source="id-c6b5a3377bf34ee6a66f3e3a69ef1786" target="id-839c73220b274740884b3ec76f738b2e">
+      <documentation>Fuente: conversación E2E-01, E2E-06.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-d5f465ded36e4375a650499924e7625b" source="id-839c73220b274740884b3ec76f738b2e" target="id-0d2d48f308344898b5f478e55acaad7b">
+      <documentation>Los ajustes se hacen con lo que reporta la marina en la inspección.
+Fuente: H-13; conversación E2E-06.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-497e154a1d624328b5a4f7d4f6416d20" source="id-0d2d48f308344898b5f478e55acaad7b" target="id-84614b41e935485187186177fee17adc">
+      <documentation>Con los ajustes de dinero se cierra el arriendo.
+Fuente: conversación E2E-01.</documentation>
+    </element>
+    <element xsi:type="archimate:FlowRelationship" id="id-bf03ed3ea8304ae7b2968360b5c783de" source="id-0d2d48f308344898b5f478e55acaad7b" target="id-2436b7f69f814e539e5d62b6168b8f70">
+      <documentation>Por cada arriendo cerrado se envía a Finanzas lo que corresponde al propietario.
+Fuente: H-11; conversación CTX-01, E2E-04.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-ecd2ae5d90684142893c6bf48d30f726" source="id-84614b41e935485187186177fee17adc" target="id-81a07e29f48848068193bbc2c85ad992">
+      <documentation>Las calificaciones se hacen una vez se cierra el arriendo.
+Fuente: H-16; conversación E2E-07.</documentation>
+    </element>
+    <element xsi:type="archimate:TriggeringRelationship" id="id-e6fe1b4b2c5d4acc874eb7f3b1d77031" source="id-81a07e29f48848068193bbc2c85ad992" target="id-50259e0b6bfc4263ac0427a073a16d8d">
+      <documentation>Supuesto: el evento de fin lo definió el equipo.
+Fuente: conversación E2E-08.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-58d21311abf3444d9bda4f018b13137f" source="id-e9cdfa42e1e340e8be8c04d4979f9d44" target="id-28f58751c0304bd9820b0e53f78eb0e6">
+      <documentation>Fuente: conversación ACT-01, E2E-02.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-0bba78fea1c24447b66b3420198d82de" source="id-e9cdfa42e1e340e8be8c04d4979f9d44" target="id-dcde48dca4d2419eb47b339951eb3eec">
+      <documentation>Fuente: conversación ACT-01.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-9768f8505b004c619d07754bd2237e87" source="id-e9cdfa42e1e340e8be8c04d4979f9d44" target="id-02db697d32614fc2a19f35df724f6f47">
+      <documentation>Fuente: conversación ACT-01, INT-CON.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-96bbaee1141c4929b649cc2b194636b1" source="id-e9cdfa42e1e340e8be8c04d4979f9d44" target="id-81a07e29f48848068193bbc2c85ad992">
+      <documentation>Fuente: H-16; conversación E2E-07.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-28170428fe144182870985d3920cff01" source="id-df04bd240bd84d9baf82861436096a92" target="id-13369d829fda453b95792ab93f9b3ffd">
+      <documentation>Fuente: H-08; conversación ACT-01, E2E-02.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-1531b0f9e93a4afabcf09dbf673f512b" source="id-df04bd240bd84d9baf82861436096a92" target="id-81a07e29f48848068193bbc2c85ad992">
+      <documentation>Fuente: H-16; conversación E2E-07.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-ca70decb5c9d46b2978f5e5dd3ae9bc5" source="id-1ee9c918301349ffbb9d44e6828b02d4" target="id-dd85041f7da44152bcd73d3392cee3be">
+      <documentation>Fuente: conversación ACT-01, INT-MAR.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-9259aafc4aaa4897bcda0b03956434a1" source="id-1ee9c918301349ffbb9d44e6828b02d4" target="id-8b05459a90324519ad48f1e81f0b5074">
+      <documentation>Fuente: H-12; conversación E2E-01, EXC-01.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-433d34640cd44036829db0d15ea7aed2" source="id-1ee9c918301349ffbb9d44e6828b02d4" target="id-839c73220b274740884b3ec76f738b2e">
+      <documentation>La marina recibe el yate y hace la inspección.
+Fuente: H-13; conversación ACT-01, E2E-06.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-ea00512a38bc4a9281cd3de02a14a215" source="id-0837aa1208da425b9270464f9b2bcd28" target="id-2ff5500910d348818c5ec5f881d67d70">
+      <documentation>El asesor envía los datos del cliente a la empresa evaluadora y recibe el nivel de riesgo; la evaluación la hace ese tercero.
+Fuente: conversación E2E-01, INT-RIE.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-85fde718fd5849228ab6ecfc63297707" source="id-b4544b3eae2a4554be78fbc9a48db866" target="id-4691f571b9ba4fd0af65b6a747d59001">
+      <documentation>Fuente: conversación ACT-01, CTX-02, E2E-03.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-55a68ebc136e4aafbb7be5b6ad2d98b9" source="id-b4544b3eae2a4554be78fbc9a48db866" target="id-c6b5a3377bf34ee6a66f3e3a69ef1786">
+      <documentation>Fuente: conversación ACT-01, CTX-02.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-88bfe5d5c99e40acb43e8540af32a7c0" source="id-6e6e67926ee748ef97c3ee84e2f12806" target="id-4cd2844c0c2f4e67af4d4f06230ca418">
+      <documentation>Fuente: conversación ACT-01, CTX-02, E2E-04.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-89f30f659dcb4f5d8f94b4f2cd47ae76" source="id-6e6e67926ee748ef97c3ee84e2f12806" target="id-0d2d48f308344898b5f478e55acaad7b">
+      <documentation>Fuente: conversación ACT-01, E2E-06.</documentation>
+    </element>
+    <element xsi:type="archimate:AssignmentRelationship" id="id-3329b42bb24d493cb2792799450d82f8" source="id-6e6e67926ee748ef97c3ee84e2f12806" target="id-2436b7f69f814e539e5d62b6168b8f70">
+      <documentation>Fuente: H-11; conversación ACT-01, E2E-04.</documentation>
+    </element>
+    <element xsi:type="archimate:AssociationRelationship" id="id-cef3f58fc17148b0b4741449d468f4cf" source="id-ca7fe4f426194763a2ae835dcca64a28" target="id-0d2d48f308344898b5f478e55acaad7b">
+      <documentation>Servicio al cliente atiende los reclamos por los cobros de los ajustes; no hace los ajustes, por eso es asociación y no asignación.
+Fuente: H-02; conversación ACT-01, EXC-01.</documentation>
+    </element>
+    <element xsi:type="archimate:AggregationRelationship" id="id-b757a0a359ac4581aeae540f7c967a3c" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-13369d829fda453b95792ab93f9b3ffd"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-f64fb6c8dc00491a85235fb50f4efecb" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-28f58751c0304bd9820b0e53f78eb0e6"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-9aa35d7394e945a89ff27c6436202a93" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-dcde48dca4d2419eb47b339951eb3eec"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-f20cb7a80d7741ffb0081d753648debb" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-2ff5500910d348818c5ec5f881d67d70"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-333eff0db9e44b25a0f47590b98eb133" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-02db697d32614fc2a19f35df724f6f47"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-e31aacf850004562a7a6ca150161a986" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-4cd2844c0c2f4e67af4d4f06230ca418"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-4bb1400c4bd1487e9722f24bc51abe61" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-4691f571b9ba4fd0af65b6a747d59001"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-117095edbe7142e6a6b4e745033c9eef" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-dd85041f7da44152bcd73d3392cee3be"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-9edf9fa0abbe40e9998077244c906dd6" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-c6b5a3377bf34ee6a66f3e3a69ef1786"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-f7f9e76e30e3402e86dc24a9a94cc1fe" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-839c73220b274740884b3ec76f738b2e"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-d3ab547ca8a5484dbed39b6956339516" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-0d2d48f308344898b5f478e55acaad7b"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-46fe65af821240cf804a96463b32d6ae" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-81a07e29f48848068193bbc2c85ad992"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-aa3d98d553f3477e9ddab39232a86db2" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-e179c0a1b4c949269a8109f3e4e21918"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-4a2d05eb79f1484cbe8070d639c22ddc" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-3a163e12d2ff4c13b996aa5f37096eec"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-f717f8f35c484f14bff40e0945e40337" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-59c3b7a4d9704420b5421d4268a16863"/>
+    <element xsi:type="archimate:AggregationRelationship" id="id-fdbb715242cb457a8a657c66c9337192" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-84614b41e935485187186177fee17adc"/>
   </folder>
   <folder name="Views" id="id-05eec744d6d2424e96716223e49cdbd3" type="diagrams">
     <folder name="Fase 1" id="id-b96d1241bc084ca89e8e1720c6282050">
@@ -741,6 +1092,186 @@ Supuesto: el experto no nombró esta área; se agrega para que el mapa represent
             <bounds x="15" y="174" width="190" height="55"/>
           </child>
         </child>
+      </element>
+      <element xsi:type="archimate:ArchimateDiagramModel" name="V3 - Cadena de valor y proceso E2E" id="id-538865f3344046a58473c4741eb7e330">
+        <child xsi:type="archimate:DiagramObject" id="id-34e9511a8b4e40e0914b539025c2e9c5" archimateElement="id-873afc6878f54a6f8b3bf86ca38f6aac">
+          <bounds x="230" y="40" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-f22d5223a4c4493499af8fe0df428ea5" source="id-34e9511a8b4e40e0914b539025c2e9c5" target="id-511e05cbfd6c4c36bbca7ae47d7ea94b" archimateRelationship="id-72f152c0f14b476c9ac1a08e4a5d9ee1"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-511e05cbfd6c4c36bbca7ae47d7ea94b" targetConnections="id-f22d5223a4c4493499af8fe0df428ea5" archimateElement="id-34551f1240514977b154b1ff53caa44d">
+          <bounds x="420" y="40" width="680" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-302977290ffe42319b408d908ac5a430" source="id-511e05cbfd6c4c36bbca7ae47d7ea94b" target="id-e184e09b4893470889417cbc8d08e16b" archimateRelationship="id-6429590cc32c47dd97fe4e5c94f8f2b2"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-e184e09b4893470889417cbc8d08e16b" targetConnections="id-302977290ffe42319b408d908ac5a430" archimateElement="id-0e054f9ca9554405ac44f6404b425e73">
+          <bounds x="1140" y="40" width="340" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-fda75dede529425894b7a40223f543bd" source="id-e184e09b4893470889417cbc8d08e16b" target="id-05b392bef8a64178b9f59ab6a7d32ec6" archimateRelationship="id-e742597b635b40899352956e6bc59b4c"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-05b392bef8a64178b9f59ab6a7d32ec6" targetConnections="id-fda75dede529425894b7a40223f543bd" archimateElement="id-ad983201e27643608caafd8400f73c88">
+          <bounds x="1520" y="40" width="340" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-e10b7101e9df4080ab2f8e543c27640d" source="id-05b392bef8a64178b9f59ab6a7d32ec6" target="id-00cffdc15a124dee8f0f2f8c150db5bb" archimateRelationship="id-5b4db347050c469d867b169c5819e5ff"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-00cffdc15a124dee8f0f2f8c150db5bb" targetConnections="id-e10b7101e9df4080ab2f8e543c27640d" archimateElement="id-dd161e9736f44623b057a2eebc6365f8">
+          <bounds x="1900" y="40" width="340" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-24a69fc5b2564c4c9a7267e5afd9eaf8" source="id-00cffdc15a124dee8f0f2f8c150db5bb" target="id-25357baa2ef745318b8dcb3fa68cc0f8" archimateRelationship="id-8d39c272196c4e5da970c442eea5ebc0"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-25357baa2ef745318b8dcb3fa68cc0f8" targetConnections="id-24a69fc5b2564c4c9a7267e5afd9eaf8" archimateElement="id-95ec05056d4a4e9a815c6faca63cf149">
+          <bounds x="2280" y="40" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-a33390687b84417599bc548a2d34bd14" source="id-25357baa2ef745318b8dcb3fa68cc0f8" target="id-bce5f883871444a18aac7726ed1747d6" archimateRelationship="id-d5337f9b5d944ea08e53485935e6bcdb"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-bce5f883871444a18aac7726ed1747d6" targetConnections="id-a33390687b84417599bc548a2d34bd14" archimateElement="id-5506ba4694f64bc0842d1985a32402cc">
+          <bounds x="2470" y="40" width="720" height="60"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-b081395a0efb45dd92bec4a231a748f9" archimateElement="id-e9cdfa42e1e340e8be8c04d4979f9d44">
+          <bounds x="420" y="130" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-fbfe5bb06eb2448da1f48a2996ca8c15" source="id-b081395a0efb45dd92bec4a231a748f9" target="id-2a450fe2eb934a198c3376e820db4d9d" archimateRelationship="id-58d21311abf3444d9bda4f018b13137f">
+            <bendpoint startX="-190" endY="-130"/>
+          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-6a547e748ea0420991e1bf8bd80c63f1" source="id-b081395a0efb45dd92bec4a231a748f9" target="id-5aa86f86027141ddae969f976c6cd4a5" archimateRelationship="id-0bba78fea1c24447b66b3420198d82de"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-aa9431b005b24818837b9e41b0b96f8c" source="id-b081395a0efb45dd92bec4a231a748f9" target="id-bfdecc33c0a1486893b2d6df6b99c7c2" archimateRelationship="id-9768f8505b004c619d07754bd2237e87">
+            <bendpoint startX="530" endY="-130"/>
+          </sourceConnection>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-8efa1b7febaf460b98c5a6ad14546eed" archimateElement="id-bcea278f7f904fe2984b6a602655e824">
+          <bounds x="40" y="250" width="150" height="80"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-912ab33a47164c18abcb3d2a099febcb" source="id-8efa1b7febaf460b98c5a6ad14546eed" target="id-2a450fe2eb934a198c3376e820db4d9d" archimateRelationship="id-85605f5df3d140b4823e4fd6f42b3bdd"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-90fad37ccd7e41b2ba7ecfa0668c717d" archimateElement="id-a809e30bc99c4bc88d333242b7998f55">
+          <bounds x="210" y="200" width="3000" height="280"/>
+          <child xsi:type="archimate:DiagramObject" id="id-2a450fe2eb934a198c3376e820db4d9d" targetConnections="id-912ab33a47164c18abcb3d2a099febcb id-b5805f42c9174b47958007efa44532de id-fbfe5bb06eb2448da1f48a2996ca8c15" archimateElement="id-28f58751c0304bd9820b0e53f78eb0e6">
+            <bounds x="20" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-79322ad939e847d49c582cadb274b50b" source="id-2a450fe2eb934a198c3376e820db4d9d" target="id-5aa86f86027141ddae969f976c6cd4a5" archimateRelationship="id-a89f00d465db4d828ec4c85759cbcabf"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-52db83297b0c40b6896f16c750b2c438" targetConnections="id-feae5e2e0019435b8e89201567dfbf2f" archimateElement="id-13369d829fda453b95792ab93f9b3ffd">
+            <bounds x="20" y="180" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-b5805f42c9174b47958007efa44532de" source="id-52db83297b0c40b6896f16c750b2c438" target="id-2a450fe2eb934a198c3376e820db4d9d" archimateRelationship="id-ac9ad7ce3f2d413db59985bbb97fce9d"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-5aa86f86027141ddae969f976c6cd4a5" targetConnections="id-79322ad939e847d49c582cadb274b50b id-6a547e748ea0420991e1bf8bd80c63f1" archimateElement="id-dcde48dca4d2419eb47b339951eb3eec">
+            <bounds x="210" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-0619289cdee84a959c1e8ecd0bcb433e" source="id-5aa86f86027141ddae969f976c6cd4a5" target="id-d5af018e69d640e8aa5364665f421875" archimateRelationship="id-4cff8cdc668349a9a74db3cc72d9b6cf"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-d5af018e69d640e8aa5364665f421875" targetConnections="id-0619289cdee84a959c1e8ecd0bcb433e id-cbd18e27c0a54b40ba594c9ee2734929" archimateElement="id-2ff5500910d348818c5ec5f881d67d70">
+            <bounds x="400" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-4af3478b0a324feb89cc62ac954cb5a6" source="id-d5af018e69d640e8aa5364665f421875" target="id-9a7f2d3c0fb84d09bf3cc25dd4fbbe40" archimateRelationship="id-900e99f9d08f484c937bedb2448d36db"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-9a7f2d3c0fb84d09bf3cc25dd4fbbe40" targetConnections="id-4af3478b0a324feb89cc62ac954cb5a6" archimateElement="id-f60a54e61bf34b4888b31e93e872f5c3">
+            <bounds x="582" y="82" width="16" height="16"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-298f2c03f5674eab82fe1a746c01e2e5" source="id-9a7f2d3c0fb84d09bf3cc25dd4fbbe40" target="id-bfdecc33c0a1486893b2d6df6b99c7c2" archimateRelationship="id-be0a72e06ef2461d9ed8f85b283d891f"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-5b03d5ef09a349f28d19efb84072b35a" source="id-9a7f2d3c0fb84d09bf3cc25dd4fbbe40" target="id-059d0f9c81644a79a67b9174486a4d1d" archimateRelationship="id-c0ec69667ad042369bd9f454144070ee"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-059d0f9c81644a79a67b9174486a4d1d" targetConnections="id-5b03d5ef09a349f28d19efb84072b35a" archimateElement="id-3a163e12d2ff4c13b996aa5f37096eec">
+            <bounds x="515" y="180" width="150" height="80"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-bfdecc33c0a1486893b2d6df6b99c7c2" targetConnections="id-298f2c03f5674eab82fe1a746c01e2e5 id-aa9431b005b24818837b9e41b0b96f8c" archimateElement="id-02db697d32614fc2a19f35df724f6f47">
+            <bounds x="740" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-598ee0d1acb0459fb3391821f729555c" source="id-bfdecc33c0a1486893b2d6df6b99c7c2" target="id-c4e5801c7adf4f68a4dd98d9d3974ffc" archimateRelationship="id-5a1fa3ccbb7d48ce9db48820bf48b718"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-c4e5801c7adf4f68a4dd98d9d3974ffc" targetConnections="id-598ee0d1acb0459fb3391821f729555c id-23a6520579054c6b8ac88ece0c1b12a4" archimateElement="id-4cd2844c0c2f4e67af4d4f06230ca418">
+            <bounds x="930" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-6e41f003ca6c43439d118d5b241df7ee" source="id-c4e5801c7adf4f68a4dd98d9d3974ffc" target="id-2f49e5ba8afe419aa055d5388bf948b5" archimateRelationship="id-cd0c5d8879dd4cb3b687c535e050bb26"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-2f49e5ba8afe419aa055d5388bf948b5" targetConnections="id-6e41f003ca6c43439d118d5b241df7ee" archimateElement="id-e179c0a1b4c949269a8109f3e4e21918">
+            <bounds x="1120" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-73dc62dab9654f7d9d32a96240fafa27" source="id-2f49e5ba8afe419aa055d5388bf948b5" target="id-5bf67262c435470d977e845781bb82f1" archimateRelationship="id-3a94a0dc3f3544478124cb1511f280f9"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-5bf67262c435470d977e845781bb82f1" targetConnections="id-73dc62dab9654f7d9d32a96240fafa27 id-d6ad413d82f44ca3b58c52bb87ca9670" archimateElement="id-4691f571b9ba4fd0af65b6a747d59001">
+            <bounds x="1310" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-5f114222b34b48c68a3b33e3465fdde9" source="id-5bf67262c435470d977e845781bb82f1" target="id-0713ed7be9a64adf93a95e8781f2c347" archimateRelationship="id-fd8c6fd73d3e4f2d9531833cae69af83"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-0713ed7be9a64adf93a95e8781f2c347" targetConnections="id-5f114222b34b48c68a3b33e3465fdde9 id-d527ac0f43d8499ebb9043df0bfa31bc" archimateElement="id-dd85041f7da44152bcd73d3392cee3be">
+            <bounds x="1500" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-dd5c3e7c3e36476ebf18b64cc7c93b24" source="id-0713ed7be9a64adf93a95e8781f2c347" target="id-d9e6170eb80848f4b779a10b25340c89" archimateRelationship="id-3223318909a24f778c47d36892822730"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-d9e6170eb80848f4b779a10b25340c89" targetConnections="id-dd5c3e7c3e36476ebf18b64cc7c93b24 id-34f94c32106e4c24886dcffde22d01ee" archimateElement="id-c6b5a3377bf34ee6a66f3e3a69ef1786">
+            <bounds x="1690" y="50" width="340" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-c11b26048fc24e3ca3ab9459636fa85b" source="id-d9e6170eb80848f4b779a10b25340c89" target="id-fba7e4225e4e45bfb4a95ea7430e74e4" archimateRelationship="id-268736b2d6e0424688647a7b5e76646e">
+              <bendpoint startX="95" startY="65" endY="-65"/>
+            </sourceConnection>
+            <sourceConnection xsi:type="archimate:Connection" id="id-808f609db36e4d538993b8d6faf2f3b2" source="id-d9e6170eb80848f4b779a10b25340c89" target="id-fa75e326c2594c69af3a84698dd32f7a" archimateRelationship="id-75fb343937374de38cfc7ae8f9d5802c"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-fba7e4225e4e45bfb4a95ea7430e74e4" targetConnections="id-c11b26048fc24e3ca3ab9459636fa85b" archimateElement="id-59c3b7a4d9704420b5421d4268a16863">
+            <bounds x="1880" y="180" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-fab7cc0f6c2e4f848449b2a1dbf3289f" source="id-fba7e4225e4e45bfb4a95ea7430e74e4" target="id-d2af98f2675e4f7cb21a21cd180ebf42" archimateRelationship="id-27bb01521d884dfe9d997d5b6fcfd4b0"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-fa75e326c2594c69af3a84698dd32f7a" targetConnections="id-808f609db36e4d538993b8d6faf2f3b2 id-d392f1ea213c4307bfabf0abdb06a882" archimateElement="id-839c73220b274740884b3ec76f738b2e">
+            <bounds x="2070" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-a2c677eca49941fbaf098c08430a5b9c" source="id-fa75e326c2594c69af3a84698dd32f7a" target="id-c913513136074473b304800d468a3ccf" archimateRelationship="id-d5f465ded36e4375a650499924e7625b"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-c913513136074473b304800d468a3ccf" targetConnections="id-a2c677eca49941fbaf098c08430a5b9c id-ae84cb2ad0f54dd287180a0e0ea9d12b" archimateElement="id-0d2d48f308344898b5f478e55acaad7b">
+            <bounds x="2260" y="50" width="340" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-ebcfd44fd8984695aacd6c468ebbaec5" source="id-c913513136074473b304800d468a3ccf" target="id-7dedf7bca6aa47f3a62bbe10954197da" archimateRelationship="id-497e154a1d624328b5a4f7d4f6416d20"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-74a6f70889b14418a6eb54ca20f2db96" source="id-c913513136074473b304800d468a3ccf" target="id-00168b1dd11b47bfafdafbbb50364ec9" archimateRelationship="id-bf03ed3ea8304ae7b2968360b5c783de">
+              <bendpoint startX="95" startY="65" endY="-205"/>
+            </sourceConnection>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-7dedf7bca6aa47f3a62bbe10954197da" targetConnections="id-ebcfd44fd8984695aacd6c468ebbaec5" archimateElement="id-84614b41e935485187186177fee17adc">
+            <bounds x="2640" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-608a6d8f866f4cbeb5b01e705d7a13bf" source="id-7dedf7bca6aa47f3a62bbe10954197da" target="id-2ac7701ec5ea4154bb4600fa0760ed1e" archimateRelationship="id-ecd2ae5d90684142893c6bf48d30f726"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-2ac7701ec5ea4154bb4600fa0760ed1e" targetConnections="id-608a6d8f866f4cbeb5b01e705d7a13bf id-dd7ba99279334f1d98aa648ed05a8d44 id-3f3794307497477ab8c02c91b6dc0620" archimateElement="id-81a07e29f48848068193bbc2c85ad992">
+            <bounds x="2830" y="50" width="150" height="80"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-14833a3fb2fe497881cbf7bed213b2c5" source="id-2ac7701ec5ea4154bb4600fa0760ed1e" target="id-d2b0c7ec45214d94bcfd430a00ac2aa6" archimateRelationship="id-e6fe1b4b2c5d4acc874eb7f3b1d77031"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-d2b0c7ec45214d94bcfd430a00ac2aa6" targetConnections="id-14833a3fb2fe497881cbf7bed213b2c5" archimateElement="id-50259e0b6bfc4263ac0427a073a16d8d">
+          <bounds x="3250" y="250" width="150" height="80"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-d2af98f2675e4f7cb21a21cd180ebf42" targetConnections="id-fab7cc0f6c2e4f848449b2a1dbf3289f id-7288bcb5cca74ca4a829cb979e6bf91f" archimateElement="id-8b05459a90324519ad48f1e81f0b5074">
+          <bounds x="2090" y="520" width="150" height="80"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-00168b1dd11b47bfafdafbbb50364ec9" targetConnections="id-74a6f70889b14418a6eb54ca20f2db96 id-4cdb352355b44a6cbd6728d3306f93ee" archimateElement="id-2436b7f69f814e539e5d62b6168b8f70">
+          <bounds x="2660" y="520" width="150" height="80"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-eb5ae508fbb64e4fb03eef0073ec6e8d" archimateElement="id-df04bd240bd84d9baf82861436096a92">
+          <bounds x="230" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-feae5e2e0019435b8e89201567dfbf2f" source="id-eb5ae508fbb64e4fb03eef0073ec6e8d" target="id-52db83297b0c40b6896f16c750b2c438" archimateRelationship="id-28170428fe144182870985d3920cff01"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-bd5fa43070aa4456afc8e17590801ef8" archimateElement="id-0837aa1208da425b9270464f9b2bcd28">
+          <bounds x="610" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-cbd18e27c0a54b40ba594c9ee2734929" source="id-bd5fa43070aa4456afc8e17590801ef8" target="id-d5af018e69d640e8aa5364665f421875" archimateRelationship="id-ea00512a38bc4a9281cd3de02a14a215"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-ff6f63b0e0d44ebfbaf47692e30ec6cc" archimateElement="id-b4544b3eae2a4554be78fbc9a48db866">
+          <bounds x="1520" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-d6ad413d82f44ca3b58c52bb87ca9670" source="id-ff6f63b0e0d44ebfbaf47692e30ec6cc" target="id-5bf67262c435470d977e845781bb82f1" archimateRelationship="id-85fde718fd5849228ab6ecfc63297707"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-ad53d75aae2147aeb36ec11e9ac9238a" archimateElement="id-1ee9c918301349ffbb9d44e6828b02d4">
+          <bounds x="2090" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-7288bcb5cca74ca4a829cb979e6bf91f" source="id-ad53d75aae2147aeb36ec11e9ac9238a" target="id-d2af98f2675e4f7cb21a21cd180ebf42" archimateRelationship="id-9259aafc4aaa4897bcda0b03956434a1"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-d392f1ea213c4307bfabf0abdb06a882" source="id-ad53d75aae2147aeb36ec11e9ac9238a" target="id-fa75e326c2594c69af3a84698dd32f7a" archimateRelationship="id-433d34640cd44036829db0d15ea7aed2">
+            <bendpoint startX="190" endY="420"/>
+          </sourceConnection>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-e898a5b147664f979d6915af75568543" archimateElement="id-6e6e67926ee748ef97c3ee84e2f12806">
+          <bounds x="2470" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-ae84cb2ad0f54dd287180a0e0ea9d12b" source="id-e898a5b147664f979d6915af75568543" target="id-c913513136074473b304800d468a3ccf" archimateRelationship="id-89f30f659dcb4f5d8f94b4f2cd47ae76">
+            <bendpoint startY="-70" endX="-95" endY="350"/>
+          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-4cdb352355b44a6cbd6728d3306f93ee" source="id-e898a5b147664f979d6915af75568543" target="id-00168b1dd11b47bfafdafbbb50364ec9" archimateRelationship="id-3329b42bb24d493cb2792799450d82f8">
+            <bendpoint startX="190" endY="150"/>
+          </sourceConnection>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-a2ebd1a9153c4439b28a03cf3a5f1d72" archimateElement="id-e9cdfa42e1e340e8be8c04d4979f9d44">
+          <bounds x="3040" y="130" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-dd7ba99279334f1d98aa648ed05a8d44" source="id-a2ebd1a9153c4439b28a03cf3a5f1d72" target="id-2ac7701ec5ea4154bb4600fa0760ed1e" archimateRelationship="id-96bbaee1141c4929b649cc2b194636b1"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-6ab691be5d234b27bd688db6ffd4f651" archimateElement="id-df04bd240bd84d9baf82861436096a92">
+          <bounds x="3040" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-3f3794307497477ab8c02c91b6dc0620" source="id-6ab691be5d234b27bd688db6ffd4f651" target="id-2ac7701ec5ea4154bb4600fa0760ed1e" archimateRelationship="id-1531b0f9e93a4afabcf09dbf673f512b"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-a3566c728088424e949c2a989a84dc51" archimateElement="id-6e6e67926ee748ef97c3ee84e2f12806">
+          <bounds x="1140" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-23a6520579054c6b8ac88ece0c1b12a4" source="id-a3566c728088424e949c2a989a84dc51" target="id-c4e5801c7adf4f68a4dd98d9d3974ffc" archimateRelationship="id-88bfe5d5c99e40acb43e8540af32a7c0"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-d10b42ec1e69468e86f07edde29fa2ec" archimateElement="id-b4544b3eae2a4554be78fbc9a48db866">
+          <bounds x="1900" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-34f94c32106e4c24886dcffde22d01ee" source="id-d10b42ec1e69468e86f07edde29fa2ec" target="id-d9e6170eb80848f4b779a10b25340c89" archimateRelationship="id-55a68ebc136e4aafbb7be5b6ad2d98b9">
+            <bendpoint startY="-70" endX="-95" endY="350"/>
+          </sourceConnection>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-5a42b7224f0d49998d712f010fce4857" archimateElement="id-1ee9c918301349ffbb9d44e6828b02d4">
+          <bounds x="1710" y="680" width="150" height="60"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-d527ac0f43d8499ebb9043df0bfa31bc" source="id-5a42b7224f0d49998d712f010fce4857" target="id-0713ed7be9a64adf93a95e8781f2c347" archimateRelationship="id-ca70decb5c9d46b2978f5e5dd3ae9bc5"/>
+        </child>
+        <documentation>Cadena de valor del arriendo desde la perspectiva del cliente y proceso de punta a punta que la realiza, con el actor que ejecuta cada paso. Cada proceso está alineado debajo de su etapa. El grupo «Alcance de la aplicación» delimita los procesos que apoya el software.</documentation>
       </element>
     </folder>
     <element xsi:type="archimate:ArchimateDiagramModel" name="Default View" id="id-f08dde7be5624937b26f41845aa42282"/>
