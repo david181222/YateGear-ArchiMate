@@ -1855,6 +1855,155 @@ Fuente: H-16; conversación E2E-07.</documentation>
 Fuente: H-16; conversación E2E-07.</documentation>
       </element>
     </folder>
+    <folder name="Fase 5" id="id-4850219b0da3433ea70e3c9ea4001c9d">
+      <element xsi:type="archimate:ApplicationComponent" name="Contexto Disponibilidad de yates" id="id-0d93d731f6fd4b21acbf20d3cb28cf6f">
+        <documentation>Contexto delimitado del dominio Disponibilidad de yates (V5). Es dueño de los agregados Yate y Calendario del yate (V6) y de su lenguaje: aquí &quot;bloqueo&quot; son las fechas que cierra el propietario y &quot;disponible&quot; es disponible para arrendar (V7). Responde qué yates hay en cada marina y qué fechas están libres, y es el único que aparta, ocupa o libera fechas, para que no haya dobles reservas (CIE-01).
+Fuente: V5, V6.3, V7; V4-DEC-03.</documentation>
+        <property key="Dominio V5" value="Disponibilidad de yates"/>
+        <property key="Clasificación" value="Soporte"/>
+        <property key="Área" value="Comercial"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Contexto Gestión del arriendo" id="id-fdcc9b19f08a492f8ccd5dd4559926bc">
+        <documentation>Contexto delimitado del dominio Gestión del arriendo (V5). Es dueño del agregado Arriendo (V6) y de su lenguaje: reserva en trámite, riesgo aceptable, contrato de arriendo, cancelación (V7). Decide si un yate ajeno se entrega: no confirma sin riesgo aceptable, contrato firmado y pagos completos (REG-01, H-07). El número del arriendo que asigna es la identidad que usan los demás contextos.
+Fuente: V5, V6.1, V7.</documentation>
+        <property key="Dominio V5" value="Gestión del arriendo"/>
+        <property key="Clasificación" value="Central"/>
+        <property key="Área" value="Comercial"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Contexto Calificaciones" id="id-6f29abc193cb4f2fa1234cec80bf0675">
+        <documentation>Contexto delimitado del dominio Calificaciones (V5). Es dueño del agregado Calificación (V6). Registra la calificación que se dan cliente y propietario al cerrar el arriendo y calcula los promedios. No tiene reglas propias de la empresa (H-16).
+Fuente: V5, V6.5, V7.</documentation>
+        <property key="Dominio V5" value="Calificaciones"/>
+        <property key="Clasificación" value="Genérico"/>
+        <property key="Área" value="Servicio al cliente"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Contexto Cobros y depósito" id="id-859686865fd4465397859188d62c971c">
+        <documentation>Contexto delimitado del dominio Cobros y depósito (V5). Es dueño de los agregados Depósito para daños, Cuenta del arriendo y Reclamo a la aseguradora (V6) y de su lenguaje: aquí &quot;bloqueo&quot; es el depósito retenido en la tarjeta (V7). Maneja todo el dinero del arriendo: todo cobro va con evidencia y el depósito se resuelve en máximo 3 días (V1).
+Fuente: V5, V6.2, V7.</documentation>
+        <property key="Dominio V5" value="Cobros y depósito"/>
+        <property key="Clasificación" value="Central"/>
+        <property key="Área" value="Finanzas"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Contexto Operación del arriendo" id="id-909c52d6cdf845e6927af4c62d2847fb">
+        <documentation>Contexto delimitado del dominio Operación del arriendo (V5). Es dueño de los agregados Acta de entrega, Acta de inspección y Lectura de ubicación y combustible (V6) y de su lenguaje: aquí &quot;disponible&quot; es listo para entregar y &quot;entrega&quot; es la de la marina al cliente (V7). Registra lo que pasa con el yate y produce la evidencia que usan los cobros.
+Fuente: V5, V6.4, V7.</documentation>
+        <property key="Dominio V5" value="Operación del arriendo"/>
+        <property key="Clasificación" value="Soporte"/>
+        <property key="Área" value="Operaciones"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Capa anticorrupción" id="id-9cc5cca6fc0e49fda42c5fd8f01d62ae">
+        <documentation>Componente de la capa anticorrupción. Realiza los ocho servicios de la capa 5 de la V4 (SA-01 a SA-08), uno por cada contraparte externa, y le sirve a los cuatro contextos que se integran con el exterior. Traduce el modelo de cada sistema o proceso externo al lenguaje del contexto que lo usa, para que ninguno de esos modelos entre a un contexto delimitado. Calificaciones no tiene integraciones externas.
+Fuente: V4, sección 6; H-20; V8-DEC-06.</documentation>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Consultar yates disponibles" id="id-3c71d6c07530402bb5d436631366725d">
+        <documentation>Servicio de aplicación del Contexto Disponibilidad de yates. Realiza SB-04 de la V4. Lee el calendario y los datos de los yates de la marina elegida y devuelve los que están disponibles para arrendar en esas fechas, con su marina y su precio por día. No cambia nada, por eso no es un comando (V6-DEC-03).
+Fuente: contrato de SB-04 (V4); V6, sección 6.</documentation>
+        <property key="Servicio básico V4" value="SB-04"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Consultar el arriendo" id="id-ed6830eac52c4d5aa7983fb1edd63869">
+        <documentation>Servicio de aplicación del Contexto Gestión del arriendo. Realiza SB-10 de la V4. Devuelve el cliente, el yate, la marina, las fechas y el estado del arriendo a quien participa en él. No cambia nada (V6-DEC-03).
+Fuente: contrato de SB-10 (V4); V6, sección 6.</documentation>
+        <property key="Servicio básico V4" value="SB-10"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Verificar los requisitos del cliente" id="id-8de1e624fe6d42b58cae281366f1e86a">
+        <documentation>Servicio de aplicación del Contexto Gestión del arriendo. Realiza SB-11 de la V4. Revisa en la ficha del cliente que guarda el arriendo la licencia de navegación vigente y la autorización de datos, y responde si cumple o no, con el motivo. En la V6 su regla quedó como invariante del Arriendo (V6-DEC-03). Por este servicio la restricción de la licencia vigente y la de la Ley 1581 llegan a la capa de aplicación.
+Fuente: contrato de SB-11 (V4); H-09, H-19; V6, sección 6.</documentation>
+        <property key="Servicio básico V4" value="SB-11"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Consultar el estado de cuenta del arriendo" id="id-e093f7b040c243449523e515011813d0">
+        <documentation>Servicio de aplicación del Contexto Cobros y depósito. Realiza SB-18 de la V4. Lee la Cuenta del arriendo (los cobros) y el Depósito para daños (el descuento y su evidencia) y devuelve los movimientos con fecha, concepto, valor y evidencia. Resuelve el pendiente de la V6, sección 6.
+Fuente: contrato de SB-18 (V4); V6, sección 6.</documentation>
+        <property key="Servicio básico V4" value="SB-18"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Consultar ubicación y combustible del yate" id="id-29d996ed0b0e4d8b8ba622da657f9388">
+        <documentation>Servicio de aplicación del Contexto Operación del arriendo. Realiza SB-26 de la V4. Devuelve la última lectura y el recorrido del yate arrendado al cliente del arriendo y a la marina que lo guarda (V4-SUP-05). Así la marina ve el seguimiento sin cambiar sus sistemas.
+Fuente: contrato de SB-26 (V4); H-12; V6, sección 6.</documentation>
+        <property key="Servicio básico V4" value="SB-26"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Consultar calificaciones promedio" id="id-f3d1d639b7ec477aa112072ed01dd0f4">
+        <documentation>Servicio de aplicación del Contexto Calificaciones. Realiza SB-30 de la V4. Calcula la calificación promedio de un cliente o de un propietario sin cambiar ninguna calificación (V6-DEC-03).
+Fuente: contrato de SB-30 (V4); V6, sección 6.</documentation>
+        <property key="Servicio básico V4" value="SB-30"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Contratos con propietarios y clientes" id="id-18b80ed18f3d4d43a5290e01b90ca4eb">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-02 &quot;Contratos con propietarios y clientes&quot; de la V4. Lo usan Disponibilidad de yates, Gestión del arriendo, Cobros y depósito.
+Qué traduce: Hoy los contratos son PDF que se envían por correo (INT-01), así que no hay un sistema con el cual integrarse. El servicio convierte el contrato firmado en los dos datos que usa el arriendo: la referencia del contrato y sus condiciones de cancelación. El documento no entra a ningún contexto.
+Fuente: SA-02 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-02"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Clientes del CRM" id="id-2a8748ebcb2c44bda5267072d3cd6c3c">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-01 &quot;Clientes del CRM&quot; de la V4. Lo usa Gestión del arriendo.
+Qué traduce: El CRM identifica al cliente con su propio código y guarda más datos de los que el arriendo necesita. El servicio solo toma los datos del arriendo y guarda la referencia al CRM, que es la ficha del cliente de la V6 (V6-SUP-01).
+Fuente: SA-01 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-01"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Nivel de riesgo de la evaluadora" id="id-b11c0fb607e44ce6ba45736c036e3a0d">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-04 &quot;Nivel de riesgo de la evaluadora&quot; de la V4. Lo usa Gestión del arriendo.
+Qué traduce: La evaluadora responde con su escala (bajo, medio o alto). El servicio la traduce a la decisión del negocio: riesgo aceptable o no se arrienda (V4-SUP-02). Su escala no entra al Arriendo.
+Fuente: SA-04 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-04"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Avisos y actas de las marinas" id="id-2754472851d144d5b79323ab235a3f20">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-05 &quot;Avisos y actas de las marinas&quot; de la V4. Lo usan Gestión del arriendo, Operación del arriendo.
+Qué traduce: Las marinas no van a cambiar sus sistemas, así que YateGear se adapta a ellas. Conformarse con su modelo metería en Operación del arriendo el sentido de la marina para &quot;disponible&quot; (listo para entregar), que choca con el de Comercial (H-17). El servicio recibe las actas en el formato que ya usa cada marina y las traduce al acta de entrega y al acta de inspección.
+Fuente: SA-05 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-05"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Ubicación y combustible del proveedor" id="id-ec3bc54925a940ccbbcb5ac42ee8479c">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-07 &quot;Ubicación y combustible del proveedor&quot; de la V4. Lo usa Operación del arriendo.
+Qué traduce: El proveedor identifica cada lectura por su dispositivo. El servicio la asocia al yate del inventario y descarta los datos que el arriendo no usa. Solo entra información.
+Fuente: SA-07 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-07"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Pólizas y reclamos de la aseguradora" id="id-45d9e0e4f7624937a6dfef70e2c3240a">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-03 &quot;Pólizas y reclamos de la aseguradora&quot; de la V4. Lo usa Cobros y depósito.
+Qué traduce: La aseguradora habla de pólizas y siniestros, y evalúa los reclamos con sus propios procesos (EXC-02). El servicio lo traduce a la póliza del arriendo y al reclamo por el excedente de daños.
+Fuente: SA-03 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-03"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Cobros por la pasarela de pagos" id="id-1cdb2efd83d648a9bc004fe001343244">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-06 &quot;Cobros por la pasarela de pagos&quot; de la V4. Lo usa Cobros y depósito.
+Qué traduce: La pasarela habla de autorizar, capturar y anular; Finanzas dice bloquear, descontar y liberar el depósito (H-17). El servicio traduce un vocabulario al otro, y así &quot;bloqueo&quot; en Cobros y depósito conserva el sentido de Finanzas.
+Fuente: SA-06 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-06"/>
+      </element>
+      <element xsi:type="archimate:ApplicationService" name="Envío de arriendos cerrados a Finanzas" id="id-415716c21d684fd5b6f0a59dab8bbc17">
+        <documentation>Servicio de aplicación de la capa anticorrupción. Realiza SA-08 &quot;Envío de arriendos cerrados a Finanzas&quot; de la V4. Lo usa Cobros y depósito.
+Qué traduce: Aquí YateGear está aguas arriba: entrega a Finanzas un registro por cada arriendo cerrado (propietario, yate, alquiler, comisión y valor del propietario) en un formato fijo que Finanzas conoce. No hay nada que traducir hacia adentro, porque no entra información. La suma mensual y el pago siguen en el proceso de Finanzas (H-11).
+Fuente: SA-08 (V4, tabla 6.2).</documentation>
+        <property key="Servicio anticorrupción V4" value="SA-08"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="CRM" id="id-caf28817537c4ca4bd1558fc179f647c">
+        <documentation>Sistema externo que usa Comercial para guardar los datos de los clientes y sus solicitudes comerciales (INT-01). Le sirve a la función &quot;Gestión de clientes en el CRM&quot; de la V4.
+Fuente: H-20; conversación INT-01, INT-CRM.</documentation>
+        <property key="Externo" value="Sí"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Sistema de la empresa evaluadora de riesgo" id="id-29a3f10ca36b4ceda2ed5657d162ef34">
+        <documentation>Sistema externo con el que la empresa evaluadora recibe los datos del cliente y responde el nivel de riesgo (INT-RIE). Se asocia con el actor &quot;Empresa evaluadora de riesgo&quot; de la V4.
+Fuente: H-07, H-20; conversación INT-RIE.</documentation>
+        <property key="Externo" value="Sí"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Sistemas de las marinas" id="id-584b815ed5b5478a8116c2a813a5752b">
+        <documentation>Sistemas propios de las marinas aliadas, que no van a cambiar (INT-01, MOT-04). Por ellos llegan las actas de entrega y de inspección. Se asocia con el actor &quot;Marina&quot; de la V3.
+Fuente: H-05, H-20; conversación INT-01, INT-MAR.</documentation>
+        <property key="Externo" value="Sí"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Plataforma del proveedor de ubicación y combustible" id="id-5e61a4bda930406f9410a28f656d5038">
+        <documentation>Plataforma externa del proveedor que recibe los datos del dispositivo de cada yate. Hoy esos datos solo se ven en el portal del proveedor (INT-01). Se asocia con el actor &quot;Proveedor de datos de ubicación y combustible&quot; de la V4.
+Fuente: H-12, H-20; conversación INT-01, INT-GPS.</documentation>
+        <property key="Externo" value="Sí"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Sistema de la aseguradora" id="id-d2840298523842f48f2d31491dbd7834">
+        <documentation>Sistema externo de la aseguradora, que emite la póliza de cada arriendo y atiende los reclamos por daños (INT-01). Se asocia con el actor &quot;Aseguradora&quot; de la V4.
+Fuente: H-15, H-20; conversación INT-01, INT-ASE.</documentation>
+        <property key="Externo" value="Sí"/>
+      </element>
+      <element xsi:type="archimate:ApplicationComponent" name="Sistema de la pasarela de pagos" id="id-2f0cc96688e1475489c549d46f5860aa">
+        <documentation>Sistema externo de la pasarela de pagos: cobra el alquiler, el seguro y el combustible, bloquea el depósito y luego lo libera o lo cobra (INT-01). Se asocia con el actor &quot;Pasarela de pagos&quot; de la V4.
+Fuente: H-10, H-20; conversación INT-01, INT-PAG.</documentation>
+        <property key="Externo" value="Sí"/>
+      </element>
+    </folder>
   </folder>
   <folder name="Technology &amp; Physical" id="id-db6fb539489c4cd2beef967116802793" type="technology"/>
   <folder name="Motivation" id="id-87e1c8de4f9f476ea2033caa017aa3c1" type="motivation">
@@ -3345,6 +3494,234 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
     <element xsi:type="archimate:AggregationRelationship" id="id-4a2d05eb79f1484cbe8070d639c22ddc" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-3a163e12d2ff4c13b996aa5f37096eec"/>
     <element xsi:type="archimate:AggregationRelationship" id="id-f717f8f35c484f14bff40e0945e40337" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-59c3b7a4d9704420b5421d4268a16863"/>
     <element xsi:type="archimate:AggregationRelationship" id="id-fdbb715242cb457a8a657c66c9337192" source="id-a809e30bc99c4bc88d333242b7998f55" target="id-84614b41e935485187186177fee17adc"/>
+    <folder name="Fase 5" id="id-b923cc6319634b8282753cf5180f9c03">
+      <element xsi:type="archimate:RealizationRelationship" id="id-2b97c3b6db314a99ba18e06654d3ee58" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-3de9c3a6e34d48f6a1fcd6a828471dd0">
+        <documentation>El contexto delimitado realiza el dominio Disponibilidad de yates de la V5: un contexto por dominio (V8-DEC-01).</documentation>
+      </element>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-706655cc67244eeea19c8b9a1397b8da" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-8e392207203f40b2b0a50bcbe62efc90"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-e502546d68d0474f9646fcbb4375f69a" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-f4ce9e396faf4c5395d097ec91278ec2"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-c40932f0c7b54d6b85715aeb2088ae52" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-91e23dd9dfb741b79a6f487952bd22c0"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-25114f8ec13146a3b7c9971b35c0c757" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-a44be1314fc14a9092a23f2528ef5824">
+        <documentation>El contexto delimitado realiza el dominio Gestión del arriendo de la V5: un contexto por dominio (V8-DEC-01).</documentation>
+      </element>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-f88e99613a1f440a950b24802b641bfa" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-9995aadff41a4a86b109d51b13dbc11c"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-d4634ceebe7d40dc94fe3cfc71d4af93" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-2a55b3149f0d4388ba3551743aa65cf4"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-486527e4c2504e069c48e79561fecafe" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-b5e59d3c453a410580107b2287cd76d2"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-3d46938e0a2e41c1a5a5f495f49b0a35" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-57da84f53a9742cea51396bf297bf06d"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-c2d8947357ff44fe82b02a8f43a5eb9b" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-ea0f1874f954489589820b4aa2761e3f"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-39ef0694011949508acaa2efe1f03cca" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-5be75381f2364a9cb9fa8d4247dce743"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-118987529fce4e80aa2a909f4e7ba0ce" source="id-6f29abc193cb4f2fa1234cec80bf0675" target="id-1c7b577ca7d04284ab10399e9b7ab37f">
+        <documentation>El contexto delimitado realiza el dominio Calificaciones de la V5: un contexto por dominio (V8-DEC-01).</documentation>
+      </element>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-59020cd81c94468db85a19701b265759" source="id-6f29abc193cb4f2fa1234cec80bf0675" target="id-b058bd36e7784e5ea81ab24c8dd3a4bb"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-d2881323d50849cf96c0bd546b9fc9ca" source="id-6f29abc193cb4f2fa1234cec80bf0675" target="id-bc9ac3247ce043cfbaf82400004826b8"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-78e0bbcbd1cb49c0852783673f8315db" source="id-859686865fd4465397859188d62c971c" target="id-d44425d2648b464eb5b71275e2978c41">
+        <documentation>El contexto delimitado realiza el dominio Cobros y depósito de la V5: un contexto por dominio (V8-DEC-01).</documentation>
+      </element>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-b14f6e36bcee4965a091d15a4352a9c2" source="id-859686865fd4465397859188d62c971c" target="id-e2968b9d61094a948605f2615f69fff0"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-25978824e199425692d4df0a25fedb95" source="id-859686865fd4465397859188d62c971c" target="id-53533cc505c540bbafcb8473107780c3"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-8b985624dd084deaa294acd56b446a69" source="id-859686865fd4465397859188d62c971c" target="id-43d3a21049834a9ea5e2f3f8b3079d0a"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-f09a476eb93a4245bc9863ef850b8b97" source="id-859686865fd4465397859188d62c971c" target="id-5ef920b9e381405495dbdfe1877eb75b"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-ca01fa08a82144c79918360f86c544e6" source="id-859686865fd4465397859188d62c971c" target="id-3101c7184ff44fbfb862a7645b4e6135"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-2e2644c754c24d408a41e725f9a72013" source="id-859686865fd4465397859188d62c971c" target="id-e5737d28667c4b8a9373ac6f62271f96"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-22a80b20c05249d59fbafe6a91d7dd2b" source="id-859686865fd4465397859188d62c971c" target="id-599456d5ca8f45b0b82efa9a05b254d2"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-a1b5c92f059b460899c5e818f8c37acb" source="id-859686865fd4465397859188d62c971c" target="id-afb038030e754dd490f69fcbf6a446e0"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-f3568d0935ab4ee8b486c6e71f9f28a7" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-41501569cf094ac4b3cc80b4ab439a97">
+        <documentation>El contexto delimitado realiza el dominio Operación del arriendo de la V5: un contexto por dominio (V8-DEC-01).</documentation>
+      </element>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-3912a95dd85a4208aad44762876dfe56" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-8addfcc26ad744b8a15ea09a54227d4d"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-538bc885df7c4ae4bddc97262d93be41" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-8222df5442934cf5a117ced88ec7329e"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-e2c32a64e73a4639ae5098903979bda8" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-c6f7cd3f402f41feb9d986570982815a"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-57797617eca94a9e91ac027773395b7d" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-9fe7bd3168374a12ac9efc3a073f62c9"/>
+      <element xsi:type="archimate:AssignmentRelationship" id="id-16a43d632b9140fbabd727ea0879f65d" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-c742e57f7d34406c8162646ca3080c19"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-61a962c3e1ff46e9a075b090a214edff" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-3c71d6c07530402bb5d436631366725d"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-aa8f31eaebeb404abbdfd130b0c89714" source="id-3c71d6c07530402bb5d436631366725d" target="id-01c956e2d271423d83b7b5db36d7511d"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-79c33122bdd14cdf9f638a207a271caf" source="id-3c71d6c07530402bb5d436631366725d" target="id-b3dcca7f045e43f49523fe907a138a79" accessType="1"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-e256b52849574b9fa4f9cb59f2a5de3d" source="id-3c71d6c07530402bb5d436631366725d" target="id-d50ced5f46a849f7b744fc977ab040e9" accessType="1"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-269bc588326a4a89b66539636ff18da6" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-ed6830eac52c4d5aa7983fb1edd63869"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-6eeb633672f048b6b4e13192647de98a" source="id-ed6830eac52c4d5aa7983fb1edd63869" target="id-47df454247c847e0be29ca1bb86c09af"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-4d7f4d13934141c099ed84fd06d65c9a" source="id-ed6830eac52c4d5aa7983fb1edd63869" target="id-3f15410f516e4820b86108f1896461a8" accessType="1"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-f03fe4d1aa1640cc906f78244252d3e3" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-8de1e624fe6d42b58cae281366f1e86a"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-4a666f11dbbd45ca8b8005422a152b32" source="id-8de1e624fe6d42b58cae281366f1e86a" target="id-2d99dc8136174976b9d7f68a2ed30efe"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-b4f4afd2416b4583b9756f05b131f0e5" source="id-8de1e624fe6d42b58cae281366f1e86a" target="id-3f15410f516e4820b86108f1896461a8" accessType="1"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-6a71029e60874f1a9559f1904791b6d9" source="id-859686865fd4465397859188d62c971c" target="id-e093f7b040c243449523e515011813d0"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-942326b625c24e8f9943977a49501310" source="id-e093f7b040c243449523e515011813d0" target="id-6451adac6a3a47c58968469b72feb93c"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-01ed62112d6e4c1389b9db8d89b04fe9" source="id-e093f7b040c243449523e515011813d0" target="id-cc25b8b2503f4df286f2f28f1c7ab12b" accessType="1"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-9475e7fc0eba4b27b00241031f568739" source="id-e093f7b040c243449523e515011813d0" target="id-6545ac90ecf249a4b622c562c49eeeca" accessType="1"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-0867aa0b41f74fb2b9ecb2d6dd8ef759" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-29d996ed0b0e4d8b8ba622da657f9388"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-d4e586d3850b4a54854163466e374819" source="id-29d996ed0b0e4d8b8ba622da657f9388" target="id-b5801260aedb4028ba4325e1eed2900b"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-cf3728795b3946378fe1a8151411a2f1" source="id-29d996ed0b0e4d8b8ba622da657f9388" target="id-6858d99a4eb2404d8c0fce1abfc1d10e" accessType="1"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-b0c124cb289348ab8a75dc0b0f581fe7" source="id-6f29abc193cb4f2fa1234cec80bf0675" target="id-f3d1d639b7ec477aa112072ed01dd0f4"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-db0f9ad90a7a4ff5984ec1a95b22f00d" source="id-f3d1d639b7ec477aa112072ed01dd0f4" target="id-4ab0c68883be4f879f9e0da5f2d83334"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-c8b40dcceacb4116a366303148b32586" source="id-f3d1d639b7ec477aa112072ed01dd0f4" target="id-e848e3b4bf284a969c9a0a9d2e4de26f" accessType="1"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-e76aa0a16e1644b0bef839ec1bfe6f2c" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-18b80ed18f3d4d43a5290e01b90ca4eb"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-4973d9327a8546ed9a5a9c43a0bdba0b" source="id-18b80ed18f3d4d43a5290e01b90ca4eb" target="id-b170a04e21cc4665abdb81d9ba6eaea1"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-4ba08407dfd946febe64c5439640c1a1" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-2a8748ebcb2c44bda5267072d3cd6c3c"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-e21e0f25e7184cd8817a23fbf5040578" source="id-2a8748ebcb2c44bda5267072d3cd6c3c" target="id-ad644fdca47f42b8ba22dfa7a62a88a7"/>
+      <element xsi:type="archimate:ServingRelationship" id="id-e7e24f53cfa640faac72b0a14fddb7f2" source="id-caf28817537c4ca4bd1558fc179f647c" target="id-33da0a71434043eda8306948f9bd797a">
+        <documentation>Une el sistema externo con su contraparte de la V4 (V8-DEC-08).</documentation>
+      </element>
+      <element xsi:type="archimate:RealizationRelationship" id="id-171bbbbd52104e3e90cd1a729a41a8c2" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-b11c0fb607e44ce6ba45736c036e3a0d"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-d0f310d6217149a9b64fb87ebb063bd6" source="id-b11c0fb607e44ce6ba45736c036e3a0d" target="id-0e97a5a8825341a6a90e40fc329cc037"/>
+      <element xsi:type="archimate:AssociationRelationship" id="id-003500a007cd42b494ed1bc8bbb713e4" source="id-29a3f10ca36b4ceda2ed5657d162ef34" target="id-5f4527133542439390074ce89735da3c">
+        <documentation>Une el sistema externo con su contraparte de la V4 (V8-DEC-08).</documentation>
+      </element>
+      <element xsi:type="archimate:RealizationRelationship" id="id-ca0f5bae186b48199b1f8894061214b7" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-2754472851d144d5b79323ab235a3f20"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-02d411586295481cbd505070edcee4ab" source="id-2754472851d144d5b79323ab235a3f20" target="id-35bf6c8298f34e57bd9ffa99877bc6e6"/>
+      <element xsi:type="archimate:AssociationRelationship" id="id-ce44d3de41314f7f93fab5c1be56cf6e" source="id-584b815ed5b5478a8116c2a813a5752b" target="id-1ee9c918301349ffbb9d44e6828b02d4">
+        <documentation>Une el sistema externo con su contraparte de la V4 (V8-DEC-08).</documentation>
+      </element>
+      <element xsi:type="archimate:RealizationRelationship" id="id-440f40459d224c469e161aeb52da1d5e" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-ec3bc54925a940ccbbcb5ac42ee8479c"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-62b08cd4a2964e1dba564924ece9ff49" source="id-ec3bc54925a940ccbbcb5ac42ee8479c" target="id-b89074202bab43d1808b22fb2d5ebdb1"/>
+      <element xsi:type="archimate:AssociationRelationship" id="id-d2589e427e96449487f40870748f5452" source="id-5e61a4bda930406f9410a28f656d5038" target="id-36cc760eb70f4f74be7dc693be15ffb8">
+        <documentation>Une el sistema externo con su contraparte de la V4 (V8-DEC-08).</documentation>
+      </element>
+      <element xsi:type="archimate:RealizationRelationship" id="id-a6fdfcf207c44952b07e1b304d1475e0" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-45d9e0e4f7624937a6dfef70e2c3240a"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-9bcbeb6025f34d69ac840654c69e6955" source="id-45d9e0e4f7624937a6dfef70e2c3240a" target="id-f1b972c2ebb54b5dbc49d796af031b80"/>
+      <element xsi:type="archimate:AssociationRelationship" id="id-21773cacb77646698c25b859d0df3787" source="id-d2840298523842f48f2d31491dbd7834" target="id-f4037231726941f09e22e186b1de8207">
+        <documentation>Une el sistema externo con su contraparte de la V4 (V8-DEC-08).</documentation>
+      </element>
+      <element xsi:type="archimate:RealizationRelationship" id="id-bdd9a03e58d34097aa0900d5264a758c" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-1cdb2efd83d648a9bc004fe001343244"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-e7baaa38f06c4553817fc718019e7ed5" source="id-1cdb2efd83d648a9bc004fe001343244" target="id-d8cd158de4664c6c931d276887de2c58"/>
+      <element xsi:type="archimate:AssociationRelationship" id="id-f96d38d0bb4c47d8b5e31c95988f857a" source="id-2f0cc96688e1475489c549d46f5860aa" target="id-a03086a44e7343a484d5072f77aacc94">
+        <documentation>Une el sistema externo con su contraparte de la V4 (V8-DEC-08).</documentation>
+      </element>
+      <element xsi:type="archimate:RealizationRelationship" id="id-7c35dff1735b4316bd361d6b32fdd256" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-415716c21d684fd5b6f0a59dab8bbc17"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-ee8d3b7cf29a4228985763eaf840d3ce" source="id-415716c21d684fd5b6f0a59dab8bbc17" target="id-5b8727eaac2c436db9285b07a20649e6"/>
+      <element xsi:type="archimate:ServingRelationship" name="Capa anticorrupción" id="id-93d81c4156474edc98919f49c192b005" source="id-03be3f82b87240b1bbabf2bfd90332eb" target="id-18b80ed18f3d4d43a5290e01b90ca4eb">
+        <documentation>Capa anticorrupción. Aguas arriba: Gestión de contratos. Aguas abajo: Gestión del arriendo, Disponibilidad de yates y Cobros y depósito.
+Hoy los contratos son PDF que se envían por correo (INT-01), así que no hay un sistema con el cual integrarse. El servicio convierte el contrato firmado en los dos datos que usa el arriendo: la referencia del contrato y sus condiciones de cancelación. El documento no entra a ningún contexto.
+Fuente: SA-02 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Capa anticorrupción"/>
+        <property key="Aguas arriba" value="Gestión de contratos"/>
+        <property key="Aguas abajo" value="Gestión del arriendo, Disponibilidad de yates y Cobros y depósito"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Capa anticorrupción" id="id-dd42f5a5892048978614daf77fd1168c" source="id-caf28817537c4ca4bd1558fc179f647c" target="id-2a8748ebcb2c44bda5267072d3cd6c3c">
+        <documentation>Capa anticorrupción. Aguas arriba: CRM. Aguas abajo: Gestión del arriendo.
+El CRM identifica al cliente con su propio código y guarda más datos de los que el arriendo necesita. El servicio solo toma los datos del arriendo y guarda la referencia al CRM, que es la ficha del cliente de la V6 (V6-SUP-01).
+Fuente: SA-01 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Capa anticorrupción"/>
+        <property key="Aguas arriba" value="CRM"/>
+        <property key="Aguas abajo" value="Gestión del arriendo"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Capa anticorrupción" id="id-44fd99ca216145aaa0807492c9ec7706" source="id-29a3f10ca36b4ceda2ed5657d162ef34" target="id-b11c0fb607e44ce6ba45736c036e3a0d">
+        <documentation>Capa anticorrupción. Aguas arriba: Empresa evaluadora de riesgo. Aguas abajo: Gestión del arriendo.
+La evaluadora responde con su escala (bajo, medio o alto). El servicio la traduce a la decisión del negocio: riesgo aceptable o no se arrienda (V4-SUP-02). Su escala no entra al Arriendo.
+Fuente: SA-04 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Capa anticorrupción"/>
+        <property key="Aguas arriba" value="Empresa evaluadora de riesgo"/>
+        <property key="Aguas abajo" value="Gestión del arriendo"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Capa anticorrupción" id="id-21fc9c1d99b14cdfa828f317f9842cb1" source="id-584b815ed5b5478a8116c2a813a5752b" target="id-2754472851d144d5b79323ab235a3f20">
+        <documentation>Capa anticorrupción. Aguas arriba: Marinas. Aguas abajo: Operación del arriendo y Gestión del arriendo.
+Las marinas no van a cambiar sus sistemas, así que YateGear se adapta a ellas. Conformarse con su modelo metería en Operación del arriendo el sentido de la marina para &quot;disponible&quot; (listo para entregar), que choca con el de Comercial (H-17). El servicio recibe las actas en el formato que ya usa cada marina y las traduce al acta de entrega y al acta de inspección.
+Fuente: SA-05 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Capa anticorrupción"/>
+        <property key="Aguas arriba" value="Marinas"/>
+        <property key="Aguas abajo" value="Operación del arriendo y Gestión del arriendo"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Capa anticorrupción" id="id-7ee52212c42c4ea8803a175848217b75" source="id-5e61a4bda930406f9410a28f656d5038" target="id-ec3bc54925a940ccbbcb5ac42ee8479c">
+        <documentation>Capa anticorrupción. Aguas arriba: Proveedor de datos de ubicación y combustible. Aguas abajo: Operación del arriendo.
+El proveedor identifica cada lectura por su dispositivo. El servicio la asocia al yate del inventario y descarta los datos que el arriendo no usa. Solo entra información.
+Fuente: SA-07 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Capa anticorrupción"/>
+        <property key="Aguas arriba" value="Proveedor de datos de ubicación y combustible"/>
+        <property key="Aguas abajo" value="Operación del arriendo"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Capa anticorrupción" id="id-1be5adadd69b40c3a07618563610cb6f" source="id-d2840298523842f48f2d31491dbd7834" target="id-45d9e0e4f7624937a6dfef70e2c3240a">
+        <documentation>Capa anticorrupción. Aguas arriba: Aseguradora. Aguas abajo: Cobros y depósito.
+La aseguradora habla de pólizas y siniestros, y evalúa los reclamos con sus propios procesos (EXC-02). El servicio lo traduce a la póliza del arriendo y al reclamo por el excedente de daños.
+Fuente: SA-03 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Capa anticorrupción"/>
+        <property key="Aguas arriba" value="Aseguradora"/>
+        <property key="Aguas abajo" value="Cobros y depósito"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Capa anticorrupción" id="id-6c5a017cd74b49669659994ddeff043a" source="id-2f0cc96688e1475489c549d46f5860aa" target="id-1cdb2efd83d648a9bc004fe001343244">
+        <documentation>Capa anticorrupción. Aguas arriba: Pasarela de pagos. Aguas abajo: Cobros y depósito.
+La pasarela habla de autorizar, capturar y anular; Finanzas dice bloquear, descontar y liberar el depósito (H-17). El servicio traduce un vocabulario al otro, y así &quot;bloqueo&quot; en Cobros y depósito conserva el sentido de Finanzas.
+Fuente: SA-06 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Capa anticorrupción"/>
+        <property key="Aguas arriba" value="Pasarela de pagos"/>
+        <property key="Aguas abajo" value="Cobros y depósito"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Lenguaje publicado" id="id-20d9dbdf7af14985bd471b6eab8fbf2b" source="id-415716c21d684fd5b6f0a59dab8bbc17" target="id-2436b7f69f814e539e5d62b6168b8f70">
+        <documentation>Lenguaje publicado. Aguas arriba: Cobros y depósito. Aguas abajo: Pagar mensualmente al propietario (Finanzas).
+Aquí YateGear está aguas arriba: entrega a Finanzas un registro por cada arriendo cerrado (propietario, yate, alquiler, comisión y valor del propietario) en un formato fijo que Finanzas conoce. No hay nada que traducir hacia adentro, porque no entra información. La suma mensual y el pago siguen en el proceso de Finanzas (H-11).
+Fuente: SA-08 (V4, tabla 6.2).</documentation>
+        <property key="Patrón" value="Lenguaje publicado"/>
+        <property key="Aguas arriba" value="Cobros y depósito"/>
+        <property key="Aguas abajo" value="Pagar mensualmente al propietario (Finanzas)"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" id="id-f10b6e75f3ee40d5b501dcb16678a865" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-0d93d731f6fd4b21acbf20d3cb28cf6f">
+        <documentation>La capa anticorrupción le sirve a este contexto con SA-02 (V4, tabla 6.2, &quot;Lo usan&quot;). Qué servicio usa cada comando se detalla en la V9.</documentation>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" id="id-4cceb51bbbe448d1879b6d711776f775" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-fdcc9b19f08a492f8ccd5dd4559926bc">
+        <documentation>La capa anticorrupción le sirve a este contexto con SA-02, SA-01, SA-04, SA-05 (V4, tabla 6.2, &quot;Lo usan&quot;). Qué servicio usa cada comando se detalla en la V9.</documentation>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" id="id-0ee913e226074199a052ff6e89a12b9d" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-859686865fd4465397859188d62c971c">
+        <documentation>La capa anticorrupción le sirve a este contexto con SA-02, SA-03, SA-06, SA-08 (V4, tabla 6.2, &quot;Lo usan&quot;). Qué servicio usa cada comando se detalla en la V9.</documentation>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" id="id-04fef91e7d57440c9fa036af89811ade" source="id-9cc5cca6fc0e49fda42c5fd8f01d62ae" target="id-909c52d6cdf845e6927af4c62d2847fb">
+        <documentation>La capa anticorrupción le sirve a este contexto con SA-05, SA-07 (V4, tabla 6.2, &quot;Lo usan&quot;). Qué servicio usa cada comando se detalla en la V9.</documentation>
+      </element>
+      <element xsi:type="archimate:AssociationRelationship" name="Asociación" id="id-0fa82336eab34690b7fc8820b6d20d1b" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-fdcc9b19f08a492f8ccd5dd4559926bc">
+        <documentation>Asociación (Partnership) entre Disponibilidad de yates y Gestión del arriendo.
+De Disponibilidad de yates a Gestión del arriendo: Reserva solicitada, Reserva confirmada, Reserva cancelada y Arriendo no realizado por riesgo alto disparan SB-05, que aparta, ocupa o libera las fechas.
+De Gestión del arriendo a Disponibilidad de yates: Gestión del arriendo usa el yate, su propietario y su marina para registrar la solicitud (SB-06) y enviar el aviso de reserva confirmada (SB-31).
+Por qué: Cada uno necesita al otro para cumplir una regla propia, y juntos cumplen &quot;cero dobles reservas&quot; (CIE-01): Gestión del arriendo decide el estado de la reserva y Disponibilidad de yates es el único que escribe el calendario (V4-DEC-03). Los dos son de Comercial.
+Fuente: V6, tabla 5.2; contratos de SB-05, SB-06 y SB-31 (V4); V4-SUP-01.</documentation>
+        <property key="Patrón" value="Asociación (Partnership)"/>
+        <property key="Aguas arriba" value="Ninguno: dependencia mutua"/>
+        <property key="Aguas abajo" value="Ninguno: dependencia mutua"/>
+      </element>
+      <element xsi:type="archimate:AssociationRelationship" name="Asociación" id="id-96157084afaa4e6395d448dceeee1760" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-859686865fd4465397859188d62c971c">
+        <documentation>Asociación (Partnership) entre Gestión del arriendo y Cobros y depósito.
+De Gestión del arriendo a Cobros y depósito: Reserva cancelada dispara SB-15 (reembolso) y SB-20 (liberar el depósito). SB-19 necesita la fecha de fin del arriendo.
+De Cobros y depósito a Gestión del arriendo: Alquiler y seguro cobrados y Depósito bloqueado disparan SB-07 (confirmar la reserva). Cuenta del arriendo cerrada dispara SB-09 (arriendo cerrado).
+Por qué: Son los dos subdominios centrales y dependen uno del otro: no se confirma sin pagos completos (REG-01) y no se cierra el arriendo sin los ajustes de dinero (E2E-01); a su vez, los cobros dependen de la cancelación y de las fechas del arriendo. Comercial y Finanzas tienen que coordinar cada cambio en estas reglas.
+Fuente: V6, tabla 5.2 y reglas de SB-19 y SB-20; V4-SUP-07, V4-SUP-09.</documentation>
+        <property key="Patrón" value="Asociación (Partnership)"/>
+        <property key="Aguas arriba" value="Ninguno: dependencia mutua"/>
+        <property key="Aguas abajo" value="Ninguno: dependencia mutua"/>
+      </element>
+      <element xsi:type="archimate:AssociationRelationship" name="Asociación" id="id-695647503550468c938619b40365a6d5" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-909c52d6cdf845e6927af4c62d2847fb">
+        <documentation>Asociación (Partnership) entre Gestión del arriendo y Operación del arriendo.
+De Gestión del arriendo a Operación del arriendo: SB-22 rechaza el acta de entrega si la reserva no está confirmada (CIE-01). SB-26 y SB-27 solo actúan con un arriendo en curso.
+De Operación del arriendo a Gestión del arriendo: Yate entregado al cliente e Inspección de devolución registrada disparan SB-09 (arriendo iniciado y yate devuelto).
+Por qué: Cada uno necesita hechos del otro: Operación del arriendo no registra una entrega sin la reserva confirmada, y Gestión del arriendo no avanza el arriendo sin la entrega y la devolución.
+Fuente: V6, tabla 5.2 y reglas de SB-22 y SB-27.</documentation>
+        <property key="Patrón" value="Asociación (Partnership)"/>
+        <property key="Aguas arriba" value="Ninguno: dependencia mutua"/>
+        <property key="Aguas abajo" value="Ninguno: dependencia mutua"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Cliente-proveedor" id="id-ecb2448d9c64471ea44c4b96845fb642" source="id-909c52d6cdf845e6927af4c62d2847fb" target="id-859686865fd4465397859188d62c971c">
+        <documentation>Cliente-proveedor (Customer-Supplier). Aguas arriba: Operación del arriendo. Aguas abajo: Cobros y depósito.
+Qué recibe Cobros y depósito: Diferencias determinadas dispara SB-14 (cargos del cierre) y SB-20 o SB-21 (liberar o descontar el depósito), con la evidencia de cada diferencia.
+Por qué: Solo Cobros y depósito depende de Operación del arriendo, así que Operación está aguas arriba. Cobros y depósito pone un requisito: cada diferencia llega con su evidencia, porque todo cobro va con evidencia (principio de la V1, H-13). Por eso es cliente-proveedor y no conformista.
+Fuente: V6, tabla 5.2; contratos de SB-14, SB-20, SB-21 y SB-24 (V4).</documentation>
+        <property key="Patrón" value="Cliente-proveedor (Customer-Supplier)"/>
+        <property key="Aguas arriba" value="Operación del arriendo"/>
+        <property key="Aguas abajo" value="Cobros y depósito"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Conformista" id="id-520aaf58fc2e4d76bc63a90e08d9fe2c" source="id-fdcc9b19f08a492f8ccd5dd4559926bc" target="id-6f29abc193cb4f2fa1234cec80bf0675">
+        <documentation>Conformista (Conformist). Aguas arriba: Gestión del arriendo. Aguas abajo: Calificaciones.
+Qué recibe Calificaciones: Arriendo cerrado, con el cliente y el propietario del arriendo, habilita SB-28 y SB-29.
+Por qué: Solo Calificaciones depende de Gestión del arriendo. Es un subdominio genérico sin reglas propias (H-16), así que toma el arriendo cerrado y sus dos partes tal como los define Gestión del arriendo, sin traducir y sin pedir cambios.
+Fuente: V6, reglas de SB-28 y SB-29; V5, sección 5.1.</documentation>
+        <property key="Patrón" value="Conformista (Conformist)"/>
+        <property key="Aguas arriba" value="Gestión del arriendo"/>
+        <property key="Aguas abajo" value="Calificaciones"/>
+      </element>
+      <element xsi:type="archimate:ServingRelationship" name="Conformista" id="id-53a5767cf9b44631b1c26d6ca49f1fc4" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-909c52d6cdf845e6927af4c62d2847fb">
+        <documentation>Conformista (Conformist). Aguas arriba: Disponibilidad de yates. Aguas abajo: Operación del arriendo.
+Qué recibe Operación del arriendo: El identificador del yate y la marina que lo guarda: SB-25 asocia cada lectura a un yate del inventario y SB-26 solo muestra el seguimiento a la marina que guarda el yate.
+Por qué: Solo Operación del arriendo depende de Disponibilidad de yates, y usa el yate y su marina tal como están en el inventario, sin pedir nada más.
+Fuente: V6, reglas de SB-25 y SB-26; V4-SUP-05.</documentation>
+        <property key="Patrón" value="Conformista (Conformist)"/>
+        <property key="Aguas arriba" value="Disponibilidad de yates"/>
+        <property key="Aguas abajo" value="Operación del arriendo"/>
+      </element>
+    </folder>
   </folder>
   <folder name="Views" id="id-05eec744d6d2424e96716223e49cdbd3" type="diagrams">
     <folder name="Fase 1" id="id-b96d1241bc084ca89e8e1720c6282050">
@@ -5888,6 +6265,137 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-2b0573a5145c46f2b3262567a7f8f0de" targetConnections="id-2287d95ac979449cbaf64a657abecf5b" archimateElement="id-26175f0b360048c098349224ac7d210d">
             <bounds x="35" y="250" width="150" height="60"/>
+          </child>
+        </child>
+      </element>
+    </folder>
+    <folder name="Fase 5" id="id-b81216ca2c5a4ec09e5a5c88881a3012">
+      <element xsi:type="archimate:ArchimateDiagramModel" name="V8 - Mapa de contextos" id="id-0359b2c8b1f94740a1433e0ac1275d12">
+        <documentation>Mapa de contextos delimitados. Cinco contextos, uno por dominio de la V5, con sus patrones de relación, y la capa anticorrupción de la V4 con sus ocho contrapartes externas. Las líneas de servicio van de aguas arriba a aguas abajo; la asociación une contextos que dependen uno del otro. El nombre de cada línea es su patrón.
+Fuente: V8-Mapa-de-contextos.md.</documentation>
+        <child xsi:type="archimate:DiagramObject" id="id-af51f883f482445b90583d17d58c4502" archimateElement="id-03be3f82b87240b1bbabf2bfd90332eb">
+          <bounds x="40" y="20" width="210" height="70"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-f2a00562973b4ad696e4704c247a8cb0" source="id-af51f883f482445b90583d17d58c4502" target="id-13ccb157ccbe4147af7855791ea17bb2" archimateRelationship="id-93d81c4156474edc98919f49c192b005"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-f349ca8365ec4a07bdc9ae2490b9b6bd" archimateElement="id-caf28817537c4ca4bd1558fc179f647c">
+          <bounds x="280" y="20" width="210" height="70"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-e75a19a827ac4eea92f3178fcbcf0fc1" source="id-f349ca8365ec4a07bdc9ae2490b9b6bd" target="id-41db2f21798e48c291996dc09d2c9908" archimateRelationship="id-dd42f5a5892048978614daf77fd1168c"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-97ce7e2056124694aa8936d34de93299" archimateElement="id-29a3f10ca36b4ceda2ed5657d162ef34">
+          <bounds x="520" y="20" width="210" height="70"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-a3af956068af4cb0b7191bab6e06fd09" source="id-97ce7e2056124694aa8936d34de93299" target="id-add723fcce294a63bcecb733ff832fbd" archimateRelationship="id-44fd99ca216145aaa0807492c9ec7706"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-da8fda7621b64b8895417918fdc03545" archimateElement="id-584b815ed5b5478a8116c2a813a5752b">
+          <bounds x="760" y="20" width="210" height="70"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-5721740730ae4f0fab8207da05e49260" source="id-da8fda7621b64b8895417918fdc03545" target="id-59b6bc4ee1e04011b816c0426f20c96f" archimateRelationship="id-21fc9c1d99b14cdfa828f317f9842cb1"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-c1e59d72083a4ae09ecf1e1a5f47067f" archimateElement="id-5e61a4bda930406f9410a28f656d5038">
+          <bounds x="1000" y="20" width="210" height="70"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-46444eb28dad4615a569222ad21068c8" source="id-c1e59d72083a4ae09ecf1e1a5f47067f" target="id-f5060c81365546dab0f89fb0a76930e3" archimateRelationship="id-7ee52212c42c4ea8803a175848217b75"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-0be7a4c5974841e2b7d7d65676d8dee3" archimateElement="id-d2840298523842f48f2d31491dbd7834">
+          <bounds x="1240" y="20" width="210" height="70"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-a1d92aec3c8648b2a0b6c5a4dac239d4" source="id-0be7a4c5974841e2b7d7d65676d8dee3" target="id-32ba1f466ba24c8e9a200339803729a1" archimateRelationship="id-1be5adadd69b40c3a07618563610cb6f"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-e2e19e7d7eb1414080047c0acaface7c" archimateElement="id-2f0cc96688e1475489c549d46f5860aa">
+          <bounds x="1480" y="20" width="210" height="70"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-e8ebfd6160174eb69bb20c7a5bac0bd0" source="id-e2e19e7d7eb1414080047c0acaface7c" target="id-156d4cd226784a548ddf268d56931815" archimateRelationship="id-6c5a017cd74b49669659994ddeff043a"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-56283409461441f3abf4132b611fd8de" targetConnections="id-4405aa897da34de58a67f1c07c040d62" archimateElement="id-2436b7f69f814e539e5d62b6168b8f70">
+          <bounds x="1720" y="20" width="210" height="70"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-f39830aee49a418996125cf079feaf11" archimateElement="id-9cc5cca6fc0e49fda42c5fd8f01d62ae">
+          <bounds x="20" y="150" width="1930" height="130"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-21eb08f918e942dca8b30ab76a14937f" source="id-f39830aee49a418996125cf079feaf11" target="id-57299947ada54e04843aa87b13bbb88f" archimateRelationship="id-f10b6e75f3ee40d5b501dcb16678a865">
+            <bendpoint startX="-835" startY="66" endX="0" endY="-209"/>
+          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-0ef3b79849054eb39c0dbd51152cb179" source="id-f39830aee49a418996125cf079feaf11" target="id-c9eec8f89a0241ac88e138cff9aa9851" archimateRelationship="id-4cceb51bbbe448d1879b6d711776f775">
+            <bendpoint startX="-418" startY="66" endX="0" endY="-209"/>
+          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-9770492a54b34fe8b90606bae195aaaf" source="id-f39830aee49a418996125cf079feaf11" target="id-9e4e5f5f461248c395ffd3bd0b2ea072" archimateRelationship="id-0ee913e226074199a052ff6e89a12b9d">
+            <bendpoint startX="416" startY="66" endX="0" endY="-209"/>
+          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-a839aacb270947fd88fde5edd1a989be" source="id-f39830aee49a418996125cf079feaf11" target="id-e61ef91e6b11428f961c50e672126139" archimateRelationship="id-04fef91e7d57440c9fa036af89811ade">
+            <bendpoint startX="833" startY="66" endX="0" endY="-209"/>
+          </sourceConnection>
+          <child xsi:type="archimate:DiagramObject" id="id-13ccb157ccbe4147af7855791ea17bb2" targetConnections="id-f2a00562973b4ad696e4704c247a8cb0" archimateElement="id-18b80ed18f3d4d43a5290e01b90ca4eb">
+            <bounds x="20" y="45" width="210" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-41db2f21798e48c291996dc09d2c9908" targetConnections="id-e75a19a827ac4eea92f3178fcbcf0fc1" archimateElement="id-2a8748ebcb2c44bda5267072d3cd6c3c">
+            <bounds x="260" y="45" width="210" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-add723fcce294a63bcecb733ff832fbd" targetConnections="id-a3af956068af4cb0b7191bab6e06fd09" archimateElement="id-b11c0fb607e44ce6ba45736c036e3a0d">
+            <bounds x="500" y="45" width="210" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-59b6bc4ee1e04011b816c0426f20c96f" targetConnections="id-5721740730ae4f0fab8207da05e49260" archimateElement="id-2754472851d144d5b79323ab235a3f20">
+            <bounds x="740" y="45" width="210" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-f5060c81365546dab0f89fb0a76930e3" targetConnections="id-46444eb28dad4615a569222ad21068c8" archimateElement="id-ec3bc54925a940ccbbcb5ac42ee8479c">
+            <bounds x="980" y="45" width="210" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-32ba1f466ba24c8e9a200339803729a1" targetConnections="id-a1d92aec3c8648b2a0b6c5a4dac239d4" archimateElement="id-45d9e0e4f7624937a6dfef70e2c3240a">
+            <bounds x="1220" y="45" width="210" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-156d4cd226784a548ddf268d56931815" targetConnections="id-e8ebfd6160174eb69bb20c7a5bac0bd0" archimateElement="id-1cdb2efd83d648a9bc004fe001343244">
+            <bounds x="1460" y="45" width="210" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-92d51efe22c94c53b6bbbacdaf42d602" archimateElement="id-415716c21d684fd5b6f0a59dab8bbc17">
+            <bounds x="1700" y="45" width="210" height="60"/>
+            <sourceConnection xsi:type="archimate:Connection" id="id-4405aa897da34de58a67f1c07c040d62" source="id-92d51efe22c94c53b6bbbacdaf42d602" target="id-56283409461441f3abf4132b611fd8de" archimateRelationship="id-20d9dbdf7af14985bd471b6eab8fbf2b"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-57299947ada54e04843aa87b13bbb88f" targetConnections="id-21eb08f918e942dca8b30ab76a14937f" archimateElement="id-0d93d731f6fd4b21acbf20d3cb28cf6f">
+          <bounds x="20" y="400" width="260" height="180"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-5af2dad3903a43e496ca3e46eafdfd87" source="id-57299947ada54e04843aa87b13bbb88f" target="id-c9eec8f89a0241ac88e138cff9aa9851" archimateRelationship="id-0fa82336eab34690b7fc8820b6d20d1b"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-6083bb347e4b4bd59b240cc10b29515e" source="id-57299947ada54e04843aa87b13bbb88f" target="id-e61ef91e6b11428f961c50e672126139" archimateRelationship="id-53a5767cf9b44631b1c26d6ca49f1fc4">
+            <bendpoint startX="0" startY="91" endX="-1668" endY="91"/>
+            <bendpoint startX="0" startY="270" endX="-1668" endY="270"/>
+            <bendpoint startX="1730" startY="270" endX="62" endY="270"/>
+            <bendpoint startX="1730" startY="91" endX="62" endY="91"/>
+          </sourceConnection>
+          <child xsi:type="archimate:DiagramObject" id="id-904a6f22ac9540528f559fdbef1958a9" archimateElement="id-3c71d6c07530402bb5d436631366725d">
+            <bounds x="20" y="45" width="220" height="55"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-c9eec8f89a0241ac88e138cff9aa9851" targetConnections="id-0ef3b79849054eb39c0dbd51152cb179 id-5af2dad3903a43e496ca3e46eafdfd87" archimateElement="id-fdcc9b19f08a492f8ccd5dd4559926bc">
+          <bounds x="437" y="400" width="260" height="180"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-b73df865c46240f58ee51910b2549e00" source="id-c9eec8f89a0241ac88e138cff9aa9851" target="id-9e4e5f5f461248c395ffd3bd0b2ea072" archimateRelationship="id-96157084afaa4e6395d448dceeee1760">
+            <bendpoint startX="73" startY="91" endX="-761" endY="91"/>
+            <bendpoint startX="73" startY="150" endX="-761" endY="150"/>
+            <bendpoint startX="834" startY="150" endX="0" endY="150"/>
+            <bendpoint startX="834" startY="91" endX="0" endY="91"/>
+          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-7f1f070999c64f06a18fbdf8b023690d" source="id-c9eec8f89a0241ac88e138cff9aa9851" target="id-e61ef91e6b11428f961c50e672126139" archimateRelationship="id-695647503550468c938619b40365a6d5">
+            <bendpoint startX="-47" startY="91" endX="-1298" endY="91"/>
+            <bendpoint startX="-47" startY="210" endX="-1298" endY="210"/>
+            <bendpoint startX="1213" startY="210" endX="-38" endY="210"/>
+            <bendpoint startX="1213" startY="91" endX="-38" endY="91"/>
+          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-cb2680db0600455a87384395b5c7455c" source="id-c9eec8f89a0241ac88e138cff9aa9851" target="id-7415a8a4525b4c7d91ac17ef658c96dc" archimateRelationship="id-520aaf58fc2e4d76bc63a90e08d9fe2c"/>
+          <child xsi:type="archimate:DiagramObject" id="id-a14b72d4fc8c470b8d2cc90de7e0f94d" archimateElement="id-ed6830eac52c4d5aa7983fb1edd63869">
+            <bounds x="20" y="45" width="220" height="55"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-2f9dc405bf0549519c98c9b7ff366a70" archimateElement="id-8de1e624fe6d42b58cae281366f1e86a">
+            <bounds x="20" y="110" width="220" height="55"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-7415a8a4525b4c7d91ac17ef658c96dc" targetConnections="id-cb2680db0600455a87384395b5c7455c" archimateElement="id-6f29abc193cb4f2fa1234cec80bf0675">
+          <bounds x="854" y="400" width="260" height="180"/>
+          <child xsi:type="archimate:DiagramObject" id="id-53aac9d4ed9a4dfc86b9131728eefc79" archimateElement="id-f3d1d639b7ec477aa112072ed01dd0f4">
+            <bounds x="20" y="45" width="220" height="55"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-9e4e5f5f461248c395ffd3bd0b2ea072" targetConnections="id-9770492a54b34fe8b90606bae195aaaf id-b73df865c46240f58ee51910b2549e00 id-1d56b2d9913a4391a901208695f4c300" archimateElement="id-859686865fd4465397859188d62c971c">
+          <bounds x="1271" y="400" width="260" height="180"/>
+          <child xsi:type="archimate:DiagramObject" id="id-1e17d431c1e44cad8a09d45831212115" archimateElement="id-e093f7b040c243449523e515011813d0">
+            <bounds x="20" y="45" width="220" height="55"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-e61ef91e6b11428f961c50e672126139" targetConnections="id-a839aacb270947fd88fde5edd1a989be id-7f1f070999c64f06a18fbdf8b023690d id-6083bb347e4b4bd59b240cc10b29515e" archimateElement="id-909c52d6cdf845e6927af4c62d2847fb">
+          <bounds x="1688" y="400" width="260" height="180"/>
+          <sourceConnection xsi:type="archimate:Connection" id="id-1d56b2d9913a4391a901208695f4c300" source="id-e61ef91e6b11428f961c50e672126139" target="id-9e4e5f5f461248c395ffd3bd0b2ea072" archimateRelationship="id-ecb2448d9c64471ea44c4b96845fb642"/>
+          <child xsi:type="archimate:DiagramObject" id="id-1022d2dca81a429aa5f89f16d940ca7b" archimateElement="id-29d996ed0b0e4d8b8ba622da657f9388">
+            <bounds x="20" y="45" width="220" height="55"/>
           </child>
         </child>
       </element>
