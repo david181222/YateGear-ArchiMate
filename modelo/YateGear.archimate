@@ -2398,6 +2398,72 @@ Reglas de comando y políticas: SB-28 y SB-29 solo se ejecutan con el arriendo c
 Fuente: H-16; conversación E2E-07; contratos de SB-28 y SB-29 (V4).</documentation>
       </element>
     </folder>
+    <folder name="Fase 6" id="id-cbcfea6bd91147f8948890db21ce0b03">
+      <element xsi:type="archimate:Grouping" name="Nombre (Name)" id="id-1f5c4abd93784f3b8f5fe923ed791a32">
+        <documentation>Casilla del canvas: el contexto delimitado que se documenta. Es el contexto principal del diseño (V11-DEC-01).&#xD;
+Fuente: V8.</documentation>
+        <property key="Casilla del canvas" value="Name"/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Propósito (Purpose)" id="id-b33b75d2bc7c47a6a468ee1a41d0eb15">
+        <documentation>Casilla del canvas: qué beneficio da el contexto y cómo, desde el punto de vista del negocio. Muestra las dos metas de la V1 a las que llega el contexto por el camino de las capacidades (V10.1).&#xD;
+Fuente: V5, sección 5.1; CIE-01, CTX-03; V1; V10.1.</documentation>
+        <property key="Casilla del canvas" value="Purpose"/>
+        <property key="Contenido" value="Lleva cada arriendo de un yate ajeno desde la solicitud de reserva hasta el cierre, y decide si el yate se entrega: solo confirma la reserva con riesgo aceptable, contrato firmado y pagos completos. Así YateGear controla el riesgo de responder por yates que no son suyos. Con Disponibilidad de yates, evita las dobles reservas."/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Clasificación estratégica (Strategic Classification)" id="id-0acbe975ad034665adacba3c7d941492">
+        <documentation>Casilla del canvas: tipo de dominio (V5), modelo de negocio y evolución. El modelo de negocio sale del impulsor de la V1 que se muestra; la evolución, de V5-DEC-05.&#xD;
+Fuente: V5, V1; V11-DEC-03.</documentation>
+        <property key="Casilla del canvas" value="Strategic Classification"/>
+        <property key="Contenido" value="Dominio: central.&#xD;&#xA;Modelo de negocio: cumplimiento. Protege a YateGear de responder por un yate ajeno sin garantías.&#xD;&#xA;Evolución: a la medida. Las tres condiciones para confirmar y la regla del riesgo alto son reglas propias de YateGear."/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Rol del dominio (Domain Roles)" id="id-47b64275283543e2a70dab6abf1bc666">
+        <documentation>Casilla del canvas: el papel del contexto según los tipos del canvas (draft, execution, analysis, gateway).&#xD;
+Fuente: V6.1, V8; V11-DEC-03.</documentation>
+        <property key="Casilla del canvas" value="Domain Roles"/>
+        <property key="Contenido" value="Contexto de ejecución (execution context). Ejecuta el ciclo del arriendo, de la solicitud al cierre, y con sus eventos coordina a Disponibilidad de yates, Cobros y depósito y Operación del arriendo."/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Comunicación entrante (Inbound Communication)" id="id-d61fce376da54df7a67b6e0a695cbc82">
+        <documentation>Casilla del canvas: las conversaciones que inicia otro colaborador: comandos y consultas de los actores, eventos de otros contextos y el contrato firmado que registra Gestión de contratos por la capa anticorrupción (V9).&#xD;
+Fuente: V6, tabla 5.2; V8; V9, tabla 4.2; diapositiva 35.</documentation>
+        <property key="Casilla del canvas" value="Inbound Communication"/>
+        <property key="Contenido" value="Colaborador --> mensajes que inicia hacia el contexto"/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Lenguaje ubicuo (Ubiquitous Language)" id="id-62cf429f300c4bf5a6b00c7a87ff4078">
+        <documentation>Casilla del canvas: los términos del lenguaje de este contexto, tal como están en la V7.&#xD;
+Fuente: V7, tabla 4.2.</documentation>
+        <property key="Casilla del canvas" value="Ubiquitous Language"/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Decisiones de negocio (Business Decisions)" id="id-90529cf15121465490684024e34821bf">
+        <documentation>Casilla del canvas: las reglas clave del contexto. Son los 4 invariantes y las 3 reglas de comando del agregado Arriendo (V6.1), con los elementos de la V1 de donde salen.&#xD;
+Fuente: V6, sección 4.1; REG-01, H-07, H-09, H-19, EXC-02, E2E-01.</documentation>
+        <property key="Casilla del canvas" value="Business Decisions"/>
+        <property key="Contenido" value="- No se confirma sin riesgo aceptable, contrato firmado y pagos completos.&#xD;&#xA;- Con riesgo alto no se arrienda.&#xD;&#xA;- No se confirma sin licencia vigente y autorización del cliente.&#xD;&#xA;- Solo se cancela antes de la fecha de inicio.&#xD;&#xA;- No se envían datos a la evaluadora sin autorización del cliente.&#xD;&#xA;- El aviso sale solo después de confirmar.&#xD;&#xA;- Se cierra solo con la cuenta del arriendo cerrada."/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Comunicación saliente (Outbound Communication)" id="id-a824b09f5c5f42549b2da5a1ec458427">
+        <documentation>Casilla del canvas: las conversaciones que inicia este contexto: los eventos que publica y quién los escucha, y las consultas y los comandos que hace por la capa anticorrupción al CRM y a la evaluadora (V9), como &quot;Credit Agency&quot; en el ejemplo de la diapositiva 35.&#xD;
+Fuente: V6, tabla 5.2; V8, sección 5.2; V9, tabla 4.2; diapositiva 35.</documentation>
+        <property key="Casilla del canvas" value="Outbound Communication"/>
+        <property key="Contenido" value="Mensajes que inicia el contexto --> colaborador"/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Supuestos (Assumptions)" id="id-5ec5e9caa9d24eb9bc0987f42b6916e1">
+        <documentation>Casilla del canvas: los supuestos no verificados con el experto que usa el diseño de este contexto.&#xD;
+Fuente: V4, sección 12; V6, sección 9; V8, sección 9.</documentation>
+        <property key="Casilla del canvas" value="Assumptions"/>
+        <property key="Contenido" value="- V4-SUP-01: las fechas quedan apartadas mientras la reserva está en trámite.&#xD;&#xA;- V4-SUP-02: riesgo aceptable es bajo o medio.&#xD;&#xA;- V4-SUP-08: Cliente, propietario, marina y empleados consultan en la aplicación los datos y el estado del arriendo en el que participan.&#xD;&#xA;- V6-SUP-01: cada arriendo guarda su copia de la ficha del cliente.&#xD;&#xA;- V8-SUP-02: un solo equipo de desarrollo construye los cinco contextos; por eso los Partnership de este contexto con Disponibilidad, Cobros y Operación se coordinan dentro de ese equipo.&#xD;&#xA;- V8-SUP-03: Comercial registra el contrato firmado mientras sigan los PDF por correo."/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Métricas de verificación (Verification Metrics)" id="id-2bbc00c82ac0427d9166cf4a467cd42e">
+        <documentation>Casilla del canvas: cómo comprobar que el límite del contexto está bien puesto, como en el ejemplo de la diapositiva 35. La prueba es la regla de dueño (V5-DEC-02).&#xD;
+Fuente: V5; V11-DEC-05; diapositiva 35.</documentation>
+        <property key="Casilla del canvas" value="Verification Metrics"/>
+        <property key="Contenido" value="- Ningún otro contexto escribe el Arriendo: si un cambio en cobros, actas o calendario obliga a cambiar el Arriendo, el límite está mal."/>
+      </element>
+      <element xsi:type="archimate:Grouping" name="Preguntas abiertas (Open Questions)" id="id-cfa097f7daf64c2b8a424100fc8c587a">
+        <documentation>Casilla del canvas: lo que el experto no respondió y afecta a este contexto.&#xD;
+Fuente: EXC-02, D-03; V6, sección 9; V4-SUP-02.</documentation>
+        <property key="Casilla del canvas" value="Open Questions"/>
+        <property key="Contenido" value="- ¿Con cuántos días de anticipación una cancelación deja de reembolsarse? Lo fija el contrato (EXC-02).&#xD;&#xA;- ¿Qué recibe el propietario si la cancelación no se reembolsa?&#xD;&#xA;- ¿El riesgo medio se acepta igual que el bajo?"/>
+      </element>
+    </folder>
   </folder>
   <folder name="Relations" id="id-ebcf19f99e3b4e13a1944eefa3ce8e43" type="relations">
     <folder name="Fase 2" id="id-8e897df8a0c943bd9f48ec7e4d5624d0">
@@ -3700,6 +3766,60 @@ Fuente: SA-07 (V4, tabla 6.2); V9-DEC-03.</documentation>
         <documentation>Relación de resumen para la trazabilidad vertical (V10): el contexto realiza este servicio de dominio porque realiza todos sus servicios básicos, con sus comandos (V6) y sus servicios de consulta (V8): Calificar al propietario, Calificar al cliente (comandos) y Consultar calificaciones promedio (consulta). La traza detallada sigue en el modelo: contexto, asignación, comando, realización, servicio básico, agregado por el servicio de dominio.</documentation>
       </element>
     </folder>
+    <folder name="Fase 6" id="id-ecac87f120f04a708e91db8b09e01dbb">
+      <element xsi:type="archimate:AggregationRelationship" id="id-d8cdd73ee1de445893f59953b9541432" source="id-1f5c4abd93784f3b8f5fe923ed791a32" target="id-fdcc9b19f08a492f8ccd5dd4559926bc"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-3cb4d8f2223742458eb96e5873d3cf5d" source="id-b33b75d2bc7c47a6a468ee1a41d0eb15" target="id-58a48a584ec14cff98423a6dbc697a93"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-ccfbf29e25fd4c35aa7600a551233d8b" source="id-0acbe975ad034665adacba3c7d941492" target="id-fd740c766eed463183ec8c8ccbd47179"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-26d942b3f0f845c8bbc69545a3d915f5" source="id-0acbe975ad034665adacba3c7d941492" target="id-f2b7c697a45d44838384ebb864258902"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-a9f30e9c51ca455ab9c918f02108a641" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-e9cdfa42e1e340e8be8c04d4979f9d44"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-f7b910db66b44575bba433b8abd4b756" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-9995aadff41a4a86b109d51b13dbc11c"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-69c66bbd03734797919be5384f5372bf" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-ea0f1874f954489589820b4aa2761e3f"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-9e5861c0e26742119dd3b56ac79c0245" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-ed6830eac52c4d5aa7983fb1edd63869"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-6c82c18a43e0480593777e914e992373" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-0837aa1208da425b9270464f9b2bcd28"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-f57c5aded1894b39882de4dc77f5c6af" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-8de1e624fe6d42b58cae281366f1e86a"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-f2ba23dc28cb49c1bf6c70763bb1ede3" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-859686865fd4465397859188d62c971c"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-ca173940b83148feb55952871e2f390e" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-a5729d322f444202bc1a34c7d68a46d8"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-6dd031efd9854047a144d613fedea07b" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-41585106baae43ab90ca920de78dc737"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-c3e788320abf48fe947da955e03b4568" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-d853efb4ccfe4d5c9b75522348b303df"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-a033c2aab7f2485591257d89a94749ae" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-909c52d6cdf845e6927af4c62d2847fb"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-2f13d142fbc84105b5b9f1dd32dd1007" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-275970c646a74ac3ac7c206246d780ab"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-afe4f43484c3406a811530f629cb1610" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-d83f5b5cfb764e7aaac782ffab1b12c4"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-1c1a0b37b591405f81de0cee3fa09c18" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-03be3f82b87240b1bbabf2bfd90332eb"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-4cedd4ca2a2b4f20b9cbe38f426591aa" source="id-d61fce376da54df7a67b6e0a695cbc82" target="id-18b80ed18f3d4d43a5290e01b90ca4eb"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-23597107ce5b4e3d8008fe1e21a8d988" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-10939f7fb6a0418f90ccf55c07818630"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-1d18c022b0734837bcc0616aa19f20cd" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-10b68119c12642c9aefd57f1a0a7b83b"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-9405ca07ccaa4b328e4a601882583301" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-b20fe67b83e34f85be3dc7b640587c50"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-a6907f7e6d82475aad0c6595ccf21580" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-36a8fb8ad48b47478ab2d60dd57c71e4"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-f04f294f03e74fdaa382b41e23cf2e4b" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-2ee26e629fcc437a8ae0c5ff79a4ae27"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-65f5591ca8d347f58e234bf456fd4458" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-bf45b6dd4f2d4e48a03468a321584845"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-ed2323a826b44ad29c2701c1f4c34b8c" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-1551623dd9224b09a86abefd97f527c5"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-c8b4a0608b9543718e03eb2f6d177ec1" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-6a24638f03664afc86f1ee28a5182012"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-b99e9a0645324ec5820ddc7cba550e8b" source="id-62cf429f300c4bf5a6b00c7a87ff4078" target="id-db961a70736f4f0398299246f530cde9"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-1d85acf0e65f4d82b2c97d5c7ebda92b" source="id-90529cf15121465490684024e34821bf" target="id-bdb763d4b5ad4c75af74a4e636512997"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-1fdf6f4f4a12493ba419e74a95421211" source="id-90529cf15121465490684024e34821bf" target="id-546d30390bbd44d88f6b3917ead4da62"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-e639512bbeb6494cb15554a65ac19983" source="id-90529cf15121465490684024e34821bf" target="id-ef3517d30dfc458798ffe36ec7f791cf"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-b881321a6cea4640ad2ec5cd645c3dc7" source="id-90529cf15121465490684024e34821bf" target="id-5b85b27ab53845bbb10df6915eef3806"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-cef5469d3e1c4663b1f4eb36d8d9225c" source="id-90529cf15121465490684024e34821bf" target="id-a64ed4f6b2734ba6ad768ab854f35b66"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-d337700289e7442e937756a5cfae73ec" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-ba01aa1a0874474086ba64badf2991e3"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-a65b892689e8441195514a1acf840ad4" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-f7f775aec49c4eb782699183059c6bc2"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-237e3b83def8400a9baf5996c24db0e9" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-28e06fd82a7641228d89ded443509b64"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-0a072187bb034c43a490a3cd54c71cf3" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-bb4b23b9412742f89ac3ae34504a8391"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-58dba6bc772643c284010722667be090" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-0d93d731f6fd4b21acbf20d3cb28cf6f"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-9c824638e36947babc2a454fa167e913" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-859686865fd4465397859188d62c971c"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-54d5d1d5320943248cd68698383622d7" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-909c52d6cdf845e6927af4c62d2847fb"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-e33d57945c654139a5e8750d1f176ba9" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-0f65cc3ebf6649e283d9b634febb03f5"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-27c1fae9e6bf45059398a0d21ca486a9" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-6f29abc193cb4f2fa1234cec80bf0675"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-3465ad769f4042aea30ccc59e207acd1" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-898e6b49f085471cb23b1ef1dbaa953e"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-25f99ac3252147f0a8d29b996bf142b2" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-03be3f82b87240b1bbabf2bfd90332eb"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-36cffd32a49a41f6a0fe0a56c635b7a1" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-b65aec8c4e0641b0ac0ef6c69373610f"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-7b574b2491954948946be731d1c12c49" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-584b815ed5b5478a8116c2a813a5752b"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-ec8af768de3d4057956f091f2b0effa1" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-df04bd240bd84d9baf82861436096a92"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-e80e9f549ddc47839d96d724c2c4ba5a" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-caf28817537c4ca4bd1558fc179f647c"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-5e10f8ee87f44e33af65bab59aea6ac2" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-2a8748ebcb2c44bda5267072d3cd6c3c"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-6f23f534c5484a11b3714cbe73d9c6fb" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-29a3f10ca36b4ceda2ed5657d162ef34"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-33f3ed7ba12b4836a79acd31f63fc99e" source="id-a824b09f5c5f42549b2da5a1ec458427" target="id-b11c0fb607e44ce6ba45736c036e3a0d"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-215f0ecbfe7d412e874c7c99a98125be" source="id-b33b75d2bc7c47a6a468ee1a41d0eb15" target="id-cd2aae7f14b841f49a018ca78168a647"/>
+    </folder>
     <element xsi:type="archimate:AssociationRelationship" id="id-03651061a5904168a138c31b204a7cf9" source="id-b110131a0f7c42198c43cddcf147f822" target="id-33b10fd26566417a9a47de80d5c77c1f"/>
     <element xsi:type="archimate:AssociationRelationship" id="id-af85221407724698b489bf9ffc7a232a" source="id-b110131a0f7c42198c43cddcf147f822" target="id-f2b7c697a45d44838384ebb864258902"/>
     <element xsi:type="archimate:AssociationRelationship" id="id-8e4ad58e3fb84ed7957c7b9595686656" source="id-40ce275a4ca744e3a86cd10c64623987" target="id-7f2ab8fc0f8a4ca688b339a173b245c8"/>
@@ -4105,6 +4225,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
           <bounds x="1090" y="985" width="180" height="80"/>
           <sourceConnection xsi:type="archimate:Connection" id="id-de1072a33fd84ce581b426b936a5a259" source="id-3ac321f7f38148a99c6089353207a2db" target="id-fbccf3bfa13d4976a1919e5879ca6a4b" archimateRelationship="id-a6dd4e1a7c9649a9ad2dd4306c6d3f60"/>
         </child>
+        <documentation>Por qué existe la aplicación: la cadena de motivación del negocio en franjas, de arriba abajo: interesados, impulsores, evaluaciones, metas, resultados y principios, requerimientos y restricciones. Las metas y los requerimientos son el punto de partida de la trazabilidad vertical de la V10.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V2 - Mapa de capacidades" id="id-b3d31ebae27d4de58c1c208385b7c44c">
         <child xsi:type="archimate:Note" id="id-ae26372ccb724de29bbc70e1bbe6ce92" lineColor="#9A9A9A" fillColor="#D98880" textPosition="1" borderType="1">
@@ -4228,6 +4349,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="15" y="194" width="190" height="65"/>
           </child>
         </child>
+        <documentation>Mapa de capacidades del negocio: las 23 capacidades de YateGear en sus 6 áreas. Las 11 capacidades impactadas por la aplicación tienen borde morado. Las agregaciones área-capacidad se ven por anidamiento. Los cursos de acción y los recursos están en el modelo; los cursos de acción se ven en la V10.1.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V3 - Cadena de valor y proceso E2E" id="id-538865f3344046a58473c4741eb7e330">
         <child xsi:type="archimate:DiagramObject" id="id-34e9511a8b4e40e0914b539025c2e9c5" archimateElement="id-873afc6878f54a6f8b3bf86ca38f6aac">
@@ -5821,6 +5943,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             </child>
           </child>
         </child>
+        <documentation>Dominios del problema: cinco dominios en tres franjas, de arriba abajo: subdominios centrales, de soporte y genéricos. Cada dominio contiene los objetos de negocio de los que es dueño (V5-DEC-02). Las agregaciones se ven por anidamiento.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V7 - Lenguaje ubicuo" id="id-cf962b3bf0a74a1d97f21db9b09827e7">
         <child xsi:type="archimate:DiagramObject" id="id-1b70d0dabadb41048f26844f44ddd597" archimateElement="id-3de9c3a6e34d48f6a1fcd6a828471dd0">
@@ -6028,6 +6151,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
         <child xsi:type="archimate:DiagramObject" id="id-f867af2b8c624e0c86b4fa4f9ded797f" targetConnections="id-92435c9c016e44f58e280e39cdc2116b" archimateElement="id-dc20a947efcd462388d7a4db0c898c36">
           <bounds x="770" y="860" width="170" height="60"/>
         </child>
+        <documentation>Lenguaje ubicuo: los cinco dominios con sus objetos de negocio y sus términos (representaciones), cada término a la altura del objeto al que se refiere. Las palabras con dos sentidos tienen un significado por sentido: &quot;bloqueo&quot; y &quot;disponible&quot; quedan entre los dos dominios que las usan, y &quot;entrega&quot; junto a Operación del arriendo, con el sentido del propietario fuera de todo dominio.</documentation>
       </element>
     </folder>
     <folder name="Fase 4" id="id-fe4fc40bf11a4c75b89db6215ee8693e">
@@ -6164,6 +6288,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
         <child xsi:type="archimate:DiagramObject" id="id-7d0a7d864a0945e6ac2060bbc1fb4bd1" targetConnections="id-3e6ef0991f1a44ceb0022b540f613153" archimateElement="id-84614b41e935485187186177fee17adc">
           <bounds x="948" y="720" width="180" height="60"/>
         </child>
+        <documentation>Agregado del dominio Gestión del arriendo: &quot;Agregado Arriendo&quot;, con su raíz (objeto de datos que realiza los objetos de negocio de la V5), los comandos que acceden a ella, los eventos que disparan y la política interna (evento que dispara un comando). Tres eventos realizan eventos de negocio de la V3. El agregado y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.2 - Cobros y depósito" id="id-6c71b7485ecd4c1aa4e66f393cf46184">
         <child xsi:type="archimate:DiagramObject" id="id-061bdd7b90fc4e489209ed79e25205b2" textAlignment="1" archimateElement="id-d44425d2648b464eb5b71275e2978c41">
@@ -6310,6 +6435,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="1105" y="355" width="150" height="60"/>
           </child>
         </child>
+        <documentation>Agregados del dominio Cobros y depósito: &quot;Agregado Depósito para daños&quot;, &quot;Agregado Cuenta del arriendo&quot; (con la entidad &quot;Cobro&quot;) y &quot;Agregado Reclamo a la aseguradora&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5), los comandos que acceden a ella, los eventos que disparan y las políticas internas (evento que dispara un comando). Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.3 - Disponibilidad de yates" id="id-faf00d5247c7464d9d6d163bb6331d6f">
         <child xsi:type="archimate:DiagramObject" id="id-e3e3c559119548bc831acbf7905b675a" textAlignment="1" archimateElement="id-3de9c3a6e34d48f6a1fcd6a828471dd0">
@@ -6386,6 +6512,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="840" y="456" width="150" height="60"/>
           </child>
         </child>
+        <documentation>Agregados del dominio Disponibilidad de yates: &quot;Agregado Yate&quot; y &quot;Agregado Calendario del yate&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5), los comandos que acceden a ella y los eventos que disparan. Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.4 - Operación del arriendo" id="id-99e7c46b42fd4a96ac513a1127ef3647">
         <child xsi:type="archimate:DiagramObject" id="id-229f8b50a5cd4d248d7ece67c1b172bd" textAlignment="1" archimateElement="id-41501569cf094ac4b3cc80b4ab439a97">
@@ -6482,6 +6609,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
         <child xsi:type="archimate:DiagramObject" id="id-a8ca1e91ff2f4576bacffe052af885c3" targetConnections="id-fb4be2829d2b4c30a5763b375445d7d0" archimateElement="id-59c3b7a4d9704420b5421d4268a16863">
           <bounds x="920" y="845" width="180" height="60"/>
         </child>
+        <documentation>Agregados del dominio Operación del arriendo: &quot;Agregado Acta de entrega&quot;, &quot;Agregado Acta de inspección&quot; y &quot;Agregado Lectura de ubicación y combustible&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5), los comandos que acceden a ella, los eventos que disparan y la política interna (evento que dispara un comando). Un evento realiza un evento de negocio de la V3. Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.5 - Calificaciones" id="id-93c047a263004ed1a92d9dc206c209cd">
         <child xsi:type="archimate:DiagramObject" id="id-094a68b19ba249b19247c35a0b18cee7" textAlignment="1" archimateElement="id-1c7b577ca7d04284ab10399e9b7ab37f">
@@ -6517,6 +6645,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="35" y="250" width="150" height="60"/>
           </child>
         </child>
+        <documentation>Agregado del dominio Calificaciones: &quot;Agregado Calificación&quot;, con su raíz (objeto de datos que realiza su objeto de negocio de la V5), los comandos que acceden a ella y los eventos que disparan. El agregado y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
     </folder>
     <folder name="Fase 5" id="id-b81216ca2c5a4ec09e5a5c88881a3012">
@@ -6646,8 +6775,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="20" y="45" width="220" height="55"/>
           </child>
         </child>
-        <documentation>Mapa de contextos delimitados. Cinco contextos, uno por dominio de la V5, con sus patrones de relación, y la capa anticorrupción de la V4 con sus ocho contrapartes externas. Las líneas de servicio van de upstream a downstream; la línea de asociación (Partnership) une contextos que dependen uno del otro. El nombre de cada línea es su patrón.
-Fuente: V8-Mapa-de-contextos.md.</documentation>
+        <documentation>Mapa de contextos delimitados. Cinco contextos, uno por dominio de la V5, con sus patrones de relación, y la capa anticorrupción de la V4 con sus ocho contrapartes externas. Las líneas de servicio van de upstream a downstream; la línea de asociación (Partnership) une contextos que dependen uno del otro. El nombre de cada línea es su patrón.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V9 - Interoperabilidad y anticorrupción" id="id-272544346fc84c459d0f33f0c4abc527">
         <child xsi:type="archimate:DiagramObject" id="id-224ae50ad4cc49f0a58e8913e2f21ee0" targetConnections="id-4929e1973b664ba8bd2eb48bb43e38c3" archimateElement="id-2436b7f69f814e539e5d62b6168b8f70">
@@ -6819,8 +6947,7 @@ Fuente: V8-Mapa-de-contextos.md.</documentation>
         <child xsi:type="archimate:DiagramObject" id="id-f0e3053f7f2b4a0f8e4be44a4b9b3981" targetConnections="id-d23c83879b014b9b805ec5bcaba4235a id-cebfb11083c54f5e81845f807468da96" archimateElement="id-909c52d6cdf845e6927af4c62d2847fb">
           <bounds x="1350" y="680" width="240" height="170"/>
         </child>
-        <documentation>Interoperabilidad y anticorrupción. Una fila por integración: la contraparte externa de la V8, los flujos de la V4.10 con su nombre y dirección, la interfaz y el servicio de la capa anticorrupción, y el contexto que usa cada servicio. Calificaciones no tiene integraciones.
-Fuente: V9-Interoperabilidad-y-anticorrupcion.md.</documentation>
+        <documentation>Interoperabilidad y anticorrupción. Una fila por integración: la contraparte externa de la V8, los flujos de la V4.10 con su nombre y dirección, la interfaz y el servicio de la capa anticorrupción, y el contexto que usa cada servicio. Calificaciones no tiene integraciones.</documentation>
       </element>
     </folder>
     <folder name="Trazabilidad" id="id-57c695e6e8914622ac8e7d010849db0c">
@@ -7032,8 +7159,7 @@ Fuente: V9-Interoperabilidad-y-anticorrupcion.md.</documentation>
           <bounds x="2730" y="1040" width="160" height="80"/>
           <sourceConnection xsi:type="archimate:Connection" id="id-e38f3f05a82b4764b294eb2c210b1516" source="id-44c8ea6d458543c897e84adfb697df5a" target="id-1c10124fd30745788ca7d89246d895b6" archimateRelationship="id-088e29f2a229437aa8988b7b042c3fdd"/>
         </child>
-        <documentation>Trazabilidad vertical, de la meta al componente de aplicación. De arriba abajo: metas con sus resultados y principios, requerimientos, servicios de negocio de plataforma, servicios de dominio y los contextos (componentes de aplicación) que los realizan. Hay un bloque por servicio de plataforma: un servicio de dominio y su contexto se repiten en cada bloque donde se usan. Los resultados y los principios se muestran dentro de la meta que realizan.
-Fuente: V10-Trazabilidad-vertical.md.</documentation>
+        <documentation>Trazabilidad vertical, de la meta al componente de aplicación. De arriba abajo: metas con sus resultados y principios, requerimientos, servicios de negocio de plataforma, servicios de dominio y los contextos (componentes de aplicación) que los realizan. Hay un bloque por servicio de plataforma: un servicio de dominio y su contexto se repiten en cada bloque donde se usan. Los resultados y los principios se muestran dentro de la meta que realizan.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V10.1 - Trazabilidad por capacidades" id="id-e552b9808de24c24b1bd0418c5db8801">
         <child xsi:type="archimate:DiagramObject" id="id-0b3ce1dfc4f347e6b03f566ffa2d2632" targetConnections="id-fe3c9a9dd5d541b396cd443bcee5f707" archimateElement="id-d3bcd79a938b4865bce7912c38770681">
@@ -7213,8 +7339,7 @@ Fuente: V10-Trazabilidad-vertical.md.</documentation>
             <bounds x="1340" y="80" width="200" height="80"/>
           </child>
         </child>
-        <documentation>Trazabilidad por capacidades. De arriba abajo: metas, cursos de acción, capacidades impactadas de la V2, servicios de dominio que las realizan, contextos (componentes de aplicación) que realizan esos servicios y la capa anticorrupción que les sirve. Cada elemento aparece una sola vez. &quot;Gestión del seguro del arriendo&quot; y &quot;Gestión de calificaciones mutuas&quot; no tienen curso de acción. Sus servicios de dominio, &quot;Gestión de cobros del arriendo&quot; y &quot;Gestión de calificaciones&quot;, llegan a las metas por los requerimientos, en la vista &quot;V10 - Trazabilidad vertical&quot;.
-Fuente: V10-Trazabilidad-vertical.md.</documentation>
+        <documentation>Trazabilidad por capacidades. De arriba abajo: metas, cursos de acción, capacidades impactadas de la V2, servicios de dominio que las realizan, contextos (componentes de aplicación) que realizan esos servicios y la capa anticorrupción que les sirve. Cada elemento aparece una sola vez. &quot;Gestión del seguro del arriendo&quot; y &quot;Gestión de calificaciones mutuas&quot; no tienen curso de acción. Sus servicios de dominio, &quot;Gestión de cobros del arriendo&quot; y &quot;Gestión de calificaciones&quot;, llegan a las metas por los requerimientos, en la vista &quot;V10 - Trazabilidad vertical&quot;.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V10.2 - Detalle: Confirmar la reserva" id="id-b66b17504682494691c0d40995dd49c6">
         <child xsi:type="archimate:DiagramObject" id="id-39efd55abdfe4e52a68a65ca5c824833" archimateElement="id-621d13a80279476681364e5f160f18c6">
@@ -7287,8 +7412,219 @@ Fuente: V10-Trazabilidad-vertical.md.</documentation>
           <bounds x="940" y="1160" width="190" height="80"/>
           <sourceConnection xsi:type="archimate:Connection" id="id-c3574ba25c9d46379c538d38095f9810" source="id-953f5b7d37aa44ab8330190087f11501" target="id-0effc6dcff3f4010bf48fe67f993e387" archimateRelationship="id-4cceb51bbbe448d1879b6d711776f775"/>
         </child>
-        <documentation>Traza completa de un servicio básico, &quot;Confirmar la reserva&quot;, sin resumir ningún nivel. De abajo arriba: el contexto ejecuta el comando, el comando realiza el servicio básico y el servicio de dominio lo agrupa. Desde ahí la traza sube por dos caminos, el de los requerimientos a la izquierda y el de las capacidades a la derecha, hasta las mismas dos metas. Muestra las cuatro relaciones de la fila V10 del enunciado: realización, influencia, servicio y asignación.
-Fuente: V10-Trazabilidad-vertical.md.</documentation>
+        <documentation>Traza completa de un servicio básico, &quot;Confirmar la reserva&quot;, sin resumir ningún nivel. De abajo arriba: el contexto ejecuta el comando, el comando realiza el servicio básico y el servicio de dominio lo agrupa. Desde ahí la traza sube por dos caminos, el de los requerimientos a la izquierda y el de las capacidades a la derecha, hasta las mismas dos metas. Muestra las cuatro relaciones de la fila V10 del enunciado: realización, influencia, servicio y asignación.</documentation>
+      </element>
+    </folder>
+    <folder name="Fase 6" id="id-ad56c52322c14d0891730fcda213a19e">
+      <element xsi:type="archimate:ArchimateDiagramModel" name="V11 - Bounded Context Canvas: Gestión del arriendo" id="id-dfdca4f104714dc8acab7935e4e54efa">
+        <child xsi:type="archimate:DiagramObject" id="id-be9d7ae150d74b39982bb6f33f95ffa4" textAlignment="1" archimateElement="id-1f5c4abd93784f3b8f5fe923ed791a32">
+          <bounds x="20" y="20" width="1960" height="90"/>
+          <child xsi:type="archimate:DiagramObject" id="id-40a9f5f6d09341ceb590d83cf920d68b" archimateElement="id-fdcc9b19f08a492f8ccd5dd4559926bc">
+            <bounds x="20" y="28" width="300" height="50"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-ebade941825e4604b86283f51755e4ff" textAlignment="1" archimateElement="id-b33b75d2bc7c47a6a468ee1a41d0eb15">
+          <bounds x="20" y="130" width="780" height="230"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+          <child xsi:type="archimate:DiagramObject" id="id-a56a459076f84ad9bec9d1818a0551ae" archimateElement="id-58a48a584ec14cff98423a6dbc697a93">
+            <bounds x="20" y="155" width="220" height="55"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-dbecc2e803e44d1fa816ee7b50808b71" archimateElement="id-cd2aae7f14b841f49a018ca78168a647">
+            <bounds x="260" y="155" width="200" height="55"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-f5b4fcfd57cb461ab6adbbb170949ce2" textAlignment="1" archimateElement="id-0acbe975ad034665adacba3c7d941492">
+          <bounds x="810" y="130" width="700" height="230"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+          <child xsi:type="archimate:DiagramObject" id="id-704f17fd1b014e8889a301cfb9fdb6bb" archimateElement="id-fd740c766eed463183ec8c8ccbd47179">
+            <bounds x="20" y="155" width="200" height="55"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-db0d8bbabef14a41999c1df19ffe8d61" archimateElement="id-f2b7c697a45d44838384ebb864258902">
+            <bounds x="240" y="155" width="230" height="55"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-9ed90e711b4e442a82fbd382e54eba18" textAlignment="1" archimateElement="id-47b64275283543e2a70dab6abf1bc666">
+          <bounds x="1520" y="130" width="460" height="230"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-94d7bca2a2ff4a08bf40cd5f845e2d6f" textAlignment="1" archimateElement="id-d61fce376da54df7a67b6e0a695cbc82">
+          <bounds x="20" y="380" width="780" height="840"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+          <child xsi:type="archimate:DiagramObject" id="id-6457d4a3377d475ca24a6755dc3189de" archimateElement="id-e9cdfa42e1e340e8be8c04d4979f9d44">
+            <bounds x="15" y="50" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-93a3ca43e00a46de9f3bbc355bff678f" archimateElement="id-9995aadff41a4a86b109d51b13dbc11c">
+            <bounds x="235" y="50" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-d882b3c4fd3b418f8ecf78278cd73b08" archimateElement="id-ea0f1874f954489589820b4aa2761e3f">
+            <bounds x="413" y="50" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-017f15ab96cc410e825a0149128c77d3" archimateElement="id-ed6830eac52c4d5aa7983fb1edd63869">
+            <bounds x="591" y="50" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-ae20b080c7214821b56437db517a89db" archimateElement="id-0837aa1208da425b9270464f9b2bcd28">
+            <bounds x="15" y="130" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-f1f7e751ce224076bf9af615d8914351" archimateElement="id-8de1e624fe6d42b58cae281366f1e86a">
+            <bounds x="235" y="130" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-ae58dd0af92740acb7acbd1206ed0dcc" archimateElement="id-859686865fd4465397859188d62c971c">
+            <bounds x="15" y="210" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-aa00a11fe480456aa676c2554dd62ecb" archimateElement="id-a5729d322f444202bc1a34c7d68a46d8">
+            <bounds x="235" y="210" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-6583d3ef54dd41f69c03b128203a70ba" archimateElement="id-41585106baae43ab90ca920de78dc737">
+            <bounds x="413" y="210" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-95a0dc973fe74a4e82bb713023e4f63f" archimateElement="id-d853efb4ccfe4d5c9b75522348b303df">
+            <bounds x="591" y="210" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-13e8acd018314f23a7cdc7a85d4e77d8" archimateElement="id-909c52d6cdf845e6927af4c62d2847fb">
+            <bounds x="15" y="290" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-80192324a63243169daa8bd08228bdbd" archimateElement="id-275970c646a74ac3ac7c206246d780ab">
+            <bounds x="235" y="290" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-9b49d9bc4ab9407c8f750a166f557582" archimateElement="id-d83f5b5cfb764e7aaac782ffab1b12c4">
+            <bounds x="413" y="290" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-44f48feb02ab4396b85858f80a55e885" archimateElement="id-03be3f82b87240b1bbabf2bfd90332eb">
+            <bounds x="15" y="450" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-12ef03171fe948939100bdfce5b6bb09" archimateElement="id-18b80ed18f3d4d43a5290e01b90ca4eb">
+            <bounds x="235" y="450" width="165" height="60"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-155bb256da154d208b1e91211a9bc7df" textAlignment="1" archimateElement="id-62cf429f300c4bf5a6b00c7a87ff4078">
+          <bounds x="810" y="380" width="420" height="260"/>
+          <child xsi:type="archimate:DiagramObject" id="id-70b4f76abdc7475e8b43589e0cc2b6b6" archimateElement="id-10939f7fb6a0418f90ccf55c07818630">
+            <bounds x="12" y="45" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-56f4f6d89aac4133aaa9055a16aea6bb" archimateElement="id-10b68119c12642c9aefd57f1a0a7b83b">
+            <bounds x="147" y="45" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-b120a1938d764adf8674719afaf05f96" archimateElement="id-b20fe67b83e34f85be3dc7b640587c50">
+            <bounds x="282" y="45" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-78af940259d84b2b8d7cb73f9e4fd751" archimateElement="id-36a8fb8ad48b47478ab2d60dd57c71e4">
+            <bounds x="12" y="115" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-c20400563c934ea0a5ff257097b9bfcc" archimateElement="id-2ee26e629fcc437a8ae0c5ff79a4ae27">
+            <bounds x="147" y="115" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-24e3cebc191c483d970d6a3d7f2e6d17" archimateElement="id-bf45b6dd4f2d4e48a03468a321584845">
+            <bounds x="282" y="115" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-8c91d894002d44a0b58c74e43c8bb144" archimateElement="id-1551623dd9224b09a86abefd97f527c5">
+            <bounds x="12" y="185" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-5f4bc65536914f4b957bedd0c40e30af" archimateElement="id-6a24638f03664afc86f1ee28a5182012">
+            <bounds x="147" y="185" width="127" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-c7a411ab64eb4eaaac4733c9079709f1" archimateElement="id-db961a70736f4f0398299246f530cde9">
+            <bounds x="282" y="185" width="127" height="60"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-661e25196fb047eab4a41e935d99753f" textAlignment="1" archimateElement="id-90529cf15121465490684024e34821bf">
+          <bounds x="810" y="650" width="420" height="570"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+          <child xsi:type="archimate:DiagramObject" id="id-58ebe744b4a941768ebfd26644bfa8f9" archimateElement="id-bdb763d4b5ad4c75af74a4e636512997">
+            <bounds x="12" y="185" width="127" height="105"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-e12b629a1b0b41f68dde9a00b410dc8a" archimateElement="id-546d30390bbd44d88f6b3917ead4da62">
+            <bounds x="147" y="185" width="127" height="105"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-9539378c89fa4d15a7a168baeb0e73ec" archimateElement="id-ef3517d30dfc458798ffe36ec7f791cf">
+            <bounds x="282" y="185" width="127" height="105"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-55b140ffb074440a9d5fc64dc0cecc44" archimateElement="id-5b85b27ab53845bbb10df6915eef3806">
+            <bounds x="12" y="300" width="127" height="105"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-047a61ca870b417387b7207dc089c3bc" archimateElement="id-a64ed4f6b2734ba6ad768ab854f35b66">
+            <bounds x="147" y="300" width="127" height="105"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-48519fb918a24b399af1f84139f7ba54" textAlignment="1" archimateElement="id-a824b09f5c5f42549b2da5a1ec458427">
+          <bounds x="1240" y="380" width="740" height="840"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+          <child xsi:type="archimate:DiagramObject" id="id-9f816bae765e4d39abd1d5d63d2c7536" archimateElement="id-ba01aa1a0874474086ba64badf2991e3">
+            <bounds x="15" y="50" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-195e952fa0d54ac59f20f31c6c06162a" archimateElement="id-f7f775aec49c4eb782699183059c6bc2">
+            <bounds x="193" y="50" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-05d2656c242b4f7db228a8169cfab1af" archimateElement="id-28e06fd82a7641228d89ded443509b64">
+            <bounds x="15" y="120" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-95aa54d281134c68a756f70ec1f7b515" archimateElement="id-bb4b23b9412742f89ac3ae34504a8391">
+            <bounds x="193" y="120" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-493d523fd5d942a888fa947fbfffa59c" archimateElement="id-0d93d731f6fd4b21acbf20d3cb28cf6f">
+            <bounds x="535" y="50" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-367a7e0425aa46bcb77024191b51987f" archimateElement="id-28e06fd82a7641228d89ded443509b64">
+            <bounds x="15" y="210" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-a40284fee70d46028f1dd9b5f1ad5084" archimateElement="id-859686865fd4465397859188d62c971c">
+            <bounds x="535" y="210" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-e1c5c6b2b28e4f7f84b1d92a0ff1de61" archimateElement="id-f7f775aec49c4eb782699183059c6bc2">
+            <bounds x="15" y="290" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-e5843104d74a453f94446d4cc2957258" archimateElement="id-909c52d6cdf845e6927af4c62d2847fb">
+            <bounds x="535" y="290" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-b344740bcf39428aafd0c58f354c2ad3" archimateElement="id-0f65cc3ebf6649e283d9b634febb03f5">
+            <bounds x="15" y="370" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-e7bea4ac424948cb8fc0564716c8191f" archimateElement="id-6f29abc193cb4f2fa1234cec80bf0675">
+            <bounds x="535" y="370" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-b22aa26084b84002870d5c4066c67a27" archimateElement="id-898e6b49f085471cb23b1ef1dbaa953e">
+            <bounds x="15" y="450" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-90177950d1c24e64a15387329fc16226" archimateElement="id-03be3f82b87240b1bbabf2bfd90332eb">
+            <bounds x="535" y="450" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-5ec0bf0747654e869386b0735ee5a431" archimateElement="id-b65aec8c4e0641b0ac0ef6c69373610f">
+            <bounds x="15" y="530" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-ec7e18fcaea345469f7864f82d14f2c8" archimateElement="id-584b815ed5b5478a8116c2a813a5752b">
+            <bounds x="535" y="530" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-bebb1da95eaf4663a4f05b79fc513fef" archimateElement="id-df04bd240bd84d9baf82861436096a92">
+            <bounds x="535" y="600" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-087da9a972c24c60bb8e99a6adf92e18" archimateElement="id-b65aec8c4e0641b0ac0ef6c69373610f">
+            <bounds x="15" y="600" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-7bc8f72e115341d68470514db86c046c" archimateElement="id-2a8748ebcb2c44bda5267072d3cd6c3c">
+            <bounds x="15" y="680" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-f451ef5adc9547638307ecd757f1cd3d" archimateElement="id-caf28817537c4ca4bd1558fc179f647c">
+            <bounds x="535" y="680" width="190" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-ebfaef7672b14d6db65956b4851ced41" archimateElement="id-b11c0fb607e44ce6ba45736c036e3a0d">
+            <bounds x="15" y="760" width="165" height="60"/>
+          </child>
+          <child xsi:type="archimate:DiagramObject" id="id-60c7960ec71a4508b2fda3b96d1d599a" archimateElement="id-29a3f10ca36b4ceda2ed5657d162ef34">
+            <bounds x="535" y="760" width="190" height="60"/>
+          </child>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-3833d73d0a3b4ba68591726fc74ae375" textAlignment="1" archimateElement="id-5ec5e9caa9d24eb9bc0987f42b6916e1">
+          <bounds x="20" y="1240" width="780" height="230"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-aac5165550214df7b79e62aaf1c58313" textAlignment="1" archimateElement="id-2bbc00c82ac0427d9166cf4a467cd42e">
+          <bounds x="810" y="1240" width="700" height="230"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+        </child>
+        <child xsi:type="archimate:DiagramObject" id="id-6e639813cb9045f984144b066dad4626" textAlignment="1" archimateElement="id-cfa097f7daf64c2b8a424100fc8c587a">
+          <bounds x="1520" y="1240" width="460" height="230"/>
+          <feature name="labelExpression" value="${name}&#xD;&#xA;${property:Contenido}"/>
+        </child>
+        <documentation>Bounded Context Canvas del contexto principal, Gestión del arriendo, en una sola página (Fase 6). Sigue la plantilla de la diapositiva 35 (ddd-crew, versión 5). Cada casilla es una agrupación; su texto se muestra con una expresión de etiqueta que lee la propiedad &quot;Contenido&quot;, y los elementos que contiene son los del modelo.</documentation>
       </element>
     </folder>
   </folder>
