@@ -1525,10 +1525,11 @@ Fuente: H-13, H-14; conversación E2E-06; SB-24 (V4).</documentation>
     <folder name="Fase 4" id="id-113a250e240843ce9e5fe15b52fa093b">
       <element xsi:type="archimate:DataObject" name="Arriendo" id="id-3f15410f516e4820b86108f1896461a8">
         <documentation>Raíz del agregado Arriendo: uso de un yate por un cliente en unas fechas, desde la solicitud de reserva hasta el cierre. Identidad: número del arriendo. Estados: reserva solicitada, reserva confirmada, no realizado por riesgo alto, cancelado, en curso, devuelto y cerrado.
-Objetos de valor: fechas del arriendo (inicio y fin); yate del arriendo (identificador del yate, su propietario, su precio por día y la marina donde está guardado, copiados del inventario al registrar la solicitud, SB-06; es la copia de cada contexto de la diapositiva 26, V8-DEC-04); ficha del cliente (referencia al CRM, licencia de navegación con número y vigencia, y autorización de datos con fecha y terceros autorizados), que no tiene identidad propia y es la copia que guarda cada arriendo (V6-SUP-01); evaluación de riesgo (nivel y fecha); referencia del contrato firmado; pruebas de pago (comprobantes del alquiler y del seguro y autorización del bloqueo del depósito).
-Realiza los objetos de negocio &quot;Arriendo&quot;, &quot;Evaluación de riesgo&quot; y &quot;Ficha del cliente&quot; de la V4 (V6-DEC-06).
+Objetos de valor: fechas del arriendo (inicio y fin); yate del arriendo (identificador del yate, su propietario, su precio por día y la marina donde está guardado, copiados del inventario al registrar la solicitud, SB-06; es la copia de cada contexto de la diapositiva 26, V8-DEC-04); ficha del cliente (referencia al CRM, licencia de navegación con número y vigencia, y autorización de datos con fecha y terceros autorizados), que no tiene identidad propia y es la copia que guarda cada arriendo (V6-SUP-01); evaluación de riesgo (nivel y fecha); pruebas de pago (comprobantes del alquiler y del seguro y autorización del bloqueo del depósito). Campo de la raíz: referencia del contrato firmado (V6-DEC-16).
+Realiza el objeto de negocio &quot;Arriendo&quot; de la V4. &quot;Evaluación de riesgo&quot; y &quot;Ficha del cliente&quot; los realizan sus objetos de valor (V6-DEC-06).
 Fuente: H-07; contratos de SB-06, SB-07, SB-11 y SB-12; SA-01 y SA-04 (V4); diapositiva 26; V8-DEC-04.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: referencia del contrato firmado" value="string?"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Registrar la solicitud de reserva" id="id-9995aadff41a4a86b109d51b13dbc11c">
         <documentation>Comando del agregado Arriendo. Realiza SB-06 &quot;Registrar la solicitud de reserva&quot; de la V4. Crea el arriendo en estado reserva solicitada con las fechas, la licencia de navegación y la autorización de datos del cliente. Lo inicia el cliente.
@@ -1600,10 +1601,14 @@ Fuente: conversación E2E-01, E2E-07.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Depósito para daños" id="id-6545ac90ecf249a4b622c562c49eeeca">
         <documentation>Raíz del agregado Depósito para daños: garantía que se bloquea en la tarjeta de crédito del cliente al reservar y que al cierre se libera o se descuenta; si la reserva se cancela, se libera al cancelar (V4-SUP-09). Identidad: la del arriendo. Estados: bloqueado, liberado y descontado.
-Objetos de valor: valor del depósito, código de autorización de la pasarela, fecha de vencimiento del bloqueo (la autorización en tarjeta de crédito dura 28 días, V4-SUP-07) y evidencia del descuento (las fotos y actas que respaldan el descuento; SB-21, H-13).
+Campos de la raíz: valor del depósito, código de autorización de la pasarela, fecha de vencimiento del bloqueo (la autorización en tarjeta de crédito dura 28 días, V4-SUP-07) y evidencia del descuento (las fotos y actas que respaldan el descuento; SB-21, H-13).
 Realiza el objeto de negocio &quot;Depósito para daños&quot; de la V4.
 Fuente: H-10, H-13; contratos de SB-19 y SB-21 (V4); conversación E2E-04, VOC-01; V4-SUP-07, V4-SUP-09.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: valor del depósito" value="decimal"/>
+        <property key="Campo: código de autorización de la pasarela" value="string"/>
+        <property key="Campo: fecha de vencimiento del bloqueo" value="DateOnly"/>
+        <property key="Campo: evidencia del descuento" value="List&lt;string>"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Liberar el depósito" id="id-e2968b9d61094a948605f2615f69fff0">
         <documentation>Comando del agregado Depósito para daños. Realiza SB-20 &quot;Liberar el depósito&quot; de la V4. Libera el depósito cuando la inspección no encontró daños o cuando la reserva se canceló (V4-SUP-09). Lo disparan &quot;Diferencias determinadas&quot; de Operación del arriendo y &quot;Reserva cancelada&quot; de Gestión del arriendo (V8).
@@ -1634,17 +1639,23 @@ Fuente: H-10; conversación E2E-04, VOC-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Cuenta del arriendo" id="id-cc25b8b2503f4df286f2f28f1c7ab12b">
         <documentation>Raíz del agregado Cuenta del arriendo: los cobros de un arriendo, desde el alquiler y el seguro al reservar hasta los cargos del cierre y el reembolso. Identidad: la misma del arriendo (diapositiva 26). Estados: abierta y cerrada.
-Objetos de valor: póliza del arriendo (número y valor que emite la aseguradora); comisión y valor del propietario, que calcula SB-17 al cerrar la cuenta y se envían a Finanzas (SA-08).
-No tiene objeto de negocio propio en la V4: el término viene de SB-17 y SB-18 y está en el glosario de la V7 (V6-DEC-05). Realiza el objeto de negocio &quot;Póliza del arriendo&quot; de la V4 (V6-DEC-06).
+Objeto de valor: póliza del arriendo (número y valor que emite la aseguradora). Campos de la raíz: comisión y valor del propietario, que calcula SB-17 al cerrar la cuenta y se envían a Finanzas (SA-08).
+No tiene objeto de negocio propio en la V4: el término viene de SB-17 y SB-18 y está en el glosario de la V7 (V6-DEC-05). El objeto de negocio &quot;Póliza del arriendo&quot; lo realiza su objeto de valor (V6-DEC-06).
 Fuente: H-11; contratos de SB-13, SB-17, SA-03 y SA-08 (V4); conversación CTX-01, INT-PAG.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: comisión" value="decimal?"/>
+        <property key="Campo: valor del propietario" value="decimal?"/>
       </element>
       <element xsi:type="archimate:DataObject" name="Cobro" id="id-73b07f4ddacf4826ad340226a0e59119">
         <documentation>Entidad del agregado Cuenta del arriendo: cada cargo o devolución de dinero del arriendo (alquiler, seguro, combustible consumido, tiempo adicional o reembolso). Identidad: su comprobante de la pasarela. Estado: orden aprobada o rechazada por la pasarela.
-Objetos de valor: concepto, valor, comprobante de la pasarela y evidencia, cuando es un cargo del cierre.
+Campos de la entidad: concepto, valor, comprobante de la pasarela y evidencia, cuando es un cargo del cierre.
 Realiza el objeto de negocio &quot;Cobro&quot; de la V4.
 Fuente: H-10, H-14; contratos de SB-13, SB-14, SB-15 y SA-06 (V4); conversación INT-PAG.</documentation>
         <property key="Tipo DDD" value="Entidad"/>
+        <property key="Campo: concepto" value="enum Concepto del cobro(alquiler, seguro, combustible consumido, tiempo adicional, reembolso)"/>
+        <property key="Campo: valor" value="decimal"/>
+        <property key="Campo: comprobante" value="string"/>
+        <property key="Campo: evidencia" value="List&lt;string>"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Cerrar las cuentas del arriendo" id="id-5ef920b9e381405495dbdfe1877eb75b">
         <documentation>Comando del agregado Cuenta del arriendo. Realiza SB-17 &quot;Cerrar las cuentas del arriendo&quot; de la V4. Cierra la cuenta con el valor del alquiler, la comisión y lo que le corresponde al propietario, y lo envía a Finanzas (SA-08). No cierra el arriendo, que es de otro dominio (V5-DEC-02). Lo disparan &quot;Cargos del cierre cobrados&quot; y la decisión sobre el depósito (&quot;Depósito liberado&quot; o &quot;Daños descontados del depósito&quot;) (V6-DEC-11).
@@ -1689,10 +1700,15 @@ Fuente: conversación EXC-02; D-03.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Reclamo a la aseguradora" id="id-97138119487d4fa1aa1837e907129ad1">
         <documentation>Raíz del agregado Reclamo a la aseguradora: solicitud a la aseguradora por la parte del daño que supera el depósito. Identidad: número de reclamo.
-Objetos de valor: identificador del arriendo al que pertenece, número de póliza, valor de los daños, valor descontado del depósito y evidencia de la entrega y de la inspección.
+Campos de la raíz: identificador del arriendo al que pertenece, número de póliza, valor de los daños, valor descontado del depósito y evidencia de la entrega y de la inspección.
 Realiza el objeto de negocio &quot;Reclamo a la aseguradora&quot; de la V4.
 Fuente: H-15; contrato de SB-16 (V4); conversación EXC-02, INT-ASE.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: identificador del arriendo" value="string"/>
+        <property key="Campo: número de póliza" value="string"/>
+        <property key="Campo: valor de los daños" value="decimal"/>
+        <property key="Campo: valor descontado del depósito" value="decimal"/>
+        <property key="Campo: evidencia" value="List&lt;string>"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Reclamar el excedente de daños a la aseguradora" id="id-afb038030e754dd490f69fcbf6a446e0">
         <documentation>Comando del agregado Reclamo a la aseguradora. Realiza SB-16 &quot;Reclamar el excedente de daños a la aseguradora&quot; de la V4. Envía a la aseguradora el reclamo por la diferencia, con la evidencia. Lo dispara &quot;Daños descontados del depósito&quot; cuando el daño supera el depósito (política del dominio).
@@ -1705,10 +1721,14 @@ Fuente: H-15; conversación INT-ASE.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Yate" id="id-d50ced5f46a849f7b744fc977ab040e9">
         <documentation>Raíz del agregado Yate: embarcación de un propietario, guardada en una marina aliada, que YateGear ofrece en arriendo. Identidad: identificador del yate en el inventario.
-Objetos de valor: datos del yate (nombre, matrícula y capacidad), precio por día, documentos al día ante la DIMAR, referencia del contrato del propietario e identificador de la marina donde está guardado. El contrato del propietario vive en Gestión de contratos y el yate guarda su referencia (SA-02). La ficha de la marina es un dato de referencia que el yate cita por su identificador (V6-DEC-07).
+Objeto de valor: datos del yate (nombre, matrícula y capacidad). Campos de la raíz: precio por día, documentos al día ante la DIMAR, referencia del contrato del propietario e identificador de la marina donde está guardado. El contrato del propietario vive en Gestión de contratos y el yate guarda su referencia (SA-02). La ficha de la marina es un dato de referencia que el yate cita por su identificador (V6-DEC-07).
 Realiza el objeto de negocio &quot;Yate&quot; de la V4.
 Fuente: H-01; contrato de SB-01 (V4); conversación CTX-01, INT-CON, NOR-01.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: precio por día" value="decimal"/>
+        <property key="Campo: documentos al día ante la DIMAR" value="bool"/>
+        <property key="Campo: referencia del contrato del propietario" value="string"/>
+        <property key="Campo: identificador de la marina" value="string"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Registrar yate en el inventario" id="id-8e392207203f40b2b0a50bcbe62efc90">
         <documentation>Comando del agregado Yate. Realiza SB-01 &quot;Registrar yate en el inventario&quot; de la V4. Da de alta el yate en la marina donde está guardado, con el precio por día que fija el propietario. Lo inicia Comercial (V4-SUP-06).
@@ -1721,7 +1741,7 @@ Fuente: contrato de SB-01 (V4).</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Calendario del yate" id="id-b3dcca7f045e43f49523fe907a138a79">
         <documentation>Raíz del agregado Calendario del yate: fechas de un yate. Identidad: la del yate.
-Objetos de valor: rango de fechas (inicio y fin) y estado de cada fecha: libre, bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada.
+Objeto de valor: rango de fechas, con inicio, fin, estado (bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada) y, si está apartado u ocupado, el arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03).
 Realiza el objeto de negocio &quot;Calendario del yate&quot; de la V4.
 Fuente: H-08, H-17; contratos de SB-03 y SB-05 (V4); conversación E2E-02, REG-02.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
@@ -1759,10 +1779,14 @@ Fuente: contrato de SB-05 (V4); V4-SUP-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Acta de entrega" id="id-f4fb995872c5435f8ccb7e85e17cbee9">
         <documentation>Raíz del agregado Acta de entrega: registro de la marina al entregar el yate. Identidad: la del arriendo.
-Objetos de valor: fotos, nivel de combustible (tanque lleno), hora de entrega y observaciones.
+Campos de la raíz: fotos, nivel de combustible (tanque lleno), hora de entrega y observaciones.
 Realiza el objeto de negocio &quot;Acta de entrega&quot; de la V4.
 Fuente: H-13; contrato de SB-22 (V4); conversación E2E-01, INT-MAR.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: fotos" value="List&lt;string>"/>
+        <property key="Campo: nivel de combustible" value="decimal"/>
+        <property key="Campo: hora de entrega" value="DateTime"/>
+        <property key="Campo: observaciones" value="string?"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Registrar el acta de entrega" id="id-8addfcc26ad744b8a15ea09a54227d4d">
         <documentation>Comando del agregado Acta de entrega. Realiza SB-22 &quot;Registrar el acta de entrega&quot; de la V4. Guarda el acta, las fotos y el nivel de combustible que reporta la marina al entregar el yate.
@@ -1776,10 +1800,13 @@ Fuente: H-13, H-17; conversación E2E-01, VOC-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Acta de inspección" id="id-2856d4f6a4b0480a86d14826dd18dedf">
         <documentation>Raíz del agregado Acta de inspección: registro de la marina al recibir el yate. Identidad: la del arriendo.
-Objetos de valor: fotos, nivel de combustible, hora de regreso y daños encontrados con su valor (V4-SUP-03).
+Objeto de valor: daño encontrado, con su descripción y su valor (V4-SUP-03, V6-SUP-04). Campos de la raíz: fotos, nivel de combustible y hora de regreso.
 Realiza el objeto de negocio &quot;Acta de inspección&quot; de la V4.
 Fuente: H-13, H-14; contrato de SB-23 (V4); conversación E2E-06, INT-MAR.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: fotos" value="List&lt;string>"/>
+        <property key="Campo: nivel de combustible" value="decimal"/>
+        <property key="Campo: hora de regreso" value="DateTime"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Determinar las diferencias entre entrega y devolución" id="id-8222df5442934cf5a117ced88ec7329e">
         <documentation>Comando del agregado Acta de inspección. Realiza SB-24 &quot;Determinar las diferencias entre entrega y devolución&quot; de la V4. Compara el acta de entrega con la de inspección y obtiene el combustible consumido, las horas adicionales y los daños, con su evidencia. Lee las raíces de los dos agregados (V6-DEC-09). Lo dispara &quot;Inspección de devolución registrada&quot; (política del dominio).
@@ -1802,10 +1829,14 @@ Fuente: H-13; conversación E2E-06.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Lectura de ubicación y combustible" id="id-6858d99a4eb2404d8c0fce1abfc1d10e">
         <documentation>Raíz del agregado Lectura de ubicación y combustible: dato que envía el dispositivo de un yate por medio del proveedor. Identidad: el yate y la hora de la lectura.
-Objetos de valor: posición, nivel de combustible y hora.
+Campos de la raíz: latitud y longitud (la posición, V6-SUP-02), nivel de combustible y hora de la lectura.
 Realiza el objeto de negocio &quot;Lectura de ubicación y combustible&quot; de la V4.
 Fuente: H-12; contrato de SB-25 (V4); conversación INT-GPS.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: latitud" value="decimal"/>
+        <property key="Campo: longitud" value="decimal"/>
+        <property key="Campo: nivel de combustible" value="decimal"/>
+        <property key="Campo: hora de la lectura" value="DateTime"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Registrar lecturas de ubicación y combustible" id="id-9fe7bd3168374a12ac9efc3a073f62c9">
         <documentation>Comando del agregado Lectura de ubicación y combustible. Realiza SB-25 &quot;Registrar lecturas de ubicación y combustible&quot; de la V4. Guarda cada lectura que llega del proveedor.
@@ -1829,10 +1860,12 @@ Fuente: H-12; conversación INT-GPS, EXC-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Calificación" id="id-e848e3b4bf284a969c9a0a9d2e4de26f">
         <documentation>Raíz del agregado Calificación: la que se dan cliente y propietario al cerrar un arriendo. Identidad: el arriendo y quién califica.
-Objetos de valor: quién califica y la calificación dada.
+Campos de la raíz: quién califica y la calificación dada.
 Realiza el objeto de negocio &quot;Calificación&quot; de la V4.
 Fuente: H-16; contratos de SB-28, SB-29 y SP-06 (V4); conversación E2E-07.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: quién califica" value="enum Parte que califica(cliente, propietario)"/>
+        <property key="Campo: calificación dada" value="int"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Calificar al propietario" id="id-b058bd36e7784e5ea81ab24c8dd3a4bb">
         <documentation>Comando del agregado Calificación. Realiza SB-28 &quot;Calificar al propietario&quot; de la V4. El cliente califica al propietario por su experiencia con el yate.
@@ -1853,6 +1886,81 @@ Fuente: H-16; conversación E2E-07.</documentation>
       <element xsi:type="archimate:ApplicationEvent" name="Cliente calificado" id="id-19f69c478e1c47e481a41c991690baaa">
         <documentation>Evento del agregado Calificación: el propietario calificó al cliente. Lo dispara SB-29. Con las dos calificaciones ocurre &quot;Calificaciones registradas&quot; de la V3, que ningún evento por separado realiza (V6-DEC-13).
 Fuente: H-16; conversación E2E-07.</documentation>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Fechas del arriendo" id="id-9bedd8cb487b46b199f02d88287ac768">
+        <documentation>Objeto de valor del agregado Arriendo: inicio y fin del arriendo. No tiene identidad propia: vive dentro de Arriendo (V6-DEC-16).
+Fuente: SB-06.</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: inicio" value="DateOnly"/>
+        <property key="Campo: fin" value="DateOnly"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Yate del arriendo" id="id-786fdd755c774038ad7b0d1d163a5d63">
+        <documentation>Objeto de valor del agregado Arriendo: identificador del yate, su propietario, su precio por día y la marina donde está guardado, copiados del inventario al registrar la solicitud. Es la copia propia de cada contexto. No tiene identidad propia: vive dentro de Arriendo (V6-DEC-16).
+Fuente: SB-06; V8-DEC-04.</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: identificador del yate" value="string"/>
+        <property key="Campo: propietario" value="string"/>
+        <property key="Campo: precio por día" value="decimal"/>
+        <property key="Campo: marina" value="string"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Ficha del cliente" id="id-a1609e0b86274fad86e6159ddec11f8b">
+        <documentation>Objeto de valor del agregado Arriendo: referencia al CRM, licencia de navegación y autorización de datos que guarda cada arriendo. No tiene identidad propia: vive dentro de Arriendo (V6-DEC-16).
+Fuente: SB-06, SB-11, SA-01; V6-SUP-01.
+Realiza el objeto de negocio &quot;Ficha del cliente&quot; de la V4 (V6-DEC-06).</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: referencia al CRM" value="string"/>
+        <property key="Campo: número de la licencia" value="string"/>
+        <property key="Campo: vigencia de la licencia" value="DateOnly"/>
+        <property key="Campo: fecha de la autorización" value="DateOnly"/>
+        <property key="Campo: terceros autorizados" value="List&lt;string>"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Evaluación de riesgo" id="id-f821ca9b471a410dbf6859cd50f53ce9">
+        <documentation>Objeto de valor del agregado Arriendo: nivel y fecha de la evaluación. Nadie la modifica después de recibirla. No tiene identidad propia: vive dentro de Arriendo (V6-DEC-16).
+Fuente: SB-12, SA-04.
+Realiza el objeto de negocio &quot;Evaluación de riesgo&quot; de la V4 (V6-DEC-06).</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: nivel" value="enum Nivel de riesgo(bajo, medio, alto)"/>
+        <property key="Campo: fecha" value="DateOnly"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Pruebas de pago" id="id-0c8b1c935dc94f9999ae85d5f779b354">
+        <documentation>Objeto de valor del agregado Arriendo: comprobantes del alquiler y del seguro y autorización del bloqueo del depósito. No tiene identidad propia: vive dentro de Arriendo (V6-DEC-16).
+Fuente: SB-07.</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: comprobante del alquiler" value="string"/>
+        <property key="Campo: comprobante del seguro" value="string"/>
+        <property key="Campo: autorización del bloqueo del depósito" value="string"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Póliza del arriendo" id="id-2fa2f5aff47347caaf386d07e2d2ae88">
+        <documentation>Objeto de valor del agregado Cuenta del arriendo: número y valor de la póliza que emite la aseguradora. No tiene identidad propia: vive dentro de Cuenta del arriendo (V6-DEC-16).
+Fuente: SB-13, SA-03.
+Realiza el objeto de negocio &quot;Póliza del arriendo&quot; de la V4 (V6-DEC-06).</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: número" value="string"/>
+        <property key="Campo: valor" value="decimal"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Datos del yate" id="id-0d2603fc1ad64e65a7eca9f214792093">
+        <documentation>Objeto de valor del agregado Yate: nombre, matrícula y capacidad del yate. No tiene identidad propia: vive dentro de Yate (V6-DEC-16).
+Fuente: SB-01.</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: nombre" value="string"/>
+        <property key="Campo: matrícula" value="string"/>
+        <property key="Campo: capacidad" value="int"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Rango de fechas" id="id-ada4b300178d4ff6a7a01bc9405f74fb">
+        <documentation>Objeto de valor del agregado Calendario del yate: fechas del yate con su estado. Una fecha que no está en ningún rango está libre. No tiene identidad propia: vive dentro de Calendario del yate (V6-DEC-16).
+Fuente: SB-03, SB-05; V6-SUP-03.</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: inicio" value="DateOnly"/>
+        <property key="Campo: fin" value="DateOnly"/>
+        <property key="Campo: estado" value="enum Estado de la fecha(bloqueada, apartada, ocupada)"/>
+        <property key="Campo: arriendo" value="string?"/>
+      </element>
+      <element xsi:type="archimate:DataObject" name="Daño encontrado" id="id-77723acb9d8548ae97e705f95c114cc6">
+        <documentation>Objeto de valor del agregado Acta de inspección: cada daño encontrado en la inspección, con su valor. No tiene identidad propia: vive dentro de Acta de inspección (V6-DEC-16).
+Fuente: SB-23; V4-SUP-03, V6-SUP-04.</documentation>
+        <property key="Tipo DDD" value="Objeto de valor"/>
+        <property key="Campo: descripción" value="string"/>
+        <property key="Campo: valor" value="decimal"/>
       </element>
     </folder>
     <folder name="Fase 5" id="id-4850219b0da3433ea70e3c9ea4001c9d">
@@ -2329,7 +2437,7 @@ Fuente: H-16, H-21; conversación E2E-07, CIE-01.</documentation>
     </folder>
     <folder name="Fase 4" id="id-ca84c9cf87cc46bf9131698eb3f4f2db">
       <element xsi:type="archimate:Grouping" name="Agregado Arriendo" id="id-2b918a7081b74d8a96e6112d86f829c1">
-        <documentation>Agregado del dominio Gestión del arriendo. Raíz: Arriendo. No tiene entidades internas: la evaluación de riesgo, la ficha del cliente y la referencia del contrato son objetos de valor de la raíz (V6-DEC-06).
+        <documentation>Agregado del dominio Gestión del arriendo. Raíz: Arriendo. No tiene entidades internas. Sus objetos de valor son Fechas del arriendo, Yate del arriendo, Ficha del cliente, Evaluación de riesgo y Pruebas de pago (V6-DEC-16); la referencia del contrato firmado es un campo de la raíz.
 Límite: confirmar necesita juntos el riesgo, la licencia, la autorización y las pruebas de pago en una sola transacción (diapositiva 19), y SB-06 escribe el arriendo y la ficha del cliente en una sola operación.
 Invariantes del agregado: no se confirma sin riesgo aceptable, contrato firmado y pagos completos (REG-01, H-07); con riesgo alto no se arrienda, y aceptable es bajo o medio (REG-01, V4-SUP-02); no se confirma sin licencia vigente y autorización del cliente (H-09, H-19); solo se cancela antes de la fecha de inicio (SB-08, EXC-02).
 Reglas de comando y políticas: SB-12 no envía datos a la evaluadora sin la autorización del cliente (H-19); SB-31 sale solo después de confirmar (H-07); &quot;Reserva confirmada&quot; dispara SB-31; SB-09 cierra el arriendo solo cuando terminan los ajustes de dinero, es decir, cuando llega &quot;Cuenta del arriendo cerrada&quot; de Cobros y depósito (E2E-01, V8).
@@ -2338,12 +2446,12 @@ Fuente: H-07, H-09, H-19; conversación REG-01, E2E-01, E2E-03, EXC-02; contrato
       <element xsi:type="archimate:Grouping" name="Agregado Depósito para daños" id="id-201299ead2af4e15b951240a3ff4586c">
         <documentation>Agregado del dominio Cobros y depósito. Raíz: Depósito para daños. Sin entidades internas.
 Límite: tiene su propio ciclo (bloqueado, y luego liberado o descontado) y su propio resultado medible (V4-DEC-04).
-Invariantes del agregado: termina en un solo estado final, liberado o descontado; si se descuenta, lo que sobra se libera en la misma operación (H-10, SB-21); el descuento exige evidencia, que la raíz guarda como objeto de valor (H-13).
+Invariantes del agregado: termina en un solo estado final, liberado o descontado; si se descuenta, lo que sobra se libera en la misma operación (H-10, SB-21); el descuento exige evidencia, que la raíz guarda en su campo &quot;evidencia del descuento&quot; (H-13).
 Reglas de comando y políticas: SB-20 libera el depósito solo si la inspección no registró daños (REG-01) o si la reserva se canceló (V4-SUP-09); la inspección está en Operación del arriendo y la cancelación en Gestión del arriendo. SB-19 rechaza el bloqueo si vencería antes del cierre: la autorización en tarjeta de crédito dura 28 días, así que la fecha de fin del arriendo no puede pasar de unos 25 días después de reservar (V4-SUP-07); la fecha de fin está en el agregado Arriendo. Se libera o se descuenta en máximo 3 días después de la devolución (resultado de la V1).
 Fuente: H-10, H-13; conversación E2E-04, E2E-06; contratos de SB-19, SB-20 y SB-21 (V4); V4-SUP-07, V4-SUP-09.</documentation>
       </element>
       <element xsi:type="archimate:Grouping" name="Agregado Cuenta del arriendo" id="id-061a58e9c8b548bc9990fbd624423929">
-        <documentation>Agregado del dominio Cobros y depósito. Raíz: Cuenta del arriendo. Entidad interna: Cobro.
+        <documentation>Agregado del dominio Cobros y depósito. Raíz: Cuenta del arriendo. Entidad interna: Cobro. Su objeto de valor es Póliza del arriendo (V6-DEC-16); la comisión y el valor del propietario son campos de la raíz.
 Límite: SB-13 escribe en una sola operación el cobro del alquiler, el del seguro y la póliza, y SB-17 cierra la cuenta cuando ya están todos los cargos: los cobros de un arriendo se cambian juntos (diapositivas 19 y 33). La cuenta usa el mismo identificador que el arriendo (diapositiva 26) (V6-DEC-05).
 Invariantes del agregado: todo cargo del cierre va con evidencia (principio de la V1); el combustible consumido siempre lo paga el cliente (REG-01); un cobro sin confirmación de la pasarela no cuenta como pagado (INT-PAG); la cuenta no se cierra mientras falte un cargo del cierre (SB-17).
 Reglas de comando y políticas: SB-14 cobra el tiempo adicional solo si el yate se devolvió tarde; ese dato llega con las diferencias de Operación del arriendo (H-14). SB-15 reembolsa solo una cancelación hecha con anticipación, según las condiciones del contrato con el cliente (EXC-02, D-03). SB-17 lo disparan &quot;Cargos del cierre cobrados&quot; y la decisión sobre el depósito (&quot;Depósito liberado&quot; o &quot;Daños descontados del depósito&quot;); su regla lo rechaza mientras falte la decisión sobre el depósito, que está en el agregado Depósito para daños (V6-DEC-11).
@@ -2357,13 +2465,13 @@ Invariantes del agregado: solo se envía si el daño supera el depósito, y con 
 Fuente: H-15; conversación EXC-02, INT-ASE; contrato de SB-16 (V4).</documentation>
       </element>
       <element xsi:type="archimate:Grouping" name="Agregado Yate" id="id-50ce3b21f9bf46de85846efc0fadda0a">
-        <documentation>Agregado del dominio Disponibilidad de yates. Raíz: Yate. Sin entidades internas.
+        <documentation>Agregado del dominio Disponibilidad de yates. Raíz: Yate. Sin entidades internas. Su objeto de valor es Datos del yate (V6-DEC-16); el precio por día, los documentos al día ante la DIMAR, la referencia del contrato del propietario y el identificador de la marina son campos de la raíz.
 Límite: el yate se registra una vez y cambia poco; sus fechas van en el agregado Calendario del yate, que tiene sus propias reglas (V4-DEC-03).
 Invariantes del agregado: se registra solo con el contrato del propietario firmado y los documentos al día ante la DIMAR (SB-01).
 Fuente: contrato de SB-01 (V4); conversación INT-CON, NOR-01.</documentation>
       </element>
       <element xsi:type="archimate:Grouping" name="Agregado Calendario del yate" id="id-85399b46487d42d0b1f00ed00e7a0890">
-        <documentation>Agregado del dominio Disponibilidad de yates. Raíz: Calendario del yate. Sin entidades internas.
+        <documentation>Agregado del dominio Disponibilidad de yates. Raíz: Calendario del yate. Sin entidades internas. Su objeto de valor es Rango de fechas (V6-DEC-16).
 Límite: es el límite de &quot;cero dobles reservas&quot;: solo lo escriben SB-03 y SB-05, y un solo agregado decide la disponibilidad (V4-DEC-03).
 Invariantes del agregado: una fecha apartada u ocupada no se aparta ni se ocupa para otro arriendo, porque un yate no tiene dos arriendos en las mismas fechas (REG-01); no se bloquean fechas con reserva confirmada (REG-02).
 Reglas de comando y políticas: solo el propietario del yate ejecuta SB-03 (E2E-02); las fechas se apartan al solicitar la reserva, se ocupan al confirmarla y se liberan si la reserva no sigue (V4-SUP-01), con eventos de Gestión del arriendo (V8).
@@ -2377,7 +2485,7 @@ Reglas de comando y políticas: SB-22 rechaza el acta si el arriendo no tiene la
 Fuente: H-13; conversación E2E-01, INT-MAR, CIE-01; contrato de SB-22 (V4).</documentation>
       </element>
       <element xsi:type="archimate:Grouping" name="Agregado Acta de inspección" id="id-0af905a47ab94912aef5350558410200">
-        <documentation>Agregado del dominio Operación del arriendo. Raíz: Acta de inspección. Sin entidades internas.
+        <documentation>Agregado del dominio Operación del arriendo. Raíz: Acta de inspección. Sin entidades internas. Su objeto de valor es Daño encontrado (V6-DEC-16); las fotos, el nivel de combustible y la hora de regreso son campos de la raíz.
 Límite: la registra la marina al recibir el yate (SB-23); es la otra mitad de la evidencia del cierre.
 Invariantes del agregado: no se registra sin fotos (H-13).
 Reglas de comando y políticas: SB-24 necesita las dos actas, porque su comparación es la evidencia (H-13); por eso lee también la raíz del agregado Acta de entrega (V6-DEC-09). &quot;Inspección de devolución registrada&quot; dispara SB-24.
@@ -3043,12 +3151,6 @@ Fuente: EXC-02, D-03; V6, sección 9; V4-SUP-02.</documentation>
       <element xsi:type="archimate:RealizationRelationship" id="id-93e1ccbdd77147e985cd8546ba483dfd" source="id-3f15410f516e4820b86108f1896461a8" target="id-10939f7fb6a0418f90ccf55c07818630">
         <documentation>El objeto de datos realiza su objeto de negocio de la V4.</documentation>
       </element>
-      <element xsi:type="archimate:RealizationRelationship" id="id-f4fbd9d893e64a8c92f1d4a48f7842b9" source="id-3f15410f516e4820b86108f1896461a8" target="id-10b68119c12642c9aefd57f1a0a7b83b">
-        <documentation>La raíz realiza también el objeto de negocio &quot;Evaluación de riesgo&quot; de la V4, que en la V6 es un objeto de valor suyo (V6-DEC-06).</documentation>
-      </element>
-      <element xsi:type="archimate:RealizationRelationship" id="id-cfd851eda67d4bfda7da8bdc1b179a61" source="id-3f15410f516e4820b86108f1896461a8" target="id-b20fe67b83e34f85be3dc7b640587c50">
-        <documentation>La raíz realiza también el objeto de negocio &quot;Ficha del cliente&quot; de la V4, que en la V6 es un objeto de valor suyo (V6-DEC-06).</documentation>
-      </element>
       <element xsi:type="archimate:AccessRelationship" id="id-e1030088ec064bb1b87180445cdf244c" source="id-9995aadff41a4a86b109d51b13dbc11c" target="id-3f15410f516e4820b86108f1896461a8"/>
       <element xsi:type="archimate:RealizationRelationship" id="id-f3e14d4196a34b43a63a480627d06d84" source="id-9995aadff41a4a86b109d51b13dbc11c" target="id-fdf9187711c74c839debc996243948f7">
         <documentation>El comando realiza el servicio básico SB-06 de la V4 (V6-DEC-02).</documentation>
@@ -3142,11 +3244,9 @@ Fuente: EXC-02, D-03; V6, sección 9; V4-SUP-02.</documentation>
         <documentation>El comando realiza el servicio básico SB-19 de la V4 (V6-DEC-02).</documentation>
       </element>
       <element xsi:type="archimate:TriggeringRelationship" id="id-da8f59737d1b4f3eaecfbf9fceecc742" source="id-43d3a21049834a9ea5e2f3f8b3079d0a" target="id-41585106baae43ab90ca920de78dc737"/>
-      <element xsi:type="archimate:RealizationRelationship" id="id-bdd66ab636a5467dab0edab96655aaf9" source="id-cc25b8b2503f4df286f2f28f1c7ab12b" target="id-05e95d27de1d4cab936789ca24102df3">
-        <documentation>La raíz realiza también el objeto de negocio &quot;Póliza del arriendo&quot; de la V4, que en la V6 es un objeto de valor suyo (V6-DEC-06).</documentation>
-      </element>
       <element xsi:type="archimate:CompositionRelationship" id="id-1acf1b6581c64b4dbe084ec858fe4fa8" source="id-cc25b8b2503f4df286f2f28f1c7ab12b" target="id-73b07f4ddacf4826ad340226a0e59119">
         <documentation>La raíz Cuenta del arriendo compone la entidad Cobro: los cobros solo cambian a través de la cuenta (V6-DEC-05).</documentation>
+        <property key="Cardinalidad" value="Muchos"/>
       </element>
       <element xsi:type="archimate:RealizationRelationship" id="id-1f250199e2c04b589cbbc5db36efd56c" source="id-73b07f4ddacf4826ad340226a0e59119" target="id-fffc2505a7e04c40a34c0d63d5958829">
         <documentation>El objeto de datos realiza su objeto de negocio de la V4.</documentation>
@@ -3319,6 +3419,60 @@ Fuente: EXC-02, D-03; V6, sección 9; V4-SUP-02.</documentation>
         <documentation>El comando realiza el servicio básico SB-29 de la V4 (V6-DEC-02).</documentation>
       </element>
       <element xsi:type="archimate:TriggeringRelationship" id="id-b2dc82875bfc4bc897831b79e4ae6469" source="id-bc9ac3247ce043cfbaf82400004826b8" target="id-19f69c478e1c47e481a41c991690baaa"/>
+      <element xsi:type="archimate:CompositionRelationship" id="id-ee06d268da2f408d8bf9bde7bb305334" source="id-3f15410f516e4820b86108f1896461a8" target="id-9bedd8cb487b46b199f02d88287ac768">
+        <documentation>La raíz Arriendo compone el objeto de valor Fechas del arriendo: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Uno"/>
+      </element>
+      <element xsi:type="archimate:CompositionRelationship" id="id-850fc88d230048ef9cb724ee440e7d42" source="id-3f15410f516e4820b86108f1896461a8" target="id-786fdd755c774038ad7b0d1d163a5d63">
+        <documentation>La raíz Arriendo compone el objeto de valor Yate del arriendo: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Uno"/>
+      </element>
+      <element xsi:type="archimate:CompositionRelationship" id="id-ad7757e40c604c82b7b1f65e724cf4d7" source="id-3f15410f516e4820b86108f1896461a8" target="id-a1609e0b86274fad86e6159ddec11f8b">
+        <documentation>La raíz Arriendo compone el objeto de valor Ficha del cliente: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Uno"/>
+      </element>
+      <element xsi:type="archimate:CompositionRelationship" id="id-e5367ed813444b918401bd1f57d029b1" source="id-3f15410f516e4820b86108f1896461a8" target="id-f821ca9b471a410dbf6859cd50f53ce9">
+        <documentation>La raíz Arriendo compone el objeto de valor Evaluación de riesgo: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Cero o uno"/>
+      </element>
+      <element xsi:type="archimate:CompositionRelationship" id="id-da20b204b668426dbba89a9cd13ce8f3" source="id-3f15410f516e4820b86108f1896461a8" target="id-0c8b1c935dc94f9999ae85d5f779b354">
+        <documentation>La raíz Arriendo compone el objeto de valor Pruebas de pago: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Cero o uno"/>
+      </element>
+      <element xsi:type="archimate:AggregationRelationship" id="id-61144f139cee447d8b012788a6e17685" source="id-2b918a7081b74d8a96e6112d86f829c1" target="id-9bedd8cb487b46b199f02d88287ac768"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-8c339d9c9012442a80bf8cc82597ad59" source="id-2b918a7081b74d8a96e6112d86f829c1" target="id-786fdd755c774038ad7b0d1d163a5d63"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-406041ee726e41258abf3428aa7019ff" source="id-2b918a7081b74d8a96e6112d86f829c1" target="id-a1609e0b86274fad86e6159ddec11f8b"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-c7bfe4ea332f4cecbe79268d9d9c5477" source="id-2b918a7081b74d8a96e6112d86f829c1" target="id-f821ca9b471a410dbf6859cd50f53ce9"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-2d21f4ec6ea24c8ab7a7c3c402d6b997" source="id-2b918a7081b74d8a96e6112d86f829c1" target="id-0c8b1c935dc94f9999ae85d5f779b354"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-3711a5006131486db9783d8d134888a8" source="id-f821ca9b471a410dbf6859cd50f53ce9" target="id-10b68119c12642c9aefd57f1a0a7b83b">
+        <documentation>El objeto de valor realiza su objeto de negocio de la V4 (V6-DEC-06).</documentation>
+      </element>
+      <element xsi:type="archimate:RealizationRelationship" id="id-30b4a006fc2e4cdc8763bd0bce4b102e" source="id-a1609e0b86274fad86e6159ddec11f8b" target="id-b20fe67b83e34f85be3dc7b640587c50">
+        <documentation>El objeto de valor realiza su objeto de negocio de la V4 (V6-DEC-06).</documentation>
+      </element>
+      <element xsi:type="archimate:CompositionRelationship" id="id-5e8f9c1b956f4633bf927c03a598d9fa" source="id-cc25b8b2503f4df286f2f28f1c7ab12b" target="id-2fa2f5aff47347caaf386d07e2d2ae88">
+        <documentation>La raíz Cuenta del arriendo compone el objeto de valor Póliza del arriendo: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Cero o uno"/>
+      </element>
+      <element xsi:type="archimate:AggregationRelationship" id="id-bef873c1a66544a2b52de487a6c45dc3" source="id-061a58e9c8b548bc9990fbd624423929" target="id-2fa2f5aff47347caaf386d07e2d2ae88"/>
+      <element xsi:type="archimate:RealizationRelationship" id="id-44dbb11da5e34a39b6ff6557e842dc9c" source="id-2fa2f5aff47347caaf386d07e2d2ae88" target="id-05e95d27de1d4cab936789ca24102df3">
+        <documentation>El objeto de valor realiza su objeto de negocio de la V4 (V6-DEC-06).</documentation>
+      </element>
+      <element xsi:type="archimate:CompositionRelationship" id="id-6094d0d152164f9299f3ebd575b7c810" source="id-d50ced5f46a849f7b744fc977ab040e9" target="id-0d2603fc1ad64e65a7eca9f214792093">
+        <documentation>La raíz Yate compone el objeto de valor Datos del yate: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Uno"/>
+      </element>
+      <element xsi:type="archimate:CompositionRelationship" id="id-31b5283dd5954622aeedaddc51af4662" source="id-b3dcca7f045e43f49523fe907a138a79" target="id-ada4b300178d4ff6a7a01bc9405f74fb">
+        <documentation>La raíz Calendario del yate compone el objeto de valor Rango de fechas: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Muchos"/>
+      </element>
+      <element xsi:type="archimate:AggregationRelationship" id="id-ae53345eb26040fca421c5e50ad1f219" source="id-50ce3b21f9bf46de85846efc0fadda0a" target="id-0d2603fc1ad64e65a7eca9f214792093"/>
+      <element xsi:type="archimate:AggregationRelationship" id="id-4601a70a734e43d3811eeb700a97824a" source="id-85399b46487d42d0b1f00ed00e7a0890" target="id-ada4b300178d4ff6a7a01bc9405f74fb"/>
+      <element xsi:type="archimate:CompositionRelationship" id="id-298e37616e7e4c139b0195ef36ab8ff5" source="id-2856d4f6a4b0480a86d14826dd18dedf" target="id-77723acb9d8548ae97e705f95c114cc6">
+        <documentation>La raíz Acta de inspección compone el objeto de valor Daño encontrado: no tiene identidad propia y solo existe dentro de la raíz (V6-DEC-16).</documentation>
+        <property key="Cardinalidad" value="Muchos"/>
+      </element>
+      <element xsi:type="archimate:AggregationRelationship" id="id-69bbda0625c541409ba0a770eb609009" source="id-0af905a47ab94912aef5350558410200" target="id-77723acb9d8548ae97e705f95c114cc6"/>
     </folder>
     <folder name="Fase 5" id="id-b923cc6319634b8282753cf5180f9c03">
       <element xsi:type="archimate:RealizationRelationship" id="id-2b97c3b6db314a99ba18e06654d3ee58" source="id-0d93d731f6fd4b21acbf20d3cb28cf6f" target="id-3de9c3a6e34d48f6a1fcd6a828471dd0">
@@ -4579,9 +4733,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
         </child>
         <child xsi:type="archimate:DiagramObject" id="id-d10b42ec1e69468e86f07edde29fa2ec" archimateElement="id-b4544b3eae2a4554be78fbc9a48db866">
           <bounds x="1900" y="552" width="150" height="60"/>
-          <sourceConnection xsi:type="archimate:Connection" id="id-34f94c32106e4c24886dcffde22d01ee" source="id-d10b42ec1e69468e86f07edde29fa2ec" target="id-d9e6170eb80848f4b779a10b25340c89" archimateRelationship="id-55a68ebc136e4aafbb7be5b6ad2d98b9">
-            <bendpoint startY="-70" endX="-95" endY="350"/>
-          </sourceConnection>
+          <sourceConnection xsi:type="archimate:Connection" id="id-34f94c32106e4c24886dcffde22d01ee" source="id-d10b42ec1e69468e86f07edde29fa2ec" target="id-d9e6170eb80848f4b779a10b25340c89" archimateRelationship="id-55a68ebc136e4aafbb7be5b6ad2d98b9"/>
         </child>
         <child xsi:type="archimate:DiagramObject" id="id-5a42b7224f0d49998d712f010fce4857" archimateElement="id-1ee9c918301349ffbb9d44e6828b02d4">
           <bounds x="1710" y="552" width="150" height="60"/>
@@ -6215,30 +6367,48 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
     <folder name="Fase 4" id="id-fe4fc40bf11a4c75b89db6215ee8693e">
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.1 - Gestión del arriendo" id="id-a22dba2542274960a856eaf703eaee40">
         <child xsi:type="archimate:DiagramObject" id="id-eb3c9fdea57a4b72ae9bb2a1e7ab79ea" textAlignment="1" archimateElement="id-a44be1314fc14a9092a23f2528ef5824">
-          <bounds x="20" y="20" width="869" height="940"/>
+          <bounds x="20" y="20" width="945" height="969"/>
           <child xsi:type="archimate:DiagramObject" id="id-d7d68a5cc94a4ca7ac165cc1c7d8ffc5" textAlignment="1" archimateElement="id-2b918a7081b74d8a96e6112d86f829c1">
-            <bounds x="24" y="36" width="817" height="756"/>
+            <bounds x="24" y="36" width="893" height="780"/>
             <child xsi:type="archimate:DiagramObject" id="id-b50b98c7d63049c79c3e9be7d8b7833e" targetConnections="id-7d6a90a5f56f4ffbbcbf68ca951f6da2 id-bc427eda309a4488ab69af4b36b331fc id-d45578170d054bfbaa7bbdbe754b7798 id-f751dfbcc3d94fe892361c40060c1925 id-61861af5c2b44f6394e0290586b354b7 id-bcc3cf25cfbf4b519ed2264e345dab3c" archimateElement="id-3f15410f516e4820b86108f1896461a8">
-              <bounds x="15" y="30" width="150" height="660"/>
-              <sourceConnection xsi:type="archimate:Connection" id="id-b5659bf416b74ecca332d3f0fb8e34b2" source="id-b50b98c7d63049c79c3e9be7d8b7833e" target="id-0bfbdfaf8864425d8d00cd6bca1e2522" archimateRelationship="id-93e1ccbdd77147e985cd8546ba483dfd"/>
-              <sourceConnection xsi:type="archimate:Connection" id="id-951a7ee3b6874644a54b76feff4fbe8e" source="id-b50b98c7d63049c79c3e9be7d8b7833e" target="id-0b2f3a7722f949beb411bc0c1fc30004" archimateRelationship="id-f4fbd9d893e64a8c92f1d4a48f7842b9">
-                <bendpoint startX="45" startY="331" endX="-125" endY="-124"/>
+              <bounds x="15" y="30" width="226" height="720"/>
+              <sourceConnection xsi:type="archimate:Connection" id="id-b5659bf416b74ecca332d3f0fb8e34b2" source="id-b50b98c7d63049c79c3e9be7d8b7833e" target="id-0bfbdfaf8864425d8d00cd6bca1e2522" archimateRelationship="id-93e1ccbdd77147e985cd8546ba483dfd">
+                <bendpoint startX="82" startY="430" endX="-75" endY="-55"/>
+                <bendpoint startX="157" startY="430" endY="-55"/>
               </sourceConnection>
-              <sourceConnection xsi:type="archimate:Connection" id="id-52e3b4e3679d4194912f252910e24076" source="id-b50b98c7d63049c79c3e9be7d8b7833e" target="id-2749200dccf64372b7b98f1b2d8e391a" archimateRelationship="id-cfd851eda67d4bfda7da8bdc1b179a61">
-                <bendpoint startX="70" startY="331" endX="-270" endY="-124"/>
-              </sourceConnection>
+              <child xsi:type="archimate:DiagramObject" id="id-4d72014c350a4dac9cc4620fc0e20b31" archimateElement="id-9bedd8cb487b46b199f02d88287ac768">
+                <bounds x="15" y="345" width="150" height="60"/>
+              </child>
+              <child xsi:type="archimate:DiagramObject" id="id-a75a44720bb543b3919fd0c6bacd1f34" archimateElement="id-786fdd755c774038ad7b0d1d163a5d63">
+                <bounds x="15" y="420" width="150" height="60"/>
+              </child>
+              <child xsi:type="archimate:DiagramObject" id="id-3e87d30da8f641a3ab4ecc1fc8e8a13b" archimateElement="id-0c8b1c935dc94f9999ae85d5f779b354">
+                <bounds x="15" y="495" width="150" height="60"/>
+              </child>
+              <child xsi:type="archimate:DiagramObject" id="id-062fe6997a624cf691cb274a24a04cab" archimateElement="id-a1609e0b86274fad86e6159ddec11f8b">
+                <bounds x="15" y="570" width="150" height="60"/>
+                <sourceConnection xsi:type="archimate:Connection" id="id-b5434348be0240e3bd08ffec83f28f98" source="id-062fe6997a624cf691cb274a24a04cab" target="id-2749200dccf64372b7b98f1b2d8e391a" archimateRelationship="id-30b4a006fc2e4cdc8763bd0bce4b102e">
+                  <bendpoint startX="173" endX="-187" endY="-245"/>
+                  <bendpoint startX="173" startY="170" endX="-187" endY="-75"/>
+                  <bendpoint startX="360" startY="170" endY="-75"/>
+                </sourceConnection>
+              </child>
+              <child xsi:type="archimate:DiagramObject" id="id-3b6d12e927ad4ff1bffcbf42b05efeec" archimateElement="id-f821ca9b471a410dbf6859cd50f53ce9">
+                <bounds x="15" y="645" width="150" height="60"/>
+                <sourceConnection xsi:type="archimate:Connection" id="id-178cd01cb2954cadae164ade47798075" source="id-3b6d12e927ad4ff1bffcbf42b05efeec" target="id-0b2f3a7722f949beb411bc0c1fc30004" archimateRelationship="id-3711a5006131486db9783d8d134888a8"/>
+              </child>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-0f2c1a6313154005bad310e6f3c954a5" archimateElement="id-9995aadff41a4a86b109d51b13dbc11c">
-              <bounds x="240" y="36" width="190" height="60"/>
+              <bounds x="316" y="36" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-7d6a90a5f56f4ffbbcbf68ca951f6da2" source="id-0f2c1a6313154005bad310e6f3c954a5" target="id-b50b98c7d63049c79c3e9be7d8b7833e" archimateRelationship="id-e1030088ec064bb1b87180445cdf244c">
-                <bendpoint startX="-134" endX="76" endY="-300"/>
+                <bendpoint startX="-133" endX="150" endY="-324"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-0affb0759d12454eaf7666df5289793d" source="id-0f2c1a6313154005bad310e6f3c954a5" target="id-4bbff8149d4f4fb3a0c5ff3022978af2" archimateRelationship="id-3f2d622eda3a4b36ae465f8717a052a1"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-10fa30570527487f9f97c6bcb77597f6" archimateElement="id-2a55b3149f0d4388ba3551743aa65cf4">
-              <bounds x="240" y="144" width="190" height="60"/>
+              <bounds x="316" y="144" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-bc427eda309a4488ab69af4b36b331fc" source="id-10fa30570527487f9f97c6bcb77597f6" target="id-b50b98c7d63049c79c3e9be7d8b7833e" archimateRelationship="id-4a7df69a98244bba96965f2dae86b543">
-                <bendpoint startX="-118" startY="-14" endX="114" endY="-200"/>
+                <bendpoint startX="-133" endX="150" endY="-216"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-764a34ef87df4d5986dce6d56a1ef78f" source="id-10fa30570527487f9f97c6bcb77597f6" target="id-437b9d05d2fa4aab8014daf2b8a185e9" archimateRelationship="id-e4035789fa474ad4971d242d6b932440"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-90a1f0732a4c4381b77c3c337dc1ff52" source="id-10fa30570527487f9f97c6bcb77597f6" target="id-a651fbb86e2c4904b2e3e5a6019399c3" archimateRelationship="id-2f2ed203f26e4b7ba335e2579753b0f5">
@@ -6250,30 +6420,30 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
               </sourceConnection>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-6b469d086956425291cdff0092a8c248" archimateElement="id-b5e59d3c453a410580107b2287cd76d2">
-              <bounds x="240" y="240" width="190" height="60"/>
+              <bounds x="316" y="240" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-d45578170d054bfbaa7bbdbe754b7798" source="id-6b469d086956425291cdff0092a8c248" target="id-b50b98c7d63049c79c3e9be7d8b7833e" archimateRelationship="id-a8b9c61f91ea496ab73c6f235491dc27">
-                <bendpoint startX="-134" endX="76" endY="-75"/>
+                <bendpoint startX="-133" endX="150" endY="-120"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-5e730da066f744b6931f5f3d6c1840c1" source="id-6b469d086956425291cdff0092a8c248" target="id-5e7edfb556bf4c3b8897fea46c2dfcb1" archimateRelationship="id-b8ca2bf20745442784baab920a6d83f3"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-93936689a05c4b109c9fd43d909129ed" targetConnections="id-bd8f2d1f80a443d9b7e16d4bd3c98ca6" archimateElement="id-57da84f53a9742cea51396bf297bf06d">
-              <bounds x="240" y="330" width="190" height="60"/>
+              <bounds x="316" y="330" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-f751dfbcc3d94fe892361c40060c1925" source="id-93936689a05c4b109c9fd43d909129ed" target="id-b50b98c7d63049c79c3e9be7d8b7833e" archimateRelationship="id-862065da28af4f2988177712864cb2bf">
-                <bendpoint startX="-134" endX="76"/>
+                <bendpoint startX="-133" endX="150" endY="-30"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-84026a7ed3684660960ed367935ebca5" source="id-93936689a05c4b109c9fd43d909129ed" target="id-643b3db3363645feb996fcd4ce30234a" archimateRelationship="id-8ebacedb85094de3a07d33f2ce8e4db4"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-3bedfd597f944fe3961f3c963148e1fc" archimateElement="id-ea0f1874f954489589820b4aa2761e3f">
-              <bounds x="240" y="420" width="190" height="60"/>
+              <bounds x="316" y="420" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-61861af5c2b44f6394e0290586b354b7" source="id-3bedfd597f944fe3961f3c963148e1fc" target="id-b50b98c7d63049c79c3e9be7d8b7833e" archimateRelationship="id-7e01983085194b62a7db8cce8b848dc1">
-                <bendpoint startX="-134" endX="76" endY="75"/>
+                <bendpoint startX="-133" endX="150" endY="60"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-dd85a07310dc4fd19942dae9bd648596" source="id-3bedfd597f944fe3961f3c963148e1fc" target="id-4395cf90a458437b9ce708d4dddb15f6" archimateRelationship="id-452f93fdc77349dbb13c04a6afc3d331"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-be04eaeee25b4f609d76c8d1d5d92728" archimateElement="id-5be75381f2364a9cb9fa8d4247dce743">
-              <bounds x="240" y="576" width="190" height="60"/>
+              <bounds x="316" y="576" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-bcc3cf25cfbf4b519ed2264e345dab3c" source="id-be04eaeee25b4f609d76c8d1d5d92728" target="id-b50b98c7d63049c79c3e9be7d8b7833e" archimateRelationship="id-eacd774820384c058081b704ae2bab65">
-                <bendpoint startX="-133" endX="76" endY="246"/>
+                <bendpoint startX="-133" endX="150" endY="216"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-ff33667c265d4452a82a087985085701" source="id-be04eaeee25b4f609d76c8d1d5d92728" target="id-7d79cd8bd8cc487580135c56a963a81f" archimateRelationship="id-17bcf2ccf6b54e928207255e2fdc7dc1">
                 <bendpoint startX="153" startY="-78" endX="-166" endY="6"/>
@@ -6287,17 +6457,17 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
               </sourceConnection>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-4bbff8149d4f4fb3a0c5ff3022978af2" targetConnections="id-0affb0759d12454eaf7666df5289793d" archimateElement="id-ba01aa1a0874474086ba64badf2991e3">
-              <bounds x="588" y="30" width="180" height="60"/>
+              <bounds x="664" y="30" width="180" height="60"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-437b9d05d2fa4aab8014daf2b8a185e9" targetConnections="id-764a34ef87df4d5986dce6d56a1ef78f" archimateElement="id-898e6b49f085471cb23b1ef1dbaa953e">
-              <bounds x="588" y="105" width="180" height="60"/>
+              <bounds x="664" y="105" width="180" height="60"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-a651fbb86e2c4904b2e3e5a6019399c3" targetConnections="id-90a1f0732a4c4381b77c3c337dc1ff52" archimateElement="id-bb4b23b9412742f89ac3ae34504a8391">
-              <bounds x="588" y="180" width="180" height="60"/>
+              <bounds x="664" y="180" width="180" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-a5bffb44ae6c46ba860ef60f22a14f5d" source="id-a651fbb86e2c4904b2e3e5a6019399c3" target="id-90d1d3cc24c048c9a8b3eb90f2e12f9f" archimateRelationship="id-813170b726454866b02b9b7f8a675624"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-5e7edfb556bf4c3b8897fea46c2dfcb1" targetConnections="id-5e730da066f744b6931f5f3d6c1840c1" archimateElement="id-f7f775aec49c4eb782699183059c6bc2">
-              <bounds x="588" y="255" width="180" height="60"/>
+              <bounds x="664" y="255" width="180" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-413588332d344fc7b085b2283d448be3" source="id-5e7edfb556bf4c3b8897fea46c2dfcb1" target="id-93bc6a8fa57749429c6588055e46ad38" archimateRelationship="id-68d4d09d7f364ee0b1b9cddca75821bf"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-bd8f2d1f80a443d9b7e16d4bd3c98ca6" source="id-5e7edfb556bf4c3b8897fea46c2dfcb1" target="id-93936689a05c4b109c9fd43d909129ed" archimateRelationship="id-4bb3be2830b946619f18bcacda5e4eb4">
                 <bendpoint startX="-122" startY="11" endX="221" endY="-64"/>
@@ -6311,42 +6481,42 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
               </sourceConnection>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-643b3db3363645feb996fcd4ce30234a" targetConnections="id-84026a7ed3684660960ed367935ebca5" archimateElement="id-b65aec8c4e0641b0ac0ef6c69373610f">
-              <bounds x="588" y="336" width="180" height="60"/>
+              <bounds x="664" y="336" width="180" height="60"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-4395cf90a458437b9ce708d4dddb15f6" targetConnections="id-dd85a07310dc4fd19942dae9bd648596" archimateElement="id-28e06fd82a7641228d89ded443509b64">
-              <bounds x="576" y="408" width="180" height="60"/>
+              <bounds x="652" y="408" width="180" height="60"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-7d79cd8bd8cc487580135c56a963a81f" targetConnections="id-ff33667c265d4452a82a087985085701" archimateElement="id-6d63b57590714cd5a0c45b5f6e7b9580">
-              <bounds x="576" y="492" width="180" height="60"/>
+              <bounds x="652" y="492" width="180" height="60"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-9af11a0d312f43f2abcd1cc8e3b20002" targetConnections="id-c02f190144604d8abb9d23f16a4de309" archimateElement="id-8efeaef2f23441879f0f9fe08fb63a2e">
-              <bounds x="576" y="576" width="180" height="60"/>
+              <bounds x="652" y="576" width="180" height="60"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-03d16fae2f044ed9bb5107ece5d61ae8" targetConnections="id-b6acf58481054adfaba8ce59c413f69a" archimateElement="id-0f65cc3ebf6649e283d9b634febb03f5">
-              <bounds x="576" y="672" width="180" height="60"/>
+              <bounds x="652" y="672" width="180" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-3e6ef0991f1a44ceb0022b540f613153" source="id-03d16fae2f044ed9bb5107ece5d61ae8" target="id-7d0a7d864a0945e6ac2060bbc1fb4bd1" archimateRelationship="id-9cd6415c3b974b28876619cac186adab"/>
             </child>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-0bfbdfaf8864425d8d00cd6bca1e2522" targetConnections="id-b5659bf416b74ecca332d3f0fb8e34b2" archimateElement="id-10939f7fb6a0418f90ccf55c07818630">
-            <bounds x="24" y="852" width="150" height="60"/>
+            <bounds x="234" y="881" width="150" height="60"/>
           </child>
-          <child xsi:type="archimate:DiagramObject" id="id-0b2f3a7722f949beb411bc0c1fc30004" targetConnections="id-951a7ee3b6874644a54b76feff4fbe8e" archimateElement="id-10b68119c12642c9aefd57f1a0a7b83b">
-            <bounds x="180" y="852" width="150" height="60"/>
+          <child xsi:type="archimate:DiagramObject" id="id-0b2f3a7722f949beb411bc0c1fc30004" targetConnections="id-178cd01cb2954cadae164ade47798075" archimateElement="id-10b68119c12642c9aefd57f1a0a7b83b">
+            <bounds x="54" y="881" width="150" height="60"/>
           </child>
-          <child xsi:type="archimate:DiagramObject" id="id-2749200dccf64372b7b98f1b2d8e391a" targetConnections="id-52e3b4e3679d4194912f252910e24076" archimateElement="id-b20fe67b83e34f85be3dc7b640587c50">
-            <bounds x="340" y="852" width="150" height="60"/>
+          <child xsi:type="archimate:DiagramObject" id="id-2749200dccf64372b7b98f1b2d8e391a" targetConnections="id-b5434348be0240e3bd08ffec83f28f98" archimateElement="id-b20fe67b83e34f85be3dc7b640587c50">
+            <bounds x="414" y="881" width="150" height="60"/>
           </child>
         </child>
         <child xsi:type="archimate:DiagramObject" id="id-90d1d3cc24c048c9a8b3eb90f2e12f9f" targetConnections="id-a5bffb44ae6c46ba860ef60f22a14f5d" archimateElement="id-3a163e12d2ff4c13b996aa5f37096eec">
-          <bounds x="947" y="228" width="180" height="60"/>
+          <bounds x="1023" y="228" width="180" height="60"/>
         </child>
         <child xsi:type="archimate:DiagramObject" id="id-93bc6a8fa57749429c6588055e46ad38" targetConnections="id-413588332d344fc7b085b2283d448be3" archimateElement="id-e179c0a1b4c949269a8109f3e4e21918">
-          <bounds x="948" y="312" width="180" height="60"/>
+          <bounds x="1024" y="312" width="180" height="60"/>
         </child>
         <child xsi:type="archimate:DiagramObject" id="id-7d0a7d864a0945e6ac2060bbc1fb4bd1" targetConnections="id-3e6ef0991f1a44ceb0022b540f613153" archimateElement="id-84614b41e935485187186177fee17adc">
-          <bounds x="948" y="720" width="180" height="60"/>
+          <bounds x="1024" y="720" width="180" height="60"/>
         </child>
-        <documentation>Agregado del dominio Gestión del arriendo: &quot;Agregado Arriendo&quot;, con su raíz (objeto de datos que realiza los objetos de negocio de la V5), los comandos que acceden a ella, los eventos que disparan y la política interna (evento que dispara un comando). Tres eventos realizan eventos de negocio de la V3. El agregado y sus elementos se ven por anidamiento dentro del dominio.</documentation>
+        <documentation>Agregado del dominio Gestión del arriendo: &quot;Agregado Arriendo&quot;, con su raíz (objeto de datos que realiza su objeto de negocio de la V5) y, dentro de ella, sus objetos de valor; &quot;Ficha del cliente&quot; y &quot;Evaluación de riesgo&quot; realizan también su objeto de negocio. Además, los comandos que acceden a la raíz, los eventos que disparan y la política interna (evento que dispara un comando). Tres eventos realizan eventos de negocio de la V3. El agregado y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.2 - Cobros y depósito" id="id-6c71b7485ecd4c1aa4e66f393cf46184">
         <child xsi:type="archimate:DiagramObject" id="id-061bdd7b90fc4e489209ed79e25205b2" textAlignment="1" archimateElement="id-d44425d2648b464eb5b71275e2978c41">
@@ -6403,9 +6573,12 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
           <child xsi:type="archimate:DiagramObject" id="id-042b9de026de44e7a7d39263344f1a37" textAlignment="1" archimateElement="id-061a58e9c8b548bc9990fbd624423929">
             <bounds x="20" y="400" width="1040" height="405"/>
             <child xsi:type="archimate:DiagramObject" id="id-a0e2ffed29754c3fb81fd95df228471e" targetConnections="id-22cfad755fd249ec9fce59a0a190c088 id-98e24d9af3af4e939a8718b85962db11 id-72b1328881904d608fe35e95ef205437 id-43815c5d95db48129094995e7bcd8252" archimateElement="id-cc25b8b2503f4df286f2f28f1c7ab12b">
-              <bounds x="204" y="30" width="150" height="360"/>
+              <bounds x="204" y="30" width="180" height="360"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-8098a234abee4ab0a782ffccd8189e93" source="id-a0e2ffed29754c3fb81fd95df228471e" target="id-8cde7f740b52495489ab67ac7b5dc218" archimateRelationship="id-1acf1b6581c64b4dbe084ec858fe4fa8"/>
-              <sourceConnection xsi:type="archimate:Connection" id="id-31f04db10f4f4525b38ecff80e16b21a" source="id-a0e2ffed29754c3fb81fd95df228471e" target="id-56972d68a1274eec876aa110ef8bffb5" archimateRelationship="id-bdd66ab636a5467dab0edab96655aaf9"/>
+              <child xsi:type="archimate:DiagramObject" id="id-f69b29bb22574834bdd947c35194cb9c" archimateElement="id-2fa2f5aff47347caaf386d07e2d2ae88">
+                <bounds x="15" y="285" width="150" height="60"/>
+                <sourceConnection xsi:type="archimate:Connection" id="id-be23740db75b40279ff91526f9f89b0d" source="id-f69b29bb22574834bdd947c35194cb9c" target="id-56972d68a1274eec876aa110ef8bffb5" archimateRelationship="id-44dbb11da5e34a39b6ff6557e842dc9c"/>
+              </child>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-8cde7f740b52495489ab67ac7b5dc218" targetConnections="id-8098a234abee4ab0a782ffccd8189e93" archimateElement="id-73b07f4ddacf4826ad340226a0e59119">
               <bounds x="15" y="180" width="150" height="60"/>
@@ -6414,28 +6587,28 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <child xsi:type="archimate:DiagramObject" id="id-e31089ee47874643a5943ad3e7dd7bb4" targetConnections="id-ba65eb28633d472d93ef01eae6aaeea7 id-a9fba5b21b5a4609ab5e7768f6001485 id-a0d61e9aaf984887b49a242eb95f8829" archimateElement="id-5ef920b9e381405495dbdfe1877eb75b">
               <bounds x="455" y="30" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-22cfad755fd249ec9fce59a0a190c088" source="id-e31089ee47874643a5943ad3e7dd7bb4" target="id-a0e2ffed29754c3fb81fd95df228471e" archimateRelationship="id-6a41ad1129a74249aba3e1acfa318231">
-                <bendpoint startX="-155" endX="135" endY="-150"/>
+                <bendpoint startX="-131" endX="125" endY="-150"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-863beeb23a2f48faa4b4cc185beef6af" source="id-e31089ee47874643a5943ad3e7dd7bb4" target="id-864b65ae6515454db90d43419cd24918" archimateRelationship="id-d9313b0bbbd64a71a31423cc98ea1c27"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-eaf3bc6ba0ba4dc0b44887015c4381b5" archimateElement="id-3101c7184ff44fbfb862a7645b4e6135">
               <bounds x="455" y="105" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-98e24d9af3af4e939a8718b85962db11" source="id-eaf3bc6ba0ba4dc0b44887015c4381b5" target="id-a0e2ffed29754c3fb81fd95df228471e" archimateRelationship="id-c4c46e4007a54b04b89a26783ffdf283">
-                <bendpoint startX="-155" endX="135" endY="-75"/>
+                <bendpoint startX="-131" endX="125" endY="-75"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-c5dc085af2e541309e1dfbec2a0948f1" source="id-eaf3bc6ba0ba4dc0b44887015c4381b5" target="id-7039e7ab5718438aaf0b6e0c0a1fca18" archimateRelationship="id-1eed0fd256ea4fc09c4f004691da262b"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-afcc856e95714c5c8592b701ba669680" archimateElement="id-e5737d28667c4b8a9373ac6f62271f96">
               <bounds x="455" y="180" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-72b1328881904d608fe35e95ef205437" source="id-afcc856e95714c5c8592b701ba669680" target="id-a0e2ffed29754c3fb81fd95df228471e" archimateRelationship="id-4d4d46d365984c5d92fe117f4fb72642">
-                <bendpoint startX="-155" endX="135"/>
+                <bendpoint startX="-131" endX="125"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-c5379ca0d9bb4d24969a1e4b07e5bd00" source="id-afcc856e95714c5c8592b701ba669680" target="id-0c55142fcaf849809011906f0a6723bd" archimateRelationship="id-463d355d0c6f4be3825578dfc198130e"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-8d095cd77b604e16be61f07399b3b640" archimateElement="id-599456d5ca8f45b0b82efa9a05b254d2">
               <bounds x="455" y="255" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-43815c5d95db48129094995e7bcd8252" source="id-8d095cd77b604e16be61f07399b3b640" target="id-a0e2ffed29754c3fb81fd95df228471e" archimateRelationship="id-ab65851ca30a477093fe098522fa3912">
-                <bendpoint startX="-155" endX="135" endY="75"/>
+                <bendpoint startX="-131" endX="125" endY="75"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-909dd3ff0c684f94aad187ed5bd0bfe3" source="id-8d095cd77b604e16be61f07399b3b640" target="id-8d5ccdbf2f8646599ecd6f196899f7c0" archimateRelationship="id-04596b58c1d648bba4330c910915af15"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-8160c630a5ae4dd79bdcf833ff636d40" source="id-8d095cd77b604e16be61f07399b3b640" target="id-0e0a891d444f4af9bc59dd1b7f5287c6" archimateRelationship="id-fec0251c0f7c4314bc717ed436514a58">
@@ -6483,8 +6656,8 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
           <child xsi:type="archimate:DiagramObject" id="id-07b0b4ba21714dae93d66dad45a4f5af" targetConnections="id-202644422b0b4051b7457e01523313e5" archimateElement="id-b02b2ebc985f4947a5e967700333f40f">
             <bounds x="35" y="325" width="150" height="60"/>
           </child>
-          <child xsi:type="archimate:DiagramObject" id="id-56972d68a1274eec876aa110ef8bffb5" targetConnections="id-31f04db10f4f4525b38ecff80e16b21a" archimateElement="id-05e95d27de1d4cab936789ca24102df3">
-            <bounds x="205" y="835" width="150" height="60"/>
+          <child xsi:type="archimate:DiagramObject" id="id-56972d68a1274eec876aa110ef8bffb5" targetConnections="id-be23740db75b40279ff91526f9f89b0d" archimateElement="id-05e95d27de1d4cab936789ca24102df3">
+            <bounds x="239" y="835" width="150" height="60"/>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-83cae487aa0a47f7b942a0ce5c6639c9" targetConnections="id-f8304b70e8194941b1f8ace57056357b" archimateElement="id-fffc2505a7e04c40a34c0d63d5958829">
             <bounds x="35" y="835" width="150" height="60"/>
@@ -6493,38 +6666,44 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="1105" y="355" width="150" height="60"/>
           </child>
         </child>
-        <documentation>Agregados del dominio Cobros y depósito: &quot;Agregado Depósito para daños&quot;, &quot;Agregado Cuenta del arriendo&quot; (con la entidad &quot;Cobro&quot;) y &quot;Agregado Reclamo a la aseguradora&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5), los comandos que acceden a ella, los eventos que disparan y las políticas internas (evento que dispara un comando). Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
+        <documentation>Agregados del dominio Cobros y depósito: &quot;Agregado Depósito para daños&quot;, &quot;Agregado Cuenta del arriendo&quot; (con la entidad &quot;Cobro&quot;) y &quot;Agregado Reclamo a la aseguradora&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5; Cuenta del arriendo no tiene uno propio y &quot;Póliza del arriendo&quot; lo realiza su objeto de valor, dentro de la raíz), los comandos que acceden a ella, los eventos que disparan y las políticas internas (evento que dispara un comando). Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.3 - Disponibilidad de yates" id="id-faf00d5247c7464d9d6d163bb6331d6f">
         <child xsi:type="archimate:DiagramObject" id="id-e3e3c559119548bc831acbf7905b675a" textAlignment="1" archimateElement="id-3de9c3a6e34d48f6a1fcd6a828471dd0">
           <bounds x="-12" y="24" width="1740" height="555"/>
           <child xsi:type="archimate:DiagramObject" id="id-0f46b4d8e2574d6c8af3448cc9626874" textAlignment="1" archimateElement="id-50ce3b21f9bf46de85846efc0fadda0a">
-            <bounds x="20" y="40" width="772" height="105"/>
+            <bounds x="20" y="40" width="772" height="181"/>
             <child xsi:type="archimate:DiagramObject" id="id-f666f80a77c246c796f0252727bed2b0" targetConnections="id-d4b215140ffa489f8da7eebe62d28197" archimateElement="id-d50ced5f46a849f7b744fc977ab040e9">
-              <bounds x="15" y="30" width="150" height="60"/>
+              <bounds x="15" y="30" width="180" height="136"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-0acca21f6b4845f29e58a8e89cc41dff" source="id-f666f80a77c246c796f0252727bed2b0" target="id-15f4063f0b6b4bd886e2f51aec1ca089" archimateRelationship="id-fd58cc6a3a664ddf84abd0a5865ab448"/>
+              <child xsi:type="archimate:DiagramObject" id="id-4d3949cabd854dabbb92851c038aa78e" archimateElement="id-0d2603fc1ad64e65a7eca9f214792093">
+                <bounds x="15" y="61" width="150" height="60"/>
+              </child>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-28da4e10fe6d4f6fbb4887c86089ee0e" archimateElement="id-8e392207203f40b2b0a50bcbe62efc90">
-              <bounds x="252" y="30" width="190" height="60"/>
+              <bounds x="282" y="30" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-d4b215140ffa489f8da7eebe62d28197" source="id-28da4e10fe6d4f6fbb4887c86089ee0e" target="id-f666f80a77c246c796f0252727bed2b0" archimateRelationship="id-28f51595993749658da137e36c47fb08">
-                <bendpoint startX="-155" endX="135"/>
+                <bendpoint startX="-139" endX="133" endY="-38"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-2d5519c7e6894e5ba96e58ae0a04eddc" source="id-28da4e10fe6d4f6fbb4887c86089ee0e" target="id-56eae78d0e6444208d607588179bf53d" archimateRelationship="id-b98f1612643a47db8e8d4b8bd1e1137c"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-56eae78d0e6444208d607588179bf53d" targetConnections="id-2d5519c7e6894e5ba96e58ae0a04eddc" archimateElement="id-4f03a460e265434e87e0081ee5018122">
-              <bounds x="552" y="30" width="180" height="60"/>
+              <bounds x="572" y="30" width="180" height="60"/>
             </child>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-9f2a49b6f8af4c5b87d32b421cc04f09" textAlignment="1" archimateElement="id-85399b46487d42d0b1f00ed00e7a0890">
             <bounds x="828" y="36" width="870" height="405"/>
             <child xsi:type="archimate:DiagramObject" id="id-93f8f6378f3b4cc6ada6a16f8388146d" targetConnections="id-52960648d2c549f281648aa5ca4b1533 id-00e84fb7bebd491da3142a5fe747b481" archimateElement="id-b3dcca7f045e43f49523fe907a138a79">
-              <bounds x="15" y="30" width="150" height="360"/>
+              <bounds x="15" y="30" width="180" height="360"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-729936a8e7464f589f371c4def5475c6" source="id-93f8f6378f3b4cc6ada6a16f8388146d" target="id-4debd6ce00644f239db24f0d5db8da1b" archimateRelationship="id-e72382d7c77848648a5cc8a8e955a02c"/>
+              <child xsi:type="archimate:DiagramObject" id="id-ad1971fac056451d86bc3117bb1e0b56" archimateElement="id-ada4b300178d4ff6a7a01bc9405f74fb">
+                <bounds x="15" y="285" width="150" height="60"/>
+              </child>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-5435ccce5f634342a895740f82865273" archimateElement="id-f4ce9e396faf4c5395d097ec91278ec2">
               <bounds x="285" y="30" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-52960648d2c549f281648aa5ca4b1533" source="id-5435ccce5f634342a895740f82865273" target="id-93f8f6378f3b4cc6ada6a16f8388146d" archimateRelationship="id-6968c01393184d71b1d98f2a4c15402e">
-                <bendpoint startX="-155" endX="135" endY="-150"/>
+                <bendpoint startX="-140" endX="135" endY="-150"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-c53393b632264ee9b9d94ed0d7843bfb" source="id-5435ccce5f634342a895740f82865273" target="id-3839e32d2879449d984f3b36c0e9966f" archimateRelationship="id-bbaccf420c0746aabb7844d4a20b4f37"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-147360d5496b4cdf8017b26b146ac03d" source="id-5435ccce5f634342a895740f82865273" target="id-5c1cffa6d995436e9a85f2e4faee281e" archimateRelationship="id-1b0f29f125a648508f98d5dc428e9677">
@@ -6535,7 +6714,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <child xsi:type="archimate:DiagramObject" id="id-9b3393f7401c47f396e3683a7f80dcc6" archimateElement="id-91e23dd9dfb741b79a6f487952bd22c0">
               <bounds x="285" y="180" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-00e84fb7bebd491da3142a5fe747b481" source="id-9b3393f7401c47f396e3683a7f80dcc6" target="id-93f8f6378f3b4cc6ada6a16f8388146d" archimateRelationship="id-bb89f82f51614aa3a49526313fb6c779">
-                <bendpoint startX="-155" endX="135"/>
+                <bendpoint startX="-140" endX="135"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-7d3d4e74b40d40d0a78cf7bcb0afc6fa" source="id-9b3393f7401c47f396e3683a7f80dcc6" target="id-aaa3f266630a46fba3078b4d163a9e5b" archimateRelationship="id-6db142c91bc84adf9789556a5008a02d"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-1acc9f38a72b49d7a92fd3554306a030" source="id-9b3393f7401c47f396e3683a7f80dcc6" target="id-d1835effe82a44aa8e7166cf4fcce388" archimateRelationship="id-ca44f8e9e91549bd8d9b4f26a8bcaf97">
@@ -6564,19 +6743,19 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             </child>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-15f4063f0b6b4bd886e2f51aec1ca089" targetConnections="id-0acca21f6b4845f29e58a8e89cc41dff" archimateElement="id-e1d1c15205ba48a4a268ba022590c305">
-            <bounds x="35" y="175" width="150" height="60"/>
+            <bounds x="50" y="251" width="150" height="60"/>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-4debd6ce00644f239db24f0d5db8da1b" targetConnections="id-729936a8e7464f589f371c4def5475c6" archimateElement="id-79b4e5f58e944efeb2843c21a189f6eb">
-            <bounds x="840" y="456" width="150" height="60"/>
+            <bounds x="858" y="456" width="150" height="60"/>
           </child>
         </child>
-        <documentation>Agregados del dominio Disponibilidad de yates: &quot;Agregado Yate&quot; y &quot;Agregado Calendario del yate&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5), los comandos que acceden a ella y los eventos que disparan. Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
+        <documentation>Agregados del dominio Disponibilidad de yates: &quot;Agregado Yate&quot; y &quot;Agregado Calendario del yate&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5) y, dentro de ella, su objeto de valor: &quot;Datos del yate&quot; y &quot;Rango de fechas&quot;. Además, los comandos que acceden a la raíz y los eventos que disparan. Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.4 - Operación del arriendo" id="id-99e7c46b42fd4a96ac513a1127ef3647">
         <child xsi:type="archimate:DiagramObject" id="id-229f8b50a5cd4d248d7ece67c1b172bd" textAlignment="1" archimateElement="id-41501569cf094ac4b3cc80b4ab439a97">
-          <bounds x="20" y="20" width="840" height="1030"/>
+          <bounds x="20" y="20" width="840" height="1100"/>
           <child xsi:type="archimate:DiagramObject" id="id-83b721e188074dc787e6d440bcbe9eeb" textAlignment="1" archimateElement="id-cba36345d0664e588345d53208c936f0">
-            <bounds x="20" y="380" width="800" height="180"/>
+            <bounds x="20" y="450" width="800" height="180"/>
             <child xsi:type="archimate:DiagramObject" id="id-5dbc9eed0c5c46f7a126258d3bcbaa05" targetConnections="id-62ca8603c1464406a43971493d121e8e id-a7f32f0e29f84bb0a39ae7a02e2265ad" archimateElement="id-f4fb995872c5435f8ccb7e85e17cbee9">
               <bounds x="15" y="30" width="150" height="136"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-7b420b394b274ea6b32e40e8436bb5ab" source="id-5dbc9eed0c5c46f7a126258d3bcbaa05" target="id-90240e1fdb1748c5af1a297995285169" archimateRelationship="id-0fd5b51e6b8e4c088348c3e911d344a1"/>
@@ -6593,25 +6772,28 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             </child>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-db946253937d479ab9072090043faa8a" textAlignment="1" archimateElement="id-0af905a47ab94912aef5350558410200">
-            <bounds x="20" y="40" width="800" height="180"/>
+            <bounds x="20" y="40" width="800" height="250"/>
             <child xsi:type="archimate:DiagramObject" id="id-4bcaf1c8daef44a683a175915ef2f893" targetConnections="id-c987fc72cec94130ad7a590353076fb7 id-b1fe4ea627774210a3a8846742ddb288" archimateElement="id-2856d4f6a4b0480a86d14826dd18dedf">
-              <bounds x="15" y="30" width="150" height="136"/>
+              <bounds x="15" y="30" width="180" height="206"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-8107fd7002054b4c87e6d75bca7fb324" source="id-4bcaf1c8daef44a683a175915ef2f893" target="id-057969322987495eb153981068e04d75" archimateRelationship="id-8d245ce10b454ea2b19376e0473e48b3"/>
+              <child xsi:type="archimate:DiagramObject" id="id-b46bfff04db74f1c91e958ddfc469a74" archimateElement="id-77723acb9d8548ae97e705f95c114cc6">
+                <bounds x="15" y="131" width="150" height="60"/>
+              </child>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-1170512d1f9045c1bd82e417eb7dde43" targetConnections="id-39be0d180b5a48f3946ab74fc4b58574" archimateElement="id-8222df5442934cf5a117ced88ec7329e">
               <bounds x="265" y="105" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-c987fc72cec94130ad7a590353076fb7" source="id-1170512d1f9045c1bd82e417eb7dde43" target="id-4bcaf1c8daef44a683a175915ef2f893" archimateRelationship="id-5c47e9fe9f584e189c86bb66c2417660">
-                <bendpoint startX="-145" endX="125" endY="37"/>
+                <bendpoint startX="-130" endX="125" endY="2"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-a7f32f0e29f84bb0a39ae7a02e2265ad" source="id-1170512d1f9045c1bd82e417eb7dde43" target="id-5dbc9eed0c5c46f7a126258d3bcbaa05" archimateRelationship="id-24f3ce3a9db84a25881f367fb6aa4390">
-                <bendpoint startY="265" endX="270" endY="-38"/>
+                <bendpoint startY="335" endX="270" endY="-38"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-2205ba4066e5499ea9ea45fcfe4cf381" source="id-1170512d1f9045c1bd82e417eb7dde43" target="id-2fdbeb2c08e94259bd7371e66b1cb914" archimateRelationship="id-b9a40d1276c24a31b71f727c51d15ce9"/>
             </child>
             <child xsi:type="archimate:DiagramObject" id="id-eece6a9e7da947eaaef50b0518c753bf" archimateElement="id-c6f7cd3f402f41feb9d986570982815a">
               <bounds x="265" y="30" width="190" height="60"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-b1fe4ea627774210a3a8846742ddb288" source="id-eece6a9e7da947eaaef50b0518c753bf" target="id-4bcaf1c8daef44a683a175915ef2f893" archimateRelationship="id-7cedcacc655044db88fbd6eab1a92a94">
-                <bendpoint startX="-145" endX="125" endY="-38"/>
+                <bendpoint startX="-130" endX="125" endY="-73"/>
               </sourceConnection>
               <sourceConnection xsi:type="archimate:Connection" id="id-f1b419ffa37d4c4593e1b4c59b4671e0" source="id-eece6a9e7da947eaaef50b0518c753bf" target="id-12379fb222f1409daebdd9ba4e2874a8" archimateRelationship="id-8a006a49b9b74eaeae10df426187a408"/>
             </child>
@@ -6627,7 +6809,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             </child>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-5b9f736de6dd4cb6abf54a7e88b1fabb" textAlignment="1" archimateElement="id-a60ede1cd8e943f980f2e677828f3d17">
-            <bounds x="20" y="720" width="800" height="180"/>
+            <bounds x="20" y="790" width="800" height="180"/>
             <child xsi:type="archimate:DiagramObject" id="id-ee277b3fae804f9baadecdf39ddc4efc" targetConnections="id-44a2e0752d054b798a2b8c4d34fa85c9 id-479050a56400474f8b006537fc5dd526" archimateElement="id-6858d99a4eb2404d8c0fce1abfc1d10e">
               <bounds x="15" y="30" width="150" height="136"/>
               <sourceConnection xsi:type="archimate:Connection" id="id-55c1fea5269340338c93b52b3a82362d" source="id-ee277b3fae804f9baadecdf39ddc4efc" target="id-fbcc0a7ce7b046c79363a14bd95869b9" archimateRelationship="id-805fe1a7c3ea4bb3833f908245d4bdf8"/>
@@ -6655,19 +6837,19 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             </child>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-90240e1fdb1748c5af1a297995285169" targetConnections="id-7b420b394b274ea6b32e40e8436bb5ab" archimateElement="id-8a315c4a6da347d09ec6c376332d5108">
-            <bounds x="35" y="610" width="150" height="60"/>
+            <bounds x="35" y="680" width="150" height="60"/>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-057969322987495eb153981068e04d75" targetConnections="id-8107fd7002054b4c87e6d75bca7fb324" archimateElement="id-f230c2e3e8ba4d8f9f39b2d81fe3cad7">
-            <bounds x="35" y="270" width="150" height="60"/>
+            <bounds x="50" y="340" width="150" height="60"/>
           </child>
           <child xsi:type="archimate:DiagramObject" id="id-fbcc0a7ce7b046c79363a14bd95869b9" targetConnections="id-55c1fea5269340338c93b52b3a82362d" archimateElement="id-3bf5c85a70e04176ade88ecf663d9026">
-            <bounds x="35" y="950" width="150" height="60"/>
+            <bounds x="35" y="1020" width="150" height="60"/>
           </child>
         </child>
         <child xsi:type="archimate:DiagramObject" id="id-a8ca1e91ff2f4576bacffe052af885c3" targetConnections="id-fb4be2829d2b4c30a5763b375445d7d0" archimateElement="id-59c3b7a4d9704420b5421d4268a16863">
-          <bounds x="920" y="845" width="180" height="60"/>
+          <bounds x="920" y="915" width="180" height="60"/>
         </child>
-        <documentation>Agregados del dominio Operación del arriendo: &quot;Agregado Acta de entrega&quot;, &quot;Agregado Acta de inspección&quot; y &quot;Agregado Lectura de ubicación y combustible&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5), los comandos que acceden a ella, los eventos que disparan y la política interna (evento que dispara un comando). Un evento realiza un evento de negocio de la V3. Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
+        <documentation>Agregados del dominio Operación del arriendo: &quot;Agregado Acta de entrega&quot;, &quot;Agregado Acta de inspección&quot; y &quot;Agregado Lectura de ubicación y combustible&quot;. Cada uno con su raíz (objeto de datos que realiza su objeto de negocio de la V5); dentro de la raíz &quot;Acta de inspección&quot; va su objeto de valor, &quot;Daño encontrado&quot;. Además, los comandos que acceden a la raíz, los eventos que disparan y la política interna (evento que dispara un comando). Un evento realiza un evento de negocio de la V3. Los agregados y sus elementos se ven por anidamiento dentro del dominio.</documentation>
       </element>
       <element xsi:type="archimate:ArchimateDiagramModel" name="V6.5 - Calificaciones" id="id-93c047a263004ed1a92d9dc206c209cd">
         <child xsi:type="archimate:DiagramObject" id="id-094a68b19ba249b19247c35a0b18cee7" textAlignment="1" archimateElement="id-1c7b577ca7d04284ab10399e9b7ab37f">

@@ -70,7 +70,7 @@ La columna "Dónde se resuelve" sale de las relaciones del modelo. En la V1 est�
 
 ## Contenido del repositorio
 
-- [modelo/YateGear.archimate](modelo/YateGear.archimate): el modelo ArchiMate fuente. Es un único modelo con 416 elementos, 890 relaciones y 27 vistas, y se abre con Archi.
+- [modelo/YateGear.archimate](modelo/YateGear.archimate): el modelo ArchiMate fuente. Es un único modelo con 425 elementos, 908 relaciones y 27 vistas, y se abre con Archi.
 - [vistas/](vistas/): las 27 vistas exportadas como imagen. Cada archivo lleva el código de su vista, por ejemplo `V4.01.png`.
 - [entrevista/](entrevista/): la evidencia de la Fase 0.
   - [01-instruccion-rol-experto.md](entrevista/01-instruccion-rol-experto.md): la instrucción de rol del experto.
@@ -1133,7 +1133,7 @@ Son parte del lenguaje, pero no se crean como representación porque ya existen 
 | Reserva confirmada | Evento de la V3 | Gestión del arriendo | La reserva queda confirmada con riesgo aceptable, contrato firmado y pagos hechos. | Con el riesgo aceptable, el contrato firmado y el alquiler, el seguro y el depósito pagados, la reserva queda confirmada y se avisa al propietario y a la marina. | H-07; E2E-03, REG-01 |
 | Pérdida de señal | Evento de la V3 ("Pérdida de señal del yate") | Operación del arriendo | El dispositivo del yate deja de enviar datos mientras está arrendado. | Si el dispositivo deja de enviar datos en el mar, la marina intenta contactar al cliente para saber cómo está el yate. | H-12; E2E-05, EXC-01 |
 | Arriendo cerrado | Evento de la V3 | Gestión del arriendo | El arriendo se cierra cuando terminan los ajustes de dinero. | Cuando Finanzas cobra el combustible y decide sobre el depósito, se cierra el arriendo; hoy eso tarda unos 10 días. | E2E-01, E2E-07 |
-| Comisión | Objeto de valor de la raíz "Cuenta del arriendo" (V6) | Cobros y depósito | Parte del alquiler con la que se queda YateGear; el resto se le paga al propietario cada mes. La aplicación la calcula al cerrar las cuentas del arriendo (SB-17) y la envía a Finanzas (SA-08); el pago mensual al propietario queda fuera del alcance. | Si un cliente arrienda un yate por tres días, YateGear cobra el total del alquiler, se queda con su comisión y el resto es para el propietario. | H-11; CTX-01; SB-17, SA-08 (V4) |
+| Comisión | Campo de la raíz "Cuenta del arriendo" (V6) | Cobros y depósito | Parte del alquiler con la que se queda YateGear; el resto se le paga al propietario cada mes. La aplicación la calcula al cerrar las cuentas del arriendo (SB-17) y la envía a Finanzas (SA-08); el pago mensual al propietario queda fuera del alcance. | Si un cliente arrienda un yate por tres días, YateGear cobra el total del alquiler, se queda con su comisión y el resto es para el propietario. | H-11; CTX-01; SB-17, SA-08 (V4) |
 | Contrato de servicio | Elementos Contract de la V4 | Ninguno: vocabulario del equipo | Especificación de un servicio de la arquitectura. Es vocabulario del equipo, no del negocio: no se debe confundir con el "Contrato de arriendo". | El contrato de SB-07 "Confirmar la reserva" dice qué recibe el servicio, qué entrega y qué reglas cumple. | V4, contratos de servicio |
 | Cuenta del arriendo | Objeto de datos "Cuenta del arriendo" (V6), raíz de su agregado | Cobros y depósito | Los cobros de un arriendo, desde el alquiler y el seguro al reservar hasta los cargos del cierre y el reembolso. Se cierra cuando están todos los cargos y la decisión sobre el depósito, y lo que le corresponde al propietario pasa a Finanzas. | Todos los pagos del cliente pasan por la pasarela en dos momentos, al reservar y al cierre; la cuenta del arriendo los reúne y se cierra cuando ya están todos. | E2E-04; SB-17, SB-18 (V4); V6-DEC-05 |
 | Ajustes de dinero | Núcleo del nombre del proceso "Hacer los ajustes de dinero" (V3) y del servicio SP-03 "Ajustes de dinero del cierre" (V4) | Cobros y depósito | Lo que se hace con el dinero cuando el yate vuelve y la marina hizo la inspección: cobrar los cargos del cierre, liberar el depósito o descontar de él los daños y, si el daño supera el depósito, reclamar a la aseguradora. Con ellos se cierra el arriendo. | Con lo que reporta la marina, Finanzas hace los ajustes por la pasarela de pagos: siempre se cobra el combustible consumido y, con el depósito, si no hay daños, se libera. | H-10, H-13, H-15; E2E-01, E2E-06 |
@@ -1175,7 +1175,7 @@ El experto las señaló en VOC-01 y el análisis las recoge en H-17. Cada palabr
 | V7-DEC-02 | Los 14 objetos de negocio de la V4 son términos del glosario tal como están. | Ya tienen nombre, definición y dominio (V5-DEC-02). Una representación por cada uno daría 14 elementos con el mismo nombre que su objeto, contra la regla de nombres V4-DEC-13. |
 | V7-DEC-03 | "Reserva confirmada", "Pérdida de señal", "Arriendo cerrado" y "Cuenta del arriendo" no se crean como representación. | Ya existen en el modelo con ese nombre: los tres primeros como eventos de la V3 y "Cuenta del arriendo" como objeto de datos de la V6. Van en la tabla de términos sin elemento propio, apuntando a ese elemento. La regla vale solo con el nombre exacto. |
 | V7-DEC-04 | La relación término --> objeto de negocio es una asociación, no una realización. | La realización dice que la representación es la forma perceptible del objeto (un PDF realiza un contrato). Aquí el término es un estado, una condición o una parte del dato; la asociación no afirma más de lo que se sabe. |
-| V7-DEC-05 | "Comisión", "Ajustes de dinero" y "Contrato de servicio" no llevan representación. | La comisión es un valor que la aplicación calcula al cerrar las cuentas (SB-17) y envía a Finanzas (SA-08); en la V6 es un objeto de valor y ningún comando ni evento la nombra. "Ajustes de dinero" ya está en el modelo como núcleo de dos nombres. "Contrato de servicio" es vocabulario de arquitectura y se anota para no confundirlo con el "Contrato de arriendo". |
+| V7-DEC-05 | "Comisión", "Ajustes de dinero" y "Contrato de servicio" no llevan representación. | La comisión es un valor que la aplicación calcula al cerrar las cuentas (SB-17) y envía a Finanzas (SA-08); en la V6 es un campo de la raíz Cuenta del arriendo y ningún comando ni evento la nombra. "Ajustes de dinero" ya está en el modelo como núcleo de dos nombres. "Contrato de servicio" es vocabulario de arquitectura y se anota para no confundirlo con el "Contrato de arriendo". |
 | V7-DEC-06 | Cada término pertenece a un solo dominio. | Es la misma regla de dueño de la V5 (V5-DEC-02): un término va en el dominio del objeto de negocio al que se refiere. Solo las palabras ambiguas aparecen en dos dominios, con un significado distinto en cada uno. |
 | V7-DEC-07 | "Entrega del yate a YateGear" queda fuera de los dominios. | Ese sentido corresponde a la vinculación del propietario, que no está en A1 a A6 (V2-DEC-04). Se muestra para que la ambigüedad quede explícita. |
 | V7-DEC-08 | "Disponible para entregar" no se asocia con ningún objeto de negocio. | Que el yate esté preparado es operación interna de la marina (D-01, D-02). La aplicación no guarda ese estado; el acta de entrega registra la entrega, no la preparación. |
@@ -1196,16 +1196,19 @@ Cómo se modela:
 | Concepto DDD | Elemento ArchiMate | Relaciones |
 |---|---|---|
 | Dominio | Agrupación de la V5, reutilizada | Agrega sus agregados (V6-DEC-01). |
-| Agregado | Agrupación "Agregado <raíz>" | Agrega su raíz, sus entidades, sus comandos y sus eventos. |
-| Raíz y entidad | Objeto de datos, con la propiedad `Tipo DDD` = Raíz o Entidad | La raíz compone las demás entidades. Cada objeto de datos realiza su objeto de negocio de la V4; la raíz realiza también los de sus objetos de valor (V6-DEC-06). |
-| Objeto de valor | Sin elemento: va en la documentación de su raíz y en las tablas de esta sección | - |
+| Agregado | Agrupación "Agregado <raíz>" | Agrega su raíz, sus entidades, sus objetos de valor, sus comandos y sus eventos. |
+| Raíz y entidad | Objeto de datos, con la propiedad `Tipo DDD` = Raíz o Entidad | La raíz compone las demás entidades. Cada objeto de datos realiza su objeto de negocio de la V4. |
+| Objeto de valor | Objeto de datos, con la propiedad `Tipo DDD` = Objeto de valor, si tiene nombre propio y varias partes. Si es un solo dato, es un campo de su raíz o entidad (V6-DEC-16). | La raíz lo compone, con la propiedad `Cardinalidad`, y el agregado lo agrega. En la vista va dentro de su raíz. Si tiene objeto de negocio en la V4, lo realiza (V6-DEC-06). |
+| Campo | Propiedad `Campo: <nombre>` de la raíz, la entidad o el objeto de valor, con su tipo como valor (V6-DEC-17). | - |
 | Comando | Proceso de aplicación, con la propiedad `Servicio básico V4` | Accede a la raíz de su agregado: escritura si cambia su estado y lectura si solo decide o avisa (V6-DEC-09). Realiza su servicio básico de la V4; esa relación está en el modelo, no en la vista (V6-DEC-02). |
 | Evento | Evento de aplicación, en participio pasado | El comando lo dispara. Si la V3 tiene el mismo hecho, lo realiza. |
 | Política del dominio | - | Evento --> dispara --> comando del mismo dominio (V6-DEC-14). |
 
+Los objetos de valor con elemento en el modelo son nueve: Fechas del arriendo, Yate del arriendo, Ficha del cliente, Evaluación de riesgo, Pruebas de pago, Póliza del arriendo, Datos del yate, Rango de fechas y Daño encontrado. Las filas "Campo" de las tablas de esta sección son campos de su raíz, de su entidad o de un objeto de valor (V6-DEC-16).
+
 Tres reglas guían la V6. Un servicio básico es comando si cambia el estado de un agregado o si produce un hecho al que otro comando o un tercero reacciona (V6-DEC-03). Un invariante es lo que el agregado puede validar solo, con sus propios datos, en una transacción (diapositiva 19); lo que depende de otro agregado, de otro dominio o de quién ejecuta el comando es una regla de comando o una política (V6-DEC-04). Se mantiene la regla de no repetir nombres, con una excepción: un elemento se llama igual que otro de otra capa cuando lo realiza (V6-DEC-02).
 
-Para leer las vistas: cada vista muestra el dominio con sus agregados. Cada agregado tiene tres columnas, como la diapositiva 23: entidades, comandos y eventos. Debajo, dentro del dominio, van los objetos de negocio que se realizan; fuera, a la derecha, los eventos de la V3 que se realizan. Los agregados y sus elementos se ven por anidamiento.
+Para leer las vistas: cada vista muestra el dominio con sus agregados. Cada agregado tiene tres columnas, como la diapositiva 23: entidades, comandos y eventos. Los objetos de valor van dentro de su raíz. Debajo, dentro del dominio, van los objetos de negocio que se realizan; fuera, a la derecha, los eventos de la V3 que se realizan. Los agregados y sus elementos se ven por anidamiento.
 
 ### V6.1 - Gestión del arriendo
 
@@ -1218,12 +1221,12 @@ El dominio Gestión del arriendo tiene un agregado, "Agregado Arriendo", con 6 c
 | Parte | Elemento | Descripción |
 |---|---|---|
 | Límite | Agregado Arriendo | Confirmar necesita juntos el riesgo, la licencia, la autorización y las pruebas de pago en una sola transacción, y SB-06 escribe el arriendo y la ficha del cliente en una sola operación. |
-| Raíz | Arriendo | Uso de un yate por un cliente en unas fechas, desde la solicitud de reserva hasta el cierre. Identidad: número del arriendo. Estados: reserva solicitada, reserva confirmada, no realizado por riesgo alto, cancelado, en curso, devuelto y cerrado. Realiza "Arriendo", "Evaluación de riesgo" y "Ficha del cliente" (V4). |
+| Raíz | Arriendo | Uso de un yate por un cliente en unas fechas, desde la solicitud de reserva hasta el cierre. Identidad: número del arriendo. Estados: reserva solicitada, reserva confirmada, no realizado por riesgo alto, cancelado, en curso, devuelto y cerrado. Realiza "Arriendo" (V4). |
 | Objeto de valor | Fechas del arriendo | Inicio y fin. Fuente: SB-06. |
 | Objeto de valor | Yate del arriendo | Identificador del yate, su propietario, su precio por día y la marina donde está guardado, copiados del inventario al registrar la solicitud. Es la copia propia de cada contexto (V8-DEC-04). Fuente: SB-06. |
-| Objeto de valor | Ficha del cliente | Referencia al CRM, licencia de navegación (número y vigencia) y autorización de datos (fecha y terceros autorizados). No tiene identidad propia: es la copia que guarda cada arriendo (V6-SUP-01). Fuente: SB-06, SB-11, SA-01. |
-| Objeto de valor | Evaluación de riesgo | Nivel (bajo, medio o alto) y fecha. Nadie la modifica después de recibirla. Fuente: SB-12, SA-04. |
-| Objeto de valor | Referencia del contrato firmado | El contrato del cliente vive en Gestión de contratos; el arriendo guarda su referencia. Fuente: SB-07, SA-02. |
+| Objeto de valor | Ficha del cliente | Referencia al CRM, licencia de navegación (número y vigencia) y autorización de datos (fecha y terceros autorizados). No tiene identidad propia: es la copia que guarda cada arriendo (V6-SUP-01). Fuente: SB-06, SB-11, SA-01. Realiza "Ficha del cliente" (V4). |
+| Objeto de valor | Evaluación de riesgo | Nivel (bajo, medio o alto) y fecha. Nadie la modifica después de recibirla. Fuente: SB-12, SA-04. Realiza "Evaluación de riesgo" (V4). |
+| Campo | Referencia del contrato firmado | El contrato del cliente vive en Gestión de contratos; el arriendo guarda su referencia. Fuente: SB-07, SA-02. |
 | Objeto de valor | Pruebas de pago | Comprobantes del alquiler y del seguro y autorización del bloqueo del depósito. Fuente: SB-07. |
 
 Invariantes del agregado:
@@ -1262,15 +1265,15 @@ El dominio Cobros y depósito tiene tres agregados: "Agregado Depósito para da�
 |---|---|---|
 | Límite | Agregado Depósito para daños | Tiene su propio ciclo (bloqueado, y luego liberado o descontado) y su propio resultado medible (V4-DEC-04). |
 | Raíz | Depósito para daños | Garantía que se bloquea en la tarjeta de crédito del cliente al reservar y que al cierre se libera o se descuenta; si la reserva se cancela, se libera al cancelar (V4-SUP-09). Identidad: la del arriendo. Estados: bloqueado, liberado y descontado. Realiza "Depósito para daños" (V4). |
-| Objeto de valor | Valor del depósito | Fuente: SB-19. |
-| Objeto de valor | Código de autorización de la pasarela | Fuente: SB-19, SA-06. |
-| Objeto de valor | Fecha de vencimiento del bloqueo | La autorización en tarjeta de crédito dura 28 días (V4-SUP-07). Fuente: SB-19; contraste de H-10. |
-| Objeto de valor | Evidencia del descuento | Las fotos y actas que respaldan el descuento. Fuente: SB-21, H-13. |
+| Campo | Valor del depósito | Fuente: SB-19. |
+| Campo | Código de autorización de la pasarela | Fuente: SB-19, SA-06. |
+| Campo | Fecha de vencimiento del bloqueo | La autorización en tarjeta de crédito dura 28 días (V4-SUP-07). Fuente: SB-19; contraste de H-10. |
+| Campo | Evidencia del descuento | Las fotos y actas que respaldan el descuento. Fuente: SB-21, H-13. |
 
 Invariantes del agregado:
 
 - Termina en un solo estado final, liberado o descontado; si se descuenta, lo que sobra se libera en la misma operación (H-10, SB-21).
-- El descuento exige evidencia, que la raíz guarda como objeto de valor (H-13).
+- El descuento exige evidencia, que la raíz guarda en su campo "evidencia del descuento" (H-13).
 
 Reglas de comando y políticas:
 
@@ -1285,11 +1288,11 @@ Fuente: H-10, H-13; E2E-04, E2E-06; contratos de SB-19, SB-20 y SB-21; V4-SUP-07
 | Parte | Elemento | Descripción |
 |---|---|---|
 | Límite | Agregado Cuenta del arriendo | SB-13 escribe en una sola operación el cobro del alquiler, el del seguro y la póliza, y SB-17 cierra la cuenta cuando ya están todos los cargos: los cobros de un arriendo se cambian juntos. La cuenta usa el mismo identificador que el arriendo (V6-DEC-05). |
-| Raíz | Cuenta del arriendo | Los cobros de un arriendo, desde el alquiler y el seguro al reservar hasta los cargos del cierre y el reembolso. Identidad: la misma del arriendo. Estados: abierta y cerrada. Realiza "Póliza del arriendo" (V4). |
+| Raíz | Cuenta del arriendo | Los cobros de un arriendo, desde el alquiler y el seguro al reservar hasta los cargos del cierre y el reembolso. Identidad: la misma del arriendo. Estados: abierta y cerrada. |
 | Entidad | Cobro | Cada cargo o devolución de dinero del arriendo (alquiler, seguro, combustible consumido, tiempo adicional o reembolso). Identidad: su comprobante de la pasarela. Estado: orden aprobada o rechazada por la pasarela. Realiza "Cobro" (V4). |
-| Objeto de valor | Póliza del arriendo | Número y valor que emite la aseguradora. Fuente: SB-13, SA-03. |
-| Objeto de valor | Concepto, valor, comprobante y evidencia de cada cobro | Van dentro de la entidad Cobro. La evidencia aplica a los cargos del cierre. Fuente: SB-13, SB-14, SB-15, SA-06. |
-| Objeto de valor | Comisión y valor del propietario | Los calcula SB-17 al cerrar la cuenta y se envían a Finanzas (SA-08). Fuente: SB-17, H-11, CTX-01. |
+| Objeto de valor | Póliza del arriendo | Número y valor que emite la aseguradora. Fuente: SB-13, SA-03. Realiza "Póliza del arriendo" (V4). |
+| Campo | Concepto, valor, comprobante y evidencia de cada cobro | Van dentro de la entidad Cobro. La evidencia aplica a los cargos del cierre. Fuente: SB-13, SB-14, SB-15, SA-06. |
+| Campo | Comisión y valor del propietario | Los calcula SB-17 al cerrar la cuenta y se envían a Finanzas (SA-08). Fuente: SB-17, H-11, CTX-01. |
 
 Invariantes del agregado:
 
@@ -1312,9 +1315,9 @@ Fuente: H-10, H-11, H-14; CTX-01, E2E-04, INT-PAG, EXC-02; contratos de SB-13, S
 |---|---|---|
 | Límite | Agregado Reclamo a la aseguradora | Tiene identidad propia (el número de reclamo) y SB-16 no escribe el depósito. |
 | Raíz | Reclamo a la aseguradora | Solicitud a la aseguradora por la parte del daño que supera el depósito. Identidad: número de reclamo. Realiza "Reclamo a la aseguradora" (V4). |
-| Objeto de valor | Identificador del arriendo | El arriendo al que pertenece el reclamo. Fuente: SB-16. |
-| Objeto de valor | Número de póliza; valor de los daños; valor descontado del depósito | Fuente: SB-16. |
-| Objeto de valor | Evidencia de la entrega y de la inspección | Fuente: SB-16, H-15. |
+| Campo | Identificador del arriendo | El arriendo al que pertenece el reclamo. Fuente: SB-16. |
+| Campo | Número de póliza; valor de los daños; valor descontado del depósito | Fuente: SB-16. |
+| Campo | Evidencia de la entrega y de la inspección | Fuente: SB-16, H-15. |
 
 Invariante del agregado: solo se envía si el daño supera el depósito, y con la evidencia de la entrega y de la inspección (H-15, EXC-02). No tiene reglas de comando ni políticas. Fuente: H-15; EXC-02, INT-ASE; contrato de SB-16.
 
@@ -1344,10 +1347,10 @@ El dominio Disponibilidad de yates tiene dos agregados, "Agregado Yate" y "Agreg
 | Límite | Agregado Yate | El yate se registra una vez y cambia poco; sus fechas van en el agregado Calendario del yate, que tiene sus propias reglas (V4-DEC-03). |
 | Raíz | Yate | Embarcación de un propietario, guardada en una marina aliada, que YateGear ofrece en arriendo. Identidad: identificador del yate en el inventario. Realiza "Yate" (V4). |
 | Objeto de valor | Datos del yate | Nombre, matrícula y capacidad. Fuente: SB-01. |
-| Objeto de valor | Precio por día | Fuente: SB-01, CTX-01. |
-| Objeto de valor | Documentos al día ante la DIMAR | Fuente: SB-01, NOR-01. |
-| Objeto de valor | Referencia del contrato del propietario | El contrato del propietario vive en Gestión de contratos; el yate guarda su referencia. Fuente: SB-01, SA-02, INT-CON. |
-| Objeto de valor | Identificador de la marina | La ficha de la marina es un dato de referencia (V6-DEC-07). Fuente: SB-01. |
+| Campo | Precio por día | Fuente: SB-01, CTX-01. |
+| Campo | Documentos al día ante la DIMAR | Fuente: SB-01, NOR-01. |
+| Campo | Referencia del contrato del propietario | El contrato del propietario vive en Gestión de contratos; el yate guarda su referencia. Fuente: SB-01, SA-02, INT-CON. |
+| Campo | Identificador de la marina | La ficha de la marina es un dato de referencia (V6-DEC-07). Fuente: SB-01. |
 
 Invariante del agregado: se registra solo con el contrato del propietario firmado y los documentos al día ante la DIMAR (SB-01). No tiene reglas de comando ni políticas. Fuente: contrato de SB-01; INT-CON, NOR-01.
 
@@ -1357,8 +1360,8 @@ Invariante del agregado: se registra solo con el contrato del propietario firmad
 |---|---|---|
 | Límite | Agregado Calendario del yate | Es el límite de "cero dobles reservas": solo lo escriben SB-03 y SB-05, y un solo agregado decide la disponibilidad (V4-DEC-03). |
 | Raíz | Calendario del yate | Fechas de un yate. Identidad: la del yate. Realiza "Calendario del yate" (V4). |
-| Objeto de valor | Rango de fechas | Inicio y fin. Fuente: SB-03, SB-05. |
-| Objeto de valor | Estado de cada fecha | Libre, bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada. Fuente: SB-03, SB-05. |
+| Objeto de valor | Rango de fechas | Inicio, fin, estado y, si está apartado u ocupado, el arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03). Fuente: SB-03, SB-05. |
+| Campo | Estado de cada fecha | Bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada. Va en cada rango de fechas (V6-SUP-03). Fuente: SB-03, SB-05. |
 
 Invariantes del agregado:
 
@@ -1390,9 +1393,9 @@ El dominio Operación del arriendo tiene tres agregados: "Agregado Acta de entre
 |---|---|---|
 | Límite | Agregado Acta de entrega | La registra la marina al entregar el yate al cliente (SB-22) y no cambia después. |
 | Raíz | Acta de entrega | Registro de la marina al entregar el yate. Identidad: la del arriendo. Realiza "Acta de entrega" (V4). |
-| Objeto de valor | Fotos | Fuente: SB-22, H-13. |
-| Objeto de valor | Nivel de combustible | Tanque lleno. Fuente: SB-22. |
-| Objeto de valor | Hora de entrega; observaciones | Fuente: SB-22. |
+| Campo | Fotos | Fuente: SB-22, H-13. |
+| Campo | Nivel de combustible | Tanque lleno. Fuente: SB-22. |
+| Campo | Hora de entrega; observaciones | Fuente: SB-22. |
 
 Invariante del agregado: no se registra sin fotos (H-13). Regla de comando: SB-22 rechaza el acta si el arriendo no tiene la reserva confirmada (CIE-01), porque ese estado está en el agregado Arriendo. Fuente: H-13; E2E-01, INT-MAR, CIE-01; contrato de SB-22.
 
@@ -1402,10 +1405,10 @@ Invariante del agregado: no se registra sin fotos (H-13). Regla de comando: SB-2
 |---|---|---|
 | Límite | Agregado Acta de inspección | La registra la marina al recibir el yate (SB-23); es la otra mitad de la evidencia del cierre. |
 | Raíz | Acta de inspección | Registro de la marina al recibir el yate. Identidad: la del arriendo. Realiza "Acta de inspección" (V4). |
-| Objeto de valor | Fotos | Fuente: SB-23, H-13. |
-| Objeto de valor | Nivel de combustible | Fuente: SB-23. |
-| Objeto de valor | Hora de regreso | Fuente: SB-23, H-14. |
-| Objeto de valor | Daños encontrados con su valor | Fuente: SB-23, V4-SUP-03. |
+| Campo | Fotos | Fuente: SB-23, H-13. |
+| Campo | Nivel de combustible | Fuente: SB-23. |
+| Campo | Hora de regreso | Fuente: SB-23, H-14. |
+| Objeto de valor | Daño encontrado | Cada daño encontrado en la inspección, con su descripción y su valor (V6-SUP-04). Fuente: SB-23, V4-SUP-03. |
 
 Invariante del agregado: no se registra sin fotos (H-13). Regla de comando: SB-24 necesita las dos actas, porque su comparación es la evidencia (H-13); por eso lee también la raíz del agregado Acta de entrega (V6-DEC-09). Política: "Inspección de devolución registrada" dispara SB-24. Fuente: H-13, H-14; E2E-06, INT-MAR; contratos de SB-23 y SB-24.
 
@@ -1415,7 +1418,7 @@ Invariante del agregado: no se registra sin fotos (H-13). Regla de comando: SB-2
 |---|---|---|
 | Límite | Agregado Lectura de ubicación y combustible | Cada lectura llega del proveedor por SA-07 y no se modifica (SB-25). |
 | Raíz | Lectura de ubicación y combustible | Dato que envía el dispositivo de un yate por medio del proveedor. Identidad: el yate y la hora de la lectura. Realiza "Lectura de ubicación y combustible" (V4). |
-| Objeto de valor | Posición; nivel de combustible; hora de la lectura | Fuente: SB-25. |
+| Campo | Posición; nivel de combustible; hora de la lectura | Fuente: SB-25. |
 
 Invariante del agregado: una lectura no se modifica. Reglas de comando: SB-25 asocia la lectura a un yate del inventario, que está en otro agregado (SA-07); SB-27 declara la pérdida de señal según el tiempo sin lecturas, un parámetro que fija Operaciones (V4-SUP-04), y solo con un arriendo en curso. Fuente: H-12; INT-GPS, E2E-05; contratos de SB-25 y SB-27.
 
@@ -1439,8 +1442,8 @@ El dominio Calificaciones tiene un agregado, "Agregado Calificación", con 2 com
 |---|---|---|
 | Límite | Agregado Calificación | Cada calificación la da una parte y no cambia después. |
 | Raíz | Calificación | La que se dan cliente y propietario al cerrar un arriendo. Identidad: el arriendo y quién califica. Realiza "Calificación" (V4). |
-| Objeto de valor | Quién califica | Cliente o propietario. Fuente: SB-28, SB-29. |
-| Objeto de valor | Calificación dada | Fuente: SB-28, SB-29, SP-06. |
+| Campo | Quién califica | Cliente o propietario. Fuente: SB-28, SB-29. |
+| Campo | Calificación dada | Fuente: SB-28, SB-29, SP-06. |
 
 Invariante del agregado: una calificación por cada parte y arriendo; lo garantiza su identidad, formada por el arriendo y quien califica (E2E-07, V6-DEC-15). Regla de comando: SB-28 y SB-29 solo se ejecutan con el arriendo cerrado (E2E-07), estado que está en el agregado Arriendo. Fuente: H-16; E2E-07; contratos de SB-28 y SB-29.
 
@@ -1502,7 +1505,7 @@ De los 30 servicios básicos de la V4, 24 son comandos y 6 no lo son (V6-DEC-03)
 | V6-DEC-03 | Solo los servicios básicos que cambian estado o producen un hecho son comandos. | Las consultas no cambian nada, y SB-11 solo valida sin que nadie escuche su resultado. |
 | V6-DEC-04 | Los invariantes del agregado van separados de las reglas de comando y políticas. | El agregado valida sus propias reglas. Lo que depende de otro agregado, de otro dominio, de varias instancias o de quién ejecuta el comando no lo puede proteger el agregado solo. |
 | V6-DEC-05 | Agregado "Cuenta del arriendo", con la entidad Cobro. | SB-13 escribe en una sola operación el cobro del alquiler, el del seguro y la póliza, y SB-17 cierra la cuenta cuando están todos los cargos: los cobros de un arriendo se cambian juntos. La cuenta usa el identificador del arriendo. |
-| V6-DEC-06 | Evaluación de riesgo, Ficha del cliente y Póliza del arriendo son objetos de valor; la raíz realiza su objeto de negocio. | Nadie les cambia el estado después de crearlos y no tienen identidad propia. Para no perder la traza con la V4, Arriendo realiza "Evaluación de riesgo" y "Ficha del cliente", y Cuenta del arriendo realiza "Póliza del arriendo". |
+| V6-DEC-06 | Evaluación de riesgo, Ficha del cliente y Póliza del arriendo son objetos de valor; cada uno es un objeto de datos que realiza su objeto de negocio de la V4. | Nadie les cambia el estado después de crearlos y no tienen identidad propia. Como son objetos de datos (V6-DEC-16), cada uno realiza su objeto de negocio, y la traza con la V4 se mantiene sin excepción a V6-DEC-02. |
 | V6-DEC-07 | "Ficha de la marina" no es parte de ningún agregado. | Ningún servicio básico la escribe: es un dato de referencia que el Yate cita por su identificador. Es el único objeto de negocio de la V4 que no se realiza en la V6. |
 | V6-DEC-08 | Un evento por cada resultado distinto del contrato del comando. | Así lo muestran SB-12, con "Riesgo aceptable obtenido" y "Arriendo no realizado por riesgo alto", y SB-15, con "Cancelación reembolsada" y "Cancelación no reembolsada". |
 | V6-DEC-09 | Cada comando escribe solo en la raíz de su agregado y solo accede a raíces. | La raíz es el único punto de acceso al agregado. Hay 21 accesos de escritura y 3 de lectura (SB-31, SB-24 y SB-27). SB-24 lee además la raíz del Acta de entrega, porque su regla exige las dos actas; leer no cambia el otro agregado. |
@@ -1512,12 +1515,17 @@ De los 30 servicios básicos de la V4, 24 son comandos y 6 no lo son (V6-DEC-03)
 | V6-DEC-13 | "Calificaciones registradas" de la V3 queda sin realizar. | Ocurre cuando ya están las dos calificaciones, y ningún evento por separado es ese hecho. |
 | V6-DEC-14 | Solo las políticas del mismo dominio se dibujan. | Los disparos entre dominios son la entrada de la V8 y van en la tabla de eventos entre dominios, para no mezclar dominios en un diagrama que es por dominio. |
 | V6-DEC-15 | Una calificación por cada parte y arriendo se garantiza con su identidad. | La identidad de la Calificación es el arriendo y quién califica (E2E-07); una segunda calificación de la misma parte para el mismo arriendo tendría la misma identidad. |
+| V6-DEC-16 | Los objetos de valor con nombre propio y varias partes son objetos de datos con `Tipo DDD` = Objeto de valor. Su raíz los compone, con la propiedad `Cardinalidad` (Uno, Cero o uno o Muchos), el agregado los agrega y en la vista van dentro de su raíz. Los que son un solo dato quedan como campos de su raíz o entidad. | El generador de código crea una clase por cada objeto de valor y la propiedad que lo contiene en la raíz. ArchiMate no dice cuántos hay de cada uno; la propiedad `Cardinalidad` lo dice. Un dato suelto no necesita su propia clase. |
+| V6-DEC-17 | Los campos de raíces, entidades y objetos de valor son propiedades `Campo: <nombre>` con su tipo, en el orden en que se leen. Tipos permitidos: `string`, `int`, `decimal`, `bool`, `DateOnly`, `DateTime`, `List<tipo>`, el sufijo `?` para un campo opcional y `enum <Nombre>(valores)`. | ArchiMate no tiene atributos con tipo; las propiedades son su forma de agregar datos a un elemento, y el generador las lee del modelo. Una lista cerrada de tipos evita errores al generar. |
 
 #### Supuestos de la V6
 
 | ID | Supuesto | Por qué se asumió | Dónde se usa |
 |---|---|---|---|
 | V6-SUP-01 | La ficha del cliente es la copia que cada arriendo guarda de los datos del cliente que necesita: referencia al CRM, licencia de navegación y autorización de datos. El dato compartido entre arriendos es la referencia al CRM. | Así lo plantea SA-01 ("solo toma los datos del arriendo"), y cada contexto guarda su propia copia de los datos que necesita de otro (V8-DEC-04). | Objeto de valor "Ficha del cliente" del agregado Arriendo |
+| V6-SUP-02 | Los tipos de dato de los campos los elige el equipo. Las referencias a otros agregados o sistemas (yate, propietario, marina, CRM, contratos, comprobantes, póliza) son texto con su identificador; las fotos y las evidencias, una lista de referencias a archivos; el nivel de combustible, un número decimal; la posición de una lectura, latitud y longitud; la calificación dada, un número entero. | La entrevista y los contratos de la V4 dicen qué datos hay, pero no su formato. | Campos de la V6 |
+| V6-SUP-03 | El calendario guarda rangos de fechas. Cada rango tiene su estado (bloqueada, apartada u ocupada) y, si está apartado u ocupado, el arriendo. Una fecha sin rango está libre. | SB-03 y SB-05 reciben rangos de fechas, y SB-05 recibe el arriendo para apartar, ocupar o soltar. | Objeto de valor "Rango de fechas" del agregado Calendario del yate |
+| V6-SUP-04 | Cada daño encontrado lleva una descripción, además de su valor. | SB-23 dice "daños encontrados con su valor"; sin descripción no se puede respaldar el cargo (principio "Todo cobro va con evidencia"). | Objeto de valor "Daño encontrado" del agregado Acta de inspección |
 
 La V6 usa además V4-SUP-01, V4-SUP-02, V4-SUP-03, V4-SUP-04, V4-SUP-05, V4-SUP-06, V4-SUP-07 y V4-SUP-09. La V8 toma los eventos entre dominios de esta sección para elegir el patrón de cada relación entre contextos.
 
@@ -1877,7 +1885,7 @@ Cada supuesto está en la sección de su vista, con su texto y por qué se asumi
 | V4 | [V4-SUP-01 a V4-SUP-09](#supuestos-de-la-v4) | V3-SUP-06, que desde la V4 se cita como V4-SUP-02 |
 | V5 | Ninguno | V2-SUP-07 |
 | V7 | Ninguno | V4-SUP-02 |
-| V6 | [V6-SUP-01](#supuestos-de-la-v6) | V4-SUP-01, V4-SUP-02, V4-SUP-03, V4-SUP-04, V4-SUP-05, V4-SUP-06, V4-SUP-07 y V4-SUP-09 |
+| V6 | [V6-SUP-01 a V6-SUP-04](#supuestos-de-la-v6) | V4-SUP-01, V4-SUP-02, V4-SUP-03, V4-SUP-04, V4-SUP-05, V4-SUP-06, V4-SUP-07 y V4-SUP-09 |
 | V8 | [V8-SUP-01 a V8-SUP-03](#supuestos-de-la-v8) | V4-SUP-01, V4-SUP-02, V4-SUP-05, V4-SUP-07, V4-SUP-09 y V6-SUP-01 |
 | V9 | Ninguno | V8-SUP-01 y V8-SUP-03 |
 | V10 | Ninguno | V1-SUP-01 y V1-SUP-04, en los casos particulares de la traza |
@@ -1932,6 +1940,7 @@ Las agregaciones de pertenencia (área --> capacidad en la V2, clasificación --
 | V6.1 a V6.5 | Agrupación de agregado | Objeto de datos: la raíz y, en "Agregado Cuenta del arriendo", también la entidad "Cobro" | Agregación | Contenedor --> contenido |
 | V6.1 a V6.5 | Agrupación de agregado | Comando (proceso de aplicación) | Agregación | Contenedor --> contenido |
 | V6.1 a V6.5 | Agrupación de agregado | Evento (evento de aplicación) | Agregación | Contenedor --> contenido |
+| V6.1 a V6.4 | Raíz (objeto de datos) | Objeto de valor | Composición | Contenedor --> contenido |
 | V8 | Componente "Capa anticorrupción" | Servicio de aplicación de la capa (SA-01 a SA-08) | Realización | Contenedor --> contenido |
 | V8 | Componente de contexto ("Contexto Disponibilidad de yates" y los demás) | Servicio de consulta del contexto | Realización | Contenedor --> contenido |
 | V9 | Componente "Capa anticorrupción" | Interfaz de aplicación | Composición | Contenedor --> contenido |
@@ -1945,19 +1954,19 @@ Las agregaciones de pertenencia (área --> capacidad en la V2, clasificación --
 
 ### Totales del modelo
 
-El modelo tiene 416 elementos, 890 relaciones y 27 vistas.
+El modelo tiene 425 elementos, 908 relaciones y 27 vistas.
 
 | Capa | Elementos | Detalle |
 |---|---|---|
 | Estrategia | 39 | 23 capacidades, 7 etapas de flujo de valor, 5 recursos y 4 cursos de acción |
 | Motivación | 36 | 4 interesados, 3 impulsores, 4 evaluaciones, 4 metas, 2 resultados, 2 principios, 7 requerimientos, 4 restricciones y 6 significados |
 | Negocio | 199 | 65 servicios de negocio, 52 contratos, 22 representaciones, 14 procesos, 14 objetos de negocio, 10 actores, 10 funciones, 6 eventos y 6 roles |
-| Aplicación | 100 | 31 eventos de aplicación, 24 procesos de aplicación, 14 servicios de aplicación, 12 componentes, 11 objetos de datos y 8 interfaces |
+| Aplicación | 109 | 31 eventos de aplicación, 24 procesos de aplicación, 20 objetos de datos, 14 servicios de aplicación, 12 componentes y 8 interfaces |
 | Otros | 42 | 41 agrupaciones y 1 unión |
 
 | Relación | Cantidad |
 |---|---|
-| Agregación | 322 |
+| Agregación | 331 |
 | Realización | 144 |
 | Asociación | 102 |
 | Asignación | 72 |
@@ -1965,8 +1974,8 @@ El modelo tiene 416 elementos, 890 relaciones y 27 vistas.
 | Acceso | 68 |
 | Disparo | 55 |
 | Flujo | 36 |
+| Composición | 18 |
 | Influencia | 10 |
-| Composición | 9 |
 
 Las 27 vistas son V1, V2, V3, V4 y sus diez vistas de apoyo V4.01 a V4.10, V5, V6.1 a V6.5, V7, V8, V9, V10, V10.1, V10.2 y V11.
 
