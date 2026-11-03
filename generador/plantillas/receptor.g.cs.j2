@@ -1,0 +1,38 @@
+// {{ cabecera }}
+// Capa 3: recibe los eventos de otros contextos y dispara el comando de este contexto
+// (eventos_de_otros_contextos del YAML). No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Recibe los eventos de otros contextos. Si un evento tiene junto_con, espera a que lleguen todos
+/// los de su grupo (en memoria, por identidad) y entonces dispara el comando con los datos de todos.</summary>
+public sealed class ReceptorDeEventosExternos(
+    EsperaDeEventos espera,
+    Bitacora bitacora,
+{% for d in manejadores %}
+    {{ d.cs }} {{ d.var }}{{ "," if not loop.last }}
+{% endfor %}
+)
+{
+{% for x in externos %}
+{% if not loop.first %}
+
+{% endif %}
+    /// <summary>"{{ x.nombre | xml }}" de "{{ x.de | xml }}" ({{ x.id }}). Dispara "{{ x.comando | xml }}"{% if x.junto_con %} junto con {{ x.junto_con | join(", ") | xml }}{% endif %}.</summary>
+    public RespuestaDeEventoExterno Recibir({{ x.clase }} evento)
+    {
+        bitacora.Anotar("evento recibido", evento.NombreEnElModelo, evento);
+{% if x.grupo %}
+        var juntos = espera.Anotar({{ x.grupo_nombre }}, [{{ x.grupo | join(", ") }}], evento, out var faltan);
+        if (juntos is null)
+        {
+            return RespuestaDeEventoExterno.Esperando(faltan);
+        }
+{% for g in x.variables %}
+        var {{ g.var }} = ({{ g.clase }})juntos[{{ g.nombre }}];
+{% endfor %}
+{% endif %}
+        return RespuestaDeEventoExterno.Ejecutado({{ x.manejador_var }}.Manejar(new {{ x.comando_clase }}({{ x.args | join(", ") }})));
+    }
+{% endfor %}
+}

@@ -1,0 +1,12 @@
+{# Un record posicional: public sealed record Nombre(tipo Prop, ...). #}
+{% macro record(nombre, params, sufijo="") -%}
+{% if params %}
+public sealed record {{ nombre }}(
+{% for p in params %}
+    {{ p.cs }} {{ p.prop }}{{ "," if not loop.last }}
+{% endfor %}
+){{ sufijo }}
+{%- else %}
+public sealed record {{ nombre }}(){{ sufijo }}
+{%- endif %}
+{%- endmacro %}

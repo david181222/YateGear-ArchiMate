@@ -1,0 +1,28 @@
+// {{ cabecera }}
+// No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Raíz "{{ r.nombre | xml }}" del "{{ r.agregado.nombre | xml }}" ({{ r.agregado.id }}).</summary>
+public sealed partial class {{ r.clase }} : IRaiz
+{
+    /// <summary>Identidad: {{ r.id_nombre | xml }}. La asigna el repositorio al guardar ({{ r.prefijo }}{{ "1".zfill(r.digitos) }}, ...).</summary>
+    public string {{ r.id_prop }} { get; private set; } = "";
+
+    /// <summary>Estado de la raíz (lista cerrada del YAML).</summary>
+    public {{ r.estado_clase }} Estado { get; set; }
+{% for f in r.campos %}
+
+    /// <summary>Campo "{{ f.nombre | xml }}" ({{ f.tipo_yaml | xml }}).</summary>
+    public {{ f.decl }}
+{% endfor %}
+{% for v in r.vos %}
+
+    /// <summary>Objeto de valor "{{ v.nombre | xml }}", Cardinalidad {{ v.card }} (composición {{ v.comp_id }}).</summary>
+    public {{ v.decl }}
+{% endfor %}
+
+    string IRaiz.Identidad => {{ r.id_prop }};
+
+    void IRaiz.AsignarIdentidad(string identidad) => {{ r.id_prop }} = identidad;
+}

@@ -1,0 +1,47 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// No editar: el generador reescribe este archivo. Las reglas y los datos calculados van en {{ q.manual.split("/")[-1] }}.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Entrada de la consulta "{{ q.nombre | xml }}" ({{ q.codigo }}).</summary>
+{{ m.record(q.clase, q.parametros, ";") }}
+
+/// <summary>Salida de la consulta "{{ q.nombre | xml }}".</summary>
+{{ m.record(q.salida, q.salida_campos, ";") }}
+
+/// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y la raíz.</summary>
+public sealed record {{ q.datos }}({{ q.clase }} Consulta, {{ raiz.clase }} {{ raiz.clase }});
+
+/// <summary>Manejador de la consulta "{{ q.nombre | xml }}" ({{ q.codigo }}). No cambia la raíz.</summary>
+/// <remarks>
+/// <para>{{ q.contrato.nombre | xml }} ({{ q.contrato.id }}), asociado al servicio de negocio
+/// "{{ q.servicio_negocio.nombre | xml }}" ({{ q.servicio_negocio.id }}).</para>
+/// <para>Entrada: {{ q.contrato.entrada | xml }}</para>
+/// <para>Salida: {{ q.contrato.salida | xml }}</para>
+/// <para>Reglas: {{ (q.contrato.reglas or "el contrato no tiene reglas.") | xml }} Van como comentario en ValidarReglas.</para>
+/// </remarks>
+public sealed partial class {{ q.manejador }}(Repositorio<{{ raiz.clase }}> repositorio)
+{
+    /// <summary>Reglas del contrato. Se escribe en el archivo manual.</summary>
+    partial void ValidarReglas({{ q.datos }} datos);
+{% for k in q.calculados %}
+
+    /// <summary>Dato calculado "{{ k.nombre | xml }}". Se escribe en el archivo manual.</summary>
+    private partial {{ k.cs }} {{ k.metodo }}({{ q.datos }} datos);
+{% endfor %}
+
+    /// <summary>Ejecuta la consulta.</summary>
+    public {{ q.salida }} Manejar({{ q.clase }} consulta)
+    {
+        var {{ raiz.var }} = repositorio.Obtener(consulta.{{ raiz.id_prop }})
+            ?? throw new NoEncontrado($"No existe {{ raiz.nombre | lower }} {consulta.{{ raiz.id_prop }}}.");
+        var datos = new {{ q.datos }}(consulta, {{ raiz.var }});
+        ValidarReglas(datos);
+        return new {{ q.salida }}(
+{% for s in q.salida_campos %}
+            {{ s.expr }}{{ "," if not loop.last }}
+{% endfor %}
+        );
+    }
+}

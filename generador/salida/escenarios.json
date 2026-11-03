@@ -1,0 +1,384 @@
+{
+  "generado_desde": "Generado desde ArchiMate: ApplicationComponent \"Contexto Gestión del arriendo\" (id-fdcc9b19f08a492f8ccd5dd4559926bc).",
+  "ruta_base": "/gestion-del-arriendo",
+  "escenarios": [
+    {
+      "nombre": "Principal hasta el cierre",
+      "identidad": "ARR-0001",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "tipo": "comando",
+          "crea": true,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "cliente",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "precioPorDia": 100,
+            "marina": "marina",
+            "inicio": "2026-02-01",
+            "fin": "2026-02-01",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Obtener el nivel de riesgo del cliente",
+          "tipo": "comando",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/comandos/obtener-el-nivel-de-riesgo-del-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Riesgo aceptable obtenido",
+            "texto": "HTTP 2xx y el evento \"Riesgo aceptable obtenido\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Verificar los requisitos del cliente",
+          "tipo": "consulta",
+          "crea": false,
+          "metodo": "GET",
+          "ruta": "/consultas/verificar-los-requisitos-del-cliente/ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Alquiler y seguro cobrados",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/alquiler-y-seguro-cobrados",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "comprobanteDelAlquiler": "comprobante del alquiler",
+            "comprobanteDelSeguro": "comprobante del seguro"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 202,
+            "texto": "HTTP 202"
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Depósito bloqueado",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/deposito-bloqueado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "autorizacionDelBloqueoDelDeposito": "autorización del bloqueo del depósito"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Aviso de reserva enviado",
+            "texto": "HTTP 2xx y el evento \"Aviso de reserva enviado\""
+          }
+        },
+        {
+          "numero": 6,
+          "nombre": "Consultar el arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-arriendo/ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "estado",
+            "valor": "reserva confirmada",
+            "json": "ReservaConfirmada",
+            "texto": "HTTP 2xx y estado \"reserva confirmada\""
+          }
+        },
+        {
+          "numero": 7,
+          "nombre": "Enviar el aviso de reserva confirmada",
+          "tipo": "comando",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/comandos/enviar-el-aviso-de-reserva-confirmada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 8,
+          "nombre": "Yate entregado al cliente",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/yate-entregado-al-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Arriendo iniciado",
+            "texto": "HTTP 2xx y el evento \"Arriendo iniciado\""
+          }
+        },
+        {
+          "numero": 9,
+          "nombre": "Inspección de devolución registrada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/inspeccion-de-devolucion-registrada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Yate devuelto",
+            "texto": "HTTP 2xx y el evento \"Yate devuelto\""
+          }
+        },
+        {
+          "numero": 10,
+          "nombre": "Cuenta del arriendo cerrada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/cuenta-del-arriendo-cerrada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Arriendo cerrado",
+            "texto": "HTTP 2xx y el evento \"Arriendo cerrado\""
+          }
+        },
+        {
+          "numero": 11,
+          "nombre": "Consultar el arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-arriendo/ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "estado",
+            "valor": "cerrado",
+            "json": "Cerrado",
+            "texto": "HTTP 2xx y estado \"cerrado\""
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Riesgo alto",
+      "identidad": "ARR-0002",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "tipo": "comando",
+          "crea": true,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "CLI-RIESGO-ALTO",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "precioPorDia": 100,
+            "marina": "marina",
+            "inicio": "2026-02-01",
+            "fin": "2026-02-01",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Obtener el nivel de riesgo del cliente",
+          "tipo": "comando",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/comandos/obtener-el-nivel-de-riesgo-del-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Arriendo no realizado por riesgo alto",
+            "texto": "HTTP 2xx y el evento \"Arriendo no realizado por riesgo alto\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Consultar el arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-arriendo/ARR-0002",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "estado",
+            "valor": "no realizado por riesgo alto",
+            "json": "NoRealizadoPorRiesgoAlto",
+            "texto": "HTTP 2xx y estado \"no realizado por riesgo alto\""
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Cancelación",
+      "identidad": "ARR-0003",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "tipo": "comando",
+          "crea": true,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "cliente",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "precioPorDia": 100,
+            "marina": "marina",
+            "inicio": "2026-02-01",
+            "fin": "2026-02-01",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Cancelar la reserva",
+          "tipo": "comando",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/comandos/cancelar-la-reserva",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003",
+            "quienCancela": "quién cancela",
+            "fechaDeLaCancelacion": "2026-02-01"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Reserva cancelada",
+            "texto": "HTTP 2xx y el evento \"Reserva cancelada\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Registrar el avance del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-el-avance-del-arriendo",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003",
+            "nuevoEstado": "EnCurso",
+            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "texto": "HTTP 409"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Confirmar sin riesgo evaluado",
+      "identidad": "ARR-0004",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "tipo": "comando",
+          "crea": true,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "cliente",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "precioPorDia": 100,
+            "marina": "marina",
+            "inicio": "2026-02-01",
+            "fin": "2026-02-01",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Confirmar la reserva",
+          "tipo": "comando",
+          "crea": false,
+          "metodo": "POST",
+          "ruta": "/comandos/confirmar-la-reserva",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0004",
+            "comprobanteDelAlquiler": "comprobante del alquiler",
+            "comprobanteDelSeguro": "comprobante del seguro",
+            "autorizacionDelBloqueoDelDeposito": "autorización del bloqueo del depósito"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "texto": "HTTP 422"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Entrada del servicio SA "{{ s.nombre | xml }}" ({{ s.codigo }}).</summary>
+{{ m.record(s.entrada, s.entrada_campos, ";") }}
+
+/// <summary>Salida del servicio SA "{{ s.nombre | xml }}" ({{ s.codigo }}).</summary>
+{{ m.record(s.salida, s.salida_campos, ";") }}
+
+/// <summary>Servicio de la capa anticorrupción "{{ s.nombre | xml }}" ({{ s.codigo }}).</summary>
+/// <remarks>
+/// <para>Interfaz: "{{ s.interfaz_modelo.nombre | xml }}" ({{ s.interfaz_modelo.id }}).
+/// Contraparte: {{ s.contraparte.tipo }} "{{ s.contraparte.nombre | xml }}" ({{ s.contraparte.id }}){{ ", sistema externo" if s.contraparte.externo }}.</para>
+/// <para>Flujos:{% for f in s.flujos %} {{ f.direccion }} "{{ f.nombre | xml }}" ({{ f.id }}){{ ";" if not loop.last else "." }}{% endfor %}</para>
+/// <para>{{ s.contrato.nombre | xml }} ({{ s.contrato.id }}). Entrada: {{ s.contrato.entrada | xml }}
+/// Salida: {{ s.contrato.salida | xml }} Reglas: {{ (s.contrato.reglas or "sin reglas.") | xml }}</para>
+/// </remarks>
+public interface {{ s.interfaz }}
+{
+    /// <summary>Llama al servicio.</summary>
+    {{ s.salida }} Llamar({{ s.entrada }} entrada);
+}
+
+/// <summary>"{{ s.contraparte.nombre | xml }}" simulado: responde con los valores fijos del YAML
+/// (casos en orden y, si ninguno se cumple, respuesta_por_defecto).</summary>
+public sealed class {{ s.simulado }}(Bitacora bitacora) : {{ s.interfaz }}
+{
+    /// <inheritdoc />
+    public {{ s.salida }} Llamar({{ s.entrada }} entrada)
+    {
+        var respuesta =
+{% for k in s.casos %}
+            {{ k.condicion }} ? {{ k.respuesta }} :
+{% endfor %}
+            {{ s.defecto }};
+        bitacora.Anotar("llamada a servicio SA", {{ s.nombre | cadena }}, new { entrada, respuesta });
+        return respuesta;
+    }
+}

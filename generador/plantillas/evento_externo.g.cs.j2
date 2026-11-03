@@ -1,0 +1,15 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// Evento de otro contexto ({{ x.de }}) tal como lo recibe este contexto (capa 3). No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Evento "{{ x.nombre | xml }}" de "{{ x.de | xml }}", con los datos que declara el YAML. Dispara "{{ x.comando | xml }}".</summary>
+{{ m.record(x.clase, x.parametros, " : IEvento") }}
+{
+    /// <summary>Nombre del evento en el modelo.</summary>
+    public string NombreEnElModelo => {{ x.nombre | cadena }};
+
+    /// <summary>Identidad de la raíz.</summary>
+    public string Identidad => {{ raiz.id_prop }};
+}

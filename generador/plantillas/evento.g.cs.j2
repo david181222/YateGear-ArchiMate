@@ -1,0 +1,15 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Evento "{{ e.nombre | xml }}". Lo publica {{ e.publicado_por | xml }}.</summary>
+{{ m.record(e.clase, e.parametros, " : IEvento") }}
+{
+    /// <summary>Nombre del evento en el modelo.</summary>
+    public string NombreEnElModelo => {{ e.nombre | cadena }};
+
+    /// <summary>Identidad de la raíz.</summary>
+    public string Identidad => {{ raiz.id_prop }};
+}

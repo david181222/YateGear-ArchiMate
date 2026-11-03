@@ -1,0 +1,355 @@
+# Especificaciones del Contexto Gestión del arriendo (piloto del generador)
+#
+# Para qué sirve: el modelo de Archi dice qué elementos tiene el contexto (raíz,
+# objetos de valor, comandos, eventos, consultas y servicios SA) y cómo se
+# relacionan. Este archivo agrega lo que el modelo no dice y el generador necesita
+# para escribir el código: datos de entrada y salida, estados y transiciones, y
+# respuestas de los sistemas externos simulados.
+#
+# Las claves son los nombres exactos del modelo. Si falta un elemento del contexto
+# o se nombra uno que no existe, el generador se detiene.
+#
+# Tipos: los mismos de los campos del modelo (V6-DEC-17): string, int, decimal,
+# bool, DateOnly, DateTime, List<tipo>, el sufijo ? para un dato opcional y
+# enum <Nombre>(valor, valor, ...). Las fechas de ejemplo van entre comillas.
+#
+# Regla de los datos: un dato pasa de un lugar a otro por su nombre. Si la entrada
+# de un comando trae "inicio" y el objeto de valor "Fechas del arriendo" tiene el
+# campo "inicio", es el mismo dato (lenguaje ubicuo, V7).
+#
+# La identidad de la raíz se agrega sola: el comando que crea la raíz la genera, y
+# va en la entrada de los demás comandos, en la de las consultas y en todos los eventos.
+#
+# Secciones:
+#   raices          identidad de cada raíz y su estado, como lista cerrada.
+#   comandos        entrada; servicios SA que usa (usa); objetos de valor o campos de
+#                   la raíz que escribe (guarda); desde qué estados se permite (desde),
+#                   a qué estado pasa (a) y qué eventos publica (eventos).
+#                   crea: true = el comando crea la raíz.
+#                   resultados = un evento por cada resultado, elegido con la condición
+#                   si (un dato y la lista de valores con que se cumple).
+#   eventos         datos que lleva cada evento del contexto. calculados = datos que
+#                   salen de una regla del contrato; los calcula el código hecho a mano.
+#   consultas       entrada y salida de cada consulta.
+#   eventos_de_otros_contextos
+#                   eventos que llegan de otros contextos, el comando que disparan (dispara),
+#                   valores fijos para su entrada (con) y eventos que deben llegar juntos
+#                   para disparar el comando (junto_con).
+#   servicios_sa    entrada y salida de cada servicio de la capa anticorrupción, y las
+#                   respuestas del sistema externo simulado: una por defecto y casos
+#                   elegidos con la condición si. Todo es fijo: sin azar ni fecha de hoy.
+#   escenarios      pruebas de punta a punta. Cada escenario es una lista de pasos y tiene
+#                   su propio arriendo: su primer paso lo crea (ARR-0001, ARR-0002, ... en
+#                   orden). Un paso es un comando, una consulta o un evento de otro contexto;
+#                   con fija valores de su entrada (el resto toma un valor de ejemplo) y
+#                   espera dice el resultado: un evento, un código HTTP (409, 422, 404 o 202)
+#                   o, en una consulta, {estado: ...}. Sin espera, el paso debe responder 2xx.
+#                   De aquí salen pruebas.http y escenarios.json, que usa probar.ps1.
+#
+# Fuentes: los contratos de la V4, la V6.1, la tabla de eventos entre dominios de la V6
+# y la V9 del README. Todo dato que no sale del README lleva "# supuesto".
+
+contexto: Contexto Gestión del arriendo
+
+raices:
+  Arriendo:
+    identidad:                                    # V6.1: "Identidad: número del arriendo"
+      nombre: número del arriendo
+      tipo: string                                # supuesto: texto, como las demás referencias (V6-SUP-02)
+      prefijo: ARR-                               # supuesto: consecutivo predecible ARR-0001, ARR-0002, ...
+      digitos: 4                                  # supuesto
+    # supuesto: el nombre del enum "Estado del arriendo"; los estados son los de la V6.1.
+    estado: enum Estado del arriendo(reserva solicitada, reserva confirmada, no realizado por riesgo alto, cancelado, en curso, devuelto, cerrado)
+
+comandos:
+
+  Registrar la solicitud de reserva:              # contrato SB-06
+    crea: true
+    a: reserva solicitada
+    entrada:
+      cliente: string                             # identificación del cliente
+      identificador del yate: string
+      propietario: string                         # supuesto: en el piloto la copia del inventario (V8-DEC-04) la envía quien llama, porque el Contexto Disponibilidad de yates todavía no se genera
+      precio por día: decimal                     # supuesto: igual que propietario
+      marina: string                              # supuesto: igual que propietario
+      inicio: DateOnly
+      fin: DateOnly
+      número de la licencia: string
+      vigencia de la licencia: DateOnly
+      fecha de la autorización: DateOnly
+      terceros autorizados: List<string>
+    usa: [Clientes del CRM]                       # V9; de SA-01 sale la referencia al CRM
+    guarda: [Fechas del arriendo, Yate del arriendo, Ficha del cliente]   # V6.1: Fuente SB-06
+    eventos: [Reserva solicitada]
+
+  Obtener el nivel de riesgo del cliente:         # contrato SB-12
+    desde: [reserva solicitada]                   # supuesto: SB-12 sigue a la solicitud (V6, eventos entre dominios); el README no lista los estados
+    entrada: {}
+    usa: [Nivel de riesgo de la evaluadora]       # V9
+    guarda: [Evaluación de riesgo]                # V6.1: Fuente SB-12, SA-04
+    resultados:                                   # un evento por resultado (V6-DEC-08)
+      Riesgo aceptable obtenido:
+        si: {nivel: [bajo, medio]}                # aceptable es bajo o medio (V4-SUP-02); el estado no cambia
+      Arriendo no realizado por riesgo alto:
+        si: {nivel: [alto]}                       # con riesgo alto no se arrienda (REG-01)
+        a: no realizado por riesgo alto
+
+  Confirmar la reserva:                           # contrato SB-07
+    desde: [reserva solicitada]                   # supuesto: orden del ciclo de vida de la V6.1
+    a: reserva confirmada
+    entrada:
+      comprobante del alquiler: string
+      comprobante del seguro: string
+      autorización del bloqueo del depósito: string
+    usa: [Contratos con propietarios y clientes]  # V9; de SA-02 sale la referencia del contrato firmado
+    guarda: [referencia del contrato firmado, Pruebas de pago]          # V6.1: Fuente SB-07, SA-02
+    eventos: [Reserva confirmada]
+
+  Enviar el aviso de reserva confirmada:          # contrato SB-31; solo lee la raíz
+    desde: [reserva confirmada]                   # el aviso sale solo después de confirmar (H-07); el estado no cambia
+    entrada: {}
+    usa: [Avisos y actas de las marinas]          # V9
+    eventos: [Aviso de reserva enviado]
+
+  Cancelar la reserva:                            # contrato SB-08
+    desde: [reserva solicitada, reserva confirmada]   # supuesto: tampoco se cancela un arriendo cancelado o no realizado; que no se cancela si ya empezó es de EXC-02
+    a: cancelado
+    entrada:
+      quién cancela: string                       # supuesto: texto; lo inicia el cliente (V6)
+      fecha de la cancelación: DateOnly
+    eventos: [Reserva cancelada]
+
+  Registrar el avance del arriendo:               # contrato SB-09
+    entrada:
+      nuevo estado: enum Avance del arriendo(en curso, devuelto, cerrado)   # supuesto: nombre del enum; los valores son los avances de SB-09 en la V6.1
+      fecha y hora del cambio: DateTime
+    resultados:
+      Arriendo iniciado:
+        si: {nuevo estado: [en curso]}
+        desde: [reserva confirmada]               # no se entrega sin la reserva confirmada (SB-22, CIE-01)
+        a: en curso
+      Yate devuelto:
+        si: {nuevo estado: [devuelto]}
+        desde: [en curso]                         # supuesto: orden del ciclo de vida de la V6.1
+        a: devuelto
+      Arriendo cerrado:
+        si: {nuevo estado: [cerrado]}
+        desde: [devuelto]                         # se cierra con los ajustes de dinero, después de la devolución (SB-09, E2E-01)
+        a: cerrado
+
+eventos:
+
+  Reserva solicitada:                             # lo escucha Disponibilidad de yates para apartar las fechas (SB-05)
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Riesgo aceptable obtenido:                      # lo escucha SA-02 para enviar el contrato: cliente, yate, fechas y valores (V4, SA-02)
+    datos:
+      referencia al CRM: string
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+      precio por día: decimal                     # supuesto: "valores" del contrato es el precio por día
+
+  Arriendo no realizado por riesgo alto:          # lo escucha Disponibilidad de yates para liberar las fechas (SB-05)
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Reserva confirmada:                             # dispara SB-31; lo escucha Disponibilidad de yates para ocupar las fechas (SB-05)
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Aviso de reserva enviado:
+    datos:
+      constancia del aviso: string                # constancia de que el aviso llegó (contrato SA-05)
+
+  Reserva cancelada:                              # la escuchan Disponibilidad de yates (fechas) y Cobros y depósito (SB-15 y SB-20)
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+      fecha de la cancelación: DateOnly
+    calculados:
+      días de anticipación: int                   # contrato SB-08: días entre la cancelación y la fecha de inicio
+
+  Arriendo iniciado:
+    datos:
+      fecha y hora del cambio: DateTime
+
+  Yate devuelto:
+    datos:
+      fecha y hora del cambio: DateTime
+
+  Arriendo cerrado:                               # lo escucha Calificaciones: el cliente y el propietario del arriendo (V8)
+    datos:
+      referencia al CRM: string
+      propietario: string
+      fecha y hora del cambio: DateTime
+
+consultas:
+
+  Consultar el arriendo:                          # contrato SB-10
+    entrada: {}
+    salida:                                       # cliente, yate, marina, fechas y estado del arriendo
+      referencia al CRM: string
+      identificador del yate: string
+      marina: string
+      inicio: DateOnly
+      fin: DateOnly
+      estado: enum Estado del arriendo(reserva solicitada, reserva confirmada, no realizado por riesgo alto, cancelado, en curso, devuelto, cerrado)
+
+  Verificar los requisitos del cliente:           # contrato SB-11; revisa la ficha del cliente que guarda el arriendo (V8)
+    entrada: {}
+    calculados:                                   # cumple o no cumple, con el motivo (reglas H-09, NOR-01 y H-19)
+      cumple: bool
+      motivo: string?
+
+# Eventos entre dominios de la V6 que disparan un comando de este contexto.
+# Los datos van con los nombres de Gestión del arriendo.
+# supuesto: en un Partnership los dos contextos acuerdan los datos del evento
+# (V8-SUP-02); se revisan al generar el otro contexto.
+eventos_de_otros_contextos:
+
+  Alquiler y seguro cobrados:
+    de: Contexto Cobros y depósito
+    dispara: Confirmar la reserva                 # SB-07 recibe los comprobantes y la autorización del depósito
+    junto_con: [Depósito bloqueado]               # los dos traen las pruebas de pago; el comando corre cuando llegaron los dos
+    datos:
+      comprobante del alquiler: string            # supuesto: en Cobros cada Cobro tiene su "comprobante"; el evento trae los dos con su concepto en el nombre
+      comprobante del seguro: string
+
+  Depósito bloqueado:
+    de: Contexto Cobros y depósito
+    dispara: Confirmar la reserva
+    junto_con: [Alquiler y seguro cobrados]
+    datos:
+      autorización del bloqueo del depósito: string   # supuesto: en Cobros es "código de autorización de la pasarela"
+
+  Yate entregado al cliente:
+    de: Contexto Operación del arriendo
+    dispara: Registrar el avance del arriendo     # "Arriendo iniciado"
+    con: {nuevo estado: en curso}
+    datos:
+      fecha y hora del cambio: DateTime           # supuesto: en Operación es "hora de entrega"
+
+  Inspección de devolución registrada:
+    de: Contexto Operación del arriendo
+    dispara: Registrar el avance del arriendo     # "Yate devuelto"
+    con: {nuevo estado: devuelto}
+    datos:
+      fecha y hora del cambio: DateTime           # supuesto: en Operación es "hora de regreso"
+
+  Cuenta del arriendo cerrada:
+    de: Contexto Cobros y depósito
+    dispara: Registrar el avance del arriendo     # "Arriendo cerrado"
+    con: {nuevo estado: cerrado}
+    datos:
+      fecha y hora del cambio: DateTime           # supuesto: la Cuenta del arriendo no tiene ese campo; el evento trae la hora del cierre
+
+servicios_sa:
+
+  Clientes del CRM:                               # contrato SA-01
+    entrada:                                      # datos del cliente y de su solicitud
+      cliente: string
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+    salida:                                       # el servicio solo toma la referencia al CRM (V6-SUP-01)
+      referencia al CRM: string
+    respuesta_por_defecto:                        # supuesto: valores de prueba
+      referencia al CRM: CRM-0001
+    casos:
+      - si: {cliente: [CLI-RIESGO-ALTO]}          # supuesto: cliente de prueba para el camino de riesgo alto de SB-12
+        respuesta:
+          referencia al CRM: CRM-0002
+
+  Contratos con propietarios y clientes:          # contrato SA-02
+    entrada:
+      número del arriendo: string                 # supuesto: el contrato del cliente se consulta por su arriendo
+    salida:                                       # estado del contrato, fecha de firma y condiciones de cancelación; la referencia: V8-SUP-03
+      referencia del contrato firmado: string
+      estado del contrato: enum Estado del contrato(enviado, firmado)   # supuesto: nombre del enum
+      fecha de firma: DateOnly?
+      condiciones de cancelación: string
+    respuesta_por_defecto:                        # supuesto: valores de prueba
+      referencia del contrato firmado: CON-0001
+      estado del contrato: firmado
+      fecha de firma: "2026-01-10"
+      condiciones de cancelación: Condiciones de prueba
+
+  Nivel de riesgo de la evaluadora:               # contrato SA-04
+    entrada:
+      referencia al CRM: string                   # supuesto: los datos del cliente autorizados se identifican con su referencia al CRM
+    salida:
+      nivel: enum Nivel de riesgo(bajo, medio, alto)
+      fecha: DateOnly
+    respuesta_por_defecto:                        # supuesto: valores de prueba
+      nivel: medio
+      fecha: "2026-01-15"
+    casos:
+      - si: {referencia al CRM: [CRM-0002]}       # supuesto: el cliente de prueba CLI-RIESGO-ALTO sale con riesgo alto
+        respuesta:
+          nivel: alto
+          fecha: "2026-01-15"
+
+  Avisos y actas de las marinas:                  # contrato SA-05
+    entrada:                                      # aviso de la reserva confirmada: yate, fechas y cliente
+      identificador del yate: string
+      marina: string                              # supuesto: la marina a la que va el aviso
+      inicio: DateOnly
+      fin: DateOnly
+      referencia al CRM: string
+    salida:
+      constancia del aviso: string                # constancia de que el aviso llegó
+    respuesta_por_defecto:
+      constancia del aviso: AVISO-RECIBIDO        # supuesto: valor de prueba
+
+escenarios:
+
+  Principal hasta el cierre:                      # ARR-0001
+    - Registrar la solicitud de reserva
+    - Obtener el nivel de riesgo del cliente:
+        espera: Riesgo aceptable obtenido
+    - Verificar los requisitos del cliente
+    - Alquiler y seguro cobrados:
+        espera: 202                               # queda esperando "Depósito bloqueado" (junto_con)
+    - Depósito bloqueado:
+        espera: Aviso de reserva enviado          # con los dos se confirma la reserva y la política envía el aviso
+    - Consultar el arriendo:
+        espera: {estado: reserva confirmada}
+    - Enviar el aviso de reserva confirmada       # llamado directo: un segundo aviso
+    - Yate entregado al cliente:
+        espera: Arriendo iniciado
+    - Inspección de devolución registrada:
+        espera: Yate devuelto
+    - Cuenta del arriendo cerrada:
+        espera: Arriendo cerrado
+    - Consultar el arriendo:
+        espera: {estado: cerrado}
+
+  Riesgo alto:                                    # ARR-0002
+    - Registrar la solicitud de reserva:
+        con: {cliente: CLI-RIESGO-ALTO}           # el CRM simulado responde CRM-0002 y la evaluadora, alto
+    - Obtener el nivel de riesgo del cliente:
+        espera: Arriendo no realizado por riesgo alto
+    - Consultar el arriendo:
+        espera: {estado: no realizado por riesgo alto}
+
+  Cancelación:                                    # ARR-0003
+    - Registrar la solicitud de reserva
+    - Cancelar la reserva:
+        espera: Reserva cancelada
+    - Registrar el avance del arriendo:           # rechazo a propósito: un arriendo cancelado no empieza
+        con: {nuevo estado: en curso}
+        espera: 409
+
+  Confirmar sin riesgo evaluado:                  # ARR-0004
+    - Registrar la solicitud de reserva
+    - Confirmar la reserva:                       # REG-01 (escrita a mano en ConfirmarLaReserva.cs): falta el riesgo aceptable
+        espera: 422

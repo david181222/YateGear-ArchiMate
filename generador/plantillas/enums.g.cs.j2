@@ -1,0 +1,15 @@
+// {{ cabecera }}
+// Enums del contexto, de los campos del modelo y del YAML. No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+{% for e in enums %}
+
+/// <summary>Enum "{{ e.nombre | xml }}". Se usa en: {{ e.origenes | join("; ") | xml }}.</summary>
+public enum {{ e.clase }}
+{
+{% for x in e.miembros %}
+    /// <summary>{{ x.valor | xml }}</summary>
+    {{ x.miembro }},
+{% endfor %}
+}
+{% endfor %}

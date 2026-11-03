@@ -1,0 +1,5 @@
+.venv/
+bin/
+obj/
+salida/intermedio/YateGear.xml
+__pycache__/

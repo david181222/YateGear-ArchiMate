@@ -1,0 +1,214 @@
+// Generado desde ArchiMate: ApplicationComponent "Contexto Gestión del arriendo" (id-fdcc9b19f08a492f8ccd5dd4559926bc).
+// Infraestructura del piloto. No sale del modelo: repositorio en memoria, bus de eventos,
+// bitácora y errores. No editar: el generador reescribe este archivo.
+#nullable enable
+using System.Globalization;
+
+namespace YateGear.GestionDelArriendo;
+
+/// <summary>Raíz de un agregado: tiene identidad, y el repositorio se la asigna al guardarla.</summary>
+public interface IRaiz
+{
+    /// <summary>Identidad de la raíz; vacía hasta que se guarda por primera vez.</summary>
+    string Identidad { get; }
+
+    /// <summary>La usa el repositorio para asignar el consecutivo.</summary>
+    void AsignarIdentidad(string identidad);
+}
+
+/// <summary>Evento del contexto.</summary>
+public interface IEvento
+{
+    /// <summary>Nombre del evento en el modelo ArchiMate.</summary>
+    string NombreEnElModelo { get; }
+
+    /// <summary>Identidad de la raíz que publicó el evento.</summary>
+    string Identidad { get; }
+}
+
+/// <summary>Repositorio en memoria de una raíz. Asigna el consecutivo al guardar una raíz nueva.</summary>
+public sealed class Repositorio<T>(string prefijo, int digitos) where T : class, IRaiz
+{
+    private readonly Dictionary<string, T> raices = new();
+    private readonly object candado = new();
+    private int ultimo;
+
+    /// <summary>La raíz con esa identidad, o null si no existe.</summary>
+    public T? Obtener(string identidad)
+    {
+        lock (candado)
+        {
+            return raices.GetValueOrDefault(identidad);
+        }
+    }
+
+    /// <summary>Guarda la raíz. Si es nueva, le asigna el siguiente consecutivo (por ejemplo {prefijo}0001).</summary>
+    public void Guardar(T raiz)
+    {
+        lock (candado)
+        {
+            if (raiz.Identidad.Length == 0)
+            {
+                ultimo++;
+                raiz.AsignarIdentidad(prefijo + ultimo.ToString("D" + digitos, CultureInfo.InvariantCulture));
+            }
+            raices[raiz.Identidad] = raiz;
+        }
+    }
+}
+
+/// <summary>Registro en orden de lo que pasa: eventos publicados y llamadas a los servicios SA simulados.</summary>
+public sealed class Bitacora
+{
+    private readonly List<RegistroDeBitacora> registros = new();
+    private readonly object candado = new();
+
+    /// <summary>Agrega un registro al final.</summary>
+    public void Anotar(string tipo, string nombre, object? datos)
+    {
+        lock (candado)
+        {
+            registros.Add(new RegistroDeBitacora(registros.Count + 1, tipo, nombre, datos));
+        }
+    }
+
+    /// <summary>Todos los registros, en orden.</summary>
+    public IReadOnlyList<RegistroDeBitacora> Todo()
+    {
+        lock (candado)
+        {
+            return registros.ToList();
+        }
+    }
+}
+
+/// <summary>Un registro de la bitácora.</summary>
+public sealed record RegistroDeBitacora(int Orden, string Tipo, string Nombre, object? Datos);
+
+/// <summary>Bus de eventos en memoria y síncrono. Si un suscriptor falla, el error queda en la bitácora
+/// y no deshace el comando que publicó el evento, porque el evento ya ocurrió.</summary>
+public sealed class BusDeEventos(Bitacora bitacora)
+{
+    private readonly Dictionary<Type, List<Action<IEvento>>> suscriptores = new();
+
+    /// <summary>Suscribe una acción a un tipo de evento.</summary>
+    public void Suscribir<TEvento>(Action<TEvento> accion) where TEvento : IEvento
+    {
+        if (!suscriptores.TryGetValue(typeof(TEvento), out var lista))
+        {
+            lista = new List<Action<IEvento>>();
+            suscriptores[typeof(TEvento)] = lista;
+        }
+        lista.Add(e => accion((TEvento)e));
+    }
+
+    /// <summary>Anota el evento en la bitácora y llama a sus suscriptores.</summary>
+    public void Publicar(IEvento evento)
+    {
+        bitacora.Anotar("evento", evento.NombreEnElModelo, evento);
+        if (!suscriptores.TryGetValue(evento.GetType(), out var lista))
+        {
+            return;
+        }
+        foreach (var suscriptor in lista)
+        {
+            try
+            {
+                suscriptor(evento);
+            }
+            catch (Exception e)
+            {
+                bitacora.Anotar("error en política", evento.NombreEnElModelo, e.Message);
+            }
+        }
+    }
+}
+
+/// <summary>Respuesta de un comando: la identidad de la raíz y los eventos que publicó.</summary>
+public sealed record RespuestaDeComando(string Identidad, IReadOnlyList<string> Eventos);
+
+/// <summary>Se incumplió una regla del contrato. Responde 422.</summary>
+public sealed class ReglaIncumplida(string regla, string motivo) : Exception($"{regla}: {motivo}")
+{
+    /// <summary>Fuente de la regla, por ejemplo REG-01.</summary>
+    public string Regla { get; } = regla;
+
+    /// <summary>Por qué se rechazó.</summary>
+    public string Motivo { get; } = motivo;
+}
+
+/// <summary>No existe la raíz pedida. Responde 404.</summary>
+public sealed class NoEncontrado(string mensaje) : Exception(mensaje);
+
+/// <summary>Falta un dato que la operación necesita. Responde 422.</summary>
+public sealed class DatoFaltante(string dato) : Exception($"Falta el dato \"{dato}\".");
+
+/// <summary>La operación no se permite en el estado actual de la raíz (capa 2). Responde 409.</summary>
+public sealed class TransicionInvalida(string operacion, string estadoActual, IReadOnlyList<string> permitidos)
+    : Exception($"\"{operacion}\" no se permite en el estado {estadoActual}.")
+{
+    /// <summary>Comando, o comando y resultado, que se intentó.</summary>
+    public string Operacion { get; } = operacion;
+
+    /// <summary>Estado en que estaba la raíz.</summary>
+    public string EstadoActual { get; } = estadoActual;
+
+    /// <summary>Estados desde los que sí se permite (desde del YAML).</summary>
+    public IReadOnlyList<string> Permitidos { get; } = permitidos;
+}
+
+/// <summary>Revisión de estados (capa 2).</summary>
+public static class Estados
+{
+    /// <summary>Lanza TransicionInvalida si el estado actual no está entre los permitidos.</summary>
+    public static void Exigir<TEstado>(string operacion, TEstado actual, params TEstado[] permitidos) where TEstado : struct, Enum
+    {
+        if (Array.IndexOf(permitidos, actual) < 0)
+        {
+            throw new TransicionInvalida(operacion, actual.ToString(), permitidos.Select(p => p.ToString()).ToList());
+        }
+    }
+}
+
+/// <summary>Eventos de otros contextos que deben llegar juntos para disparar un comando (junto_con, capa 3).
+/// Los que ya llegaron se guardan en memoria por la identidad de la raíz.</summary>
+public sealed class EsperaDeEventos
+{
+    private readonly Dictionary<string, Dictionary<string, IEvento>> llegados = new();
+    private readonly object candado = new();
+
+    /// <summary>Anota el evento. Si ya llegaron todos los del grupo para esa identidad, los devuelve y los
+    /// quita de la espera; si no, devuelve null y en faltan los que todavía no llegan.</summary>
+    public IReadOnlyDictionary<string, IEvento>? Anotar(string grupo, IReadOnlyList<string> eventosDelGrupo, IEvento evento,
+        out IReadOnlyList<string> faltan)
+    {
+        lock (candado)
+        {
+            var clave = grupo + "|" + evento.Identidad;
+            if (!llegados.TryGetValue(clave, out var ya))
+            {
+                ya = new Dictionary<string, IEvento>();
+                llegados[clave] = ya;
+            }
+            ya[evento.NombreEnElModelo] = evento;
+            faltan = eventosDelGrupo.Where(n => !ya.ContainsKey(n)).ToList();
+            if (faltan.Count > 0)
+            {
+                return null;
+            }
+            llegados.Remove(clave);
+            return ya;
+        }
+    }
+}
+
+/// <summary>Respuesta a un evento de otro contexto: "esperando" (faltan eventos de su grupo, responde 202)
+/// o "ejecutado" (disparó su comando).</summary>
+public sealed record RespuestaDeEventoExterno(string Estado, IReadOnlyList<string> Faltan, RespuestaDeComando? Comando)
+{
+    /// <summary>Faltan eventos del grupo junto_con.</summary>
+    public static RespuestaDeEventoExterno Esperando(IReadOnlyList<string> faltan) => new("esperando", faltan, null);
+
+    /// <summary>El evento disparó su comando.</summary>
+    public static RespuestaDeEventoExterno Ejecutado(RespuestaDeComando comando) => new("ejecutado", [], comando);
+}

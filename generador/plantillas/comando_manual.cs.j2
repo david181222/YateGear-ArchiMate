@@ -1,0 +1,26 @@
+// Archivo manual: el generador lo creó una sola vez y nunca lo sobrescribe.
+// {{ cabecera }}
+namespace {{ ns }};
+
+public sealed partial class {{ c.manejador }}
+{
+    // Reglas del "{{ c.contrato.nombre }}" ({{ c.contrato.id }}):
+{% for l in c.reglas %}
+    //   {{ l }}
+{% endfor %}
+    //
+    // Se llama antes de la transición de estado. Para rechazar la operación:
+    //   throw new ReglaIncumplida("REG-01", "motivo");
+    partial void ValidarReglas({{ c.datos }} datos)
+    {
+    }
+{% for k in c.calculados %}
+
+    // PENDIENTE: valor provisional de "{{ k.nombre }}" ({{ k.tipo_yaml }}), dato calculado del evento "{{ k.evento }}".
+    // Regla de la que sale: contrato {{ c.codigo }}, salida:
+{% for l in c.salida_contrato %}
+    //   {{ l }}
+{% endfor %}
+    private partial {{ k.cs }} {{ k.metodo }}({{ c.datos }} datos) => {{ k.provisional }};
+{% endfor %}
+}

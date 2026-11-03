@@ -1,0 +1,154 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// No editar: el generador reescribe este archivo. Las reglas y los datos calculados van en {{ c.manual.split("/")[-1] }}.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Entrada del comando "{{ c.nombre | xml }}" ({{ c.codigo }}).</summary>
+{{ m.record(c.clase, c.parametros, ";") }}
+
+/// <summary>Lo que reciben ValidarReglas y los datos calculados: el comando{{ "" if c.crea else ", la raíz" }} y las respuestas de los servicios SA.</summary>
+{{ m.record(c.datos, c.datos_props, ";") }}
+{% if c.resultados %}
+
+/// <summary>Resultados de "{{ c.nombre | xml }}": un evento por resultado.</summary>
+public enum {{ c.enum_resultado }}
+{
+{% for x in c.resultados %}
+    /// <summary>Publica "{{ x.evento | xml }}".</summary>
+    {{ x.miembro }},
+{% endfor %}
+}
+{% endif %}
+
+/// <summary>Manejador del comando "{{ c.nombre | xml }}" ({{ c.codigo }}).</summary>
+/// <remarks>
+/// <para>{{ c.contrato.nombre | xml }} ({{ c.contrato.id }}), asociado al servicio de negocio
+/// "{{ c.servicio_negocio.nombre | xml }}" ({{ c.servicio_negocio.id }}), que el comando realiza.</para>
+/// <para>Entrada: {{ c.contrato.entrada | xml }}</para>
+/// <para>Salida: {{ c.contrato.salida | xml }}</para>
+/// <para>Reglas: {{ (c.contrato.reglas or "el contrato no tiene reglas.") | xml }} Van como comentario en ValidarReglas.</para>
+/// </remarks>
+public sealed partial class {{ c.manejador }}(
+{% for d in c.dependencias %}
+    {{ d.cs }} {{ d.var }}{{ "," if not loop.last }}
+{% endfor %}
+)
+{
+    /// <summary>Reglas del contrato que no son transiciones de estado. Se escribe en el archivo manual.</summary>
+    partial void ValidarReglas({{ c.datos }} datos);
+{% for k in c.calculados %}
+
+    /// <summary>Dato calculado "{{ k.nombre | xml }}" del evento "{{ k.evento | xml }}". Se escribe en el archivo manual.</summary>
+    private partial {{ k.cs }} {{ k.metodo }}({{ c.datos }} datos);
+{% endfor %}
+
+    /// <summary>Ejecuta el comando.</summary>
+    public RespuestaDeComando Manejar({{ c.clase }} comando)
+    {
+{% if not c.crea %}
+        // 1. Cargar la raíz.
+        var {{ raiz.var }} = repositorio.Obtener(comando.{{ raiz.id_prop }})
+            ?? throw new NoEncontrado($"No existe {{ raiz.nombre | lower }} {comando.{{ raiz.id_prop }}}.");
+{% else %}
+        // 1. El comando crea la raíz: se arma en el paso 6, después de ValidarReglas.
+{% endif %}
+{% if c.desde %}
+
+        // 1b. Estados desde los que se permite el comando (capa 2), antes de llamar a los SA.
+        Estados.Exigir({{ c.operacion }}, {{ raiz.var }}.Estado, {{ c.desde | join(", ") }});
+{% endif %}
+{% if c.llamadas %}
+
+        // 2. Servicios SA que usa, en orden.
+{% for l in c.llamadas %}
+        var {{ l.var }} = {{ l.servicio }}.Llamar(new {{ l.entrada }}({{ l.args | join(", ") }}));
+{% endfor %}
+{% endif %}
+{% if c.resultados %}
+
+        // 3. Elegir el resultado (condición si del YAML).
+        var resultado =
+{% for x in c.resultados %}
+            {{ x.condicion }} ? {{ c.enum_resultado }}.{{ x.miembro }} :
+{% endfor %}
+            throw new ReglaIncumplida("resultados", {{ c.sin_resultado }});
+{% if c.resultados_con_desde %}
+
+        // Estados desde los que se permite el resultado elegido (capa 2).
+        switch (resultado)
+        {
+{% for x in c.resultados_con_desde %}
+            case {{ c.enum_resultado }}.{{ x.miembro }}:
+                Estados.Exigir({{ x.operacion }}, {{ raiz.var }}.Estado, {{ x.desde | join(", ") }});
+                break;
+{% endfor %}
+        }
+{% endif %}
+{% endif %}
+
+        // 4. Reglas del contrato (archivo manual).
+        var datos = new {{ c.datos }}({{ c.datos_args | join(", ") }});
+        ValidarReglas(datos);
+{% if c.crea %}
+
+        // 6. Crear la raíz con su estado inicial y lo que guarda el comando. Al guardarla recibe su identidad.
+        var {{ raiz.var }} = new {{ raiz.clase }}
+        {
+{% for a in c.asignaciones %}
+            {{ a.prop }} = {{ a.expr }},
+{% endfor %}
+        };
+        repositorio.Guardar({{ raiz.var }});
+{% elif c.escribe %}
+
+        // 6. Guardar en la raíz lo que escribe el comando y su nuevo estado (capa 2).
+{% for a in c.asignaciones %}
+        {{ raiz.var }}.{{ a.prop }} = {{ a.expr }};
+{% endfor %}
+{% if c.a %}
+        {{ raiz.var }}.Estado = {{ c.a }};
+{% endif %}
+{% if c.resultados_con_a %}
+        switch (resultado)
+        {
+{% for x in c.resultados_con_a %}
+            case {{ c.enum_resultado }}.{{ x.miembro }}:
+                {{ raiz.var }}.Estado = {{ x.a }};
+                break;
+{% endfor %}
+        }
+{% endif %}
+        repositorio.Guardar({{ raiz.var }});
+{% else %}
+
+        // 6. El comando solo lee la raíz: no guarda.
+{% endif %}
+
+        // 7. Publicar los eventos.
+        var eventos = new List<string>();
+{% if c.resultados %}
+        switch (resultado)
+        {
+{% for x in c.resultados %}
+            case {{ c.enum_resultado }}.{{ x.miembro }}:
+{% for e in x.publicar %}
+                Publicar(new {{ e.clase }}({{ e.args | join(", ") }}), eventos);
+{% endfor %}
+                break;
+{% endfor %}
+        }
+{% else %}
+{% for e in c.eventos %}
+        Publicar(new {{ e.clase }}({{ e.args | join(", ") }}), eventos);
+{% endfor %}
+{% endif %}
+        return new RespuestaDeComando({{ raiz.var }}.{{ raiz.id_prop }}, eventos);
+    }
+
+    private void Publicar(IEvento evento, List<string> eventos)
+    {
+        bus.Publicar(evento);
+        eventos.Add(evento.NombreEnElModelo);
+    }
+}

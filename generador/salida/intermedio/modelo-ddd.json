@@ -1,0 +1,788 @@
+{
+  "generado_desde": {
+    "modelo_id": "id-98e02fd4df1c4f21a8610d291649a7af",
+    "modelo_nombre": "YateGear",
+    "archivo": "YateGear.xml"
+  },
+  "contextos": [
+    {
+      "id": "id-fdcc9b19f08a492f8ccd5dd4559926bc",
+      "nombre": "Contexto Gestión del arriendo",
+      "agregados": [
+        {
+          "id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "nombre": "Agregado Arriendo",
+          "raiz": {
+            "id": "id-3f15410f516e4820b86108f1896461a8",
+            "nombre": "Arriendo",
+            "campos": [
+              {
+                "nombre": "referencia del contrato firmado",
+                "tipo": "string?",
+                "base": "string",
+                "lista": false,
+                "opcional": true,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": [
+            {
+              "id": "id-f821ca9b471a410dbf6859cd50f53ce9",
+              "nombre": "Evaluación de riesgo",
+              "compuesto_por": "id-3f15410f516e4820b86108f1896461a8",
+              "cardinalidad": "Cero o uno",
+              "composicion_id": "id-e5367ed813444b918401bd1f57d029b1",
+              "campos": [
+                {
+                  "nombre": "nivel",
+                  "tipo": "enum Nivel de riesgo(bajo, medio, alto)",
+                  "base": "enum",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": {
+                    "nombre": "Nivel de riesgo",
+                    "valores": [
+                      "bajo",
+                      "medio",
+                      "alto"
+                    ]
+                  }
+                },
+                {
+                  "nombre": "fecha",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            },
+            {
+              "id": "id-9bedd8cb487b46b199f02d88287ac768",
+              "nombre": "Fechas del arriendo",
+              "compuesto_por": "id-3f15410f516e4820b86108f1896461a8",
+              "cardinalidad": "Uno",
+              "composicion_id": "id-ee06d268da2f408d8bf9bde7bb305334",
+              "campos": [
+                {
+                  "nombre": "inicio",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "fin",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            },
+            {
+              "id": "id-a1609e0b86274fad86e6159ddec11f8b",
+              "nombre": "Ficha del cliente",
+              "compuesto_por": "id-3f15410f516e4820b86108f1896461a8",
+              "cardinalidad": "Uno",
+              "composicion_id": "id-ad7757e40c604c82b7b1f65e724cf4d7",
+              "campos": [
+                {
+                  "nombre": "referencia al CRM",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "número de la licencia",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "vigencia de la licencia",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "fecha de la autorización",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "terceros autorizados",
+                  "tipo": "List<string>",
+                  "base": "string",
+                  "lista": true,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            },
+            {
+              "id": "id-0c8b1c935dc94f9999ae85d5f779b354",
+              "nombre": "Pruebas de pago",
+              "compuesto_por": "id-3f15410f516e4820b86108f1896461a8",
+              "cardinalidad": "Cero o uno",
+              "composicion_id": "id-da20b204b668426dbba89a9cd13ce8f3",
+              "campos": [
+                {
+                  "nombre": "comprobante del alquiler",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "comprobante del seguro",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "autorización del bloqueo del depósito",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            },
+            {
+              "id": "id-786fdd755c774038ad7b0d1d163a5d63",
+              "nombre": "Yate del arriendo",
+              "compuesto_por": "id-3f15410f516e4820b86108f1896461a8",
+              "cardinalidad": "Uno",
+              "composicion_id": "id-850fc88d230048ef9cb724ee440e7d42",
+              "campos": [
+                {
+                  "nombre": "identificador del yate",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "propietario",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "precio por día",
+                  "tipo": "decimal",
+                  "base": "decimal",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "marina",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "comandos": [
+        {
+          "id": "id-ea0f1874f954489589820b4aa2761e3f",
+          "nombre": "Cancelar la reserva",
+          "codigo": "SB-08",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+          "acceso": "escritura",
+          "acceso_id": "id-7e01983085194b62a7db8cce8b848dc1",
+          "lee_tambien": [],
+          "eventos": [
+            "id-28e06fd82a7641228d89ded443509b64"
+          ],
+          "servicio_negocio": {
+            "id": "id-543ee022ee44497dbc49d870bc511326",
+            "nombre": "Cancelar la reserva"
+          },
+          "contrato": {
+            "id": "id-1b76f672e55f4171bc42f6e9e3700c3a",
+            "nombre": "Contrato de servicio: Cancelar la reserva",
+            "entrada": "Arriendo, quién cancela y fecha de la cancelación.",
+            "salida": "Arriendo cancelado y días de anticipación frente a la fecha de inicio.",
+            "reglas": "Se rechaza si el arriendo ya empezó: la cancelación es antes de la fecha del arriendo (EXC-02). La anticipación que da derecho a reembolso está en el contrato con el cliente (D-03)."
+          }
+        },
+        {
+          "id": "id-b5e59d3c453a410580107b2287cd76d2",
+          "nombre": "Confirmar la reserva",
+          "codigo": "SB-07",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+          "acceso": "escritura",
+          "acceso_id": "id-a8b9c61f91ea496ab73c6f235491dc27",
+          "lee_tambien": [],
+          "eventos": [
+            "id-f7f775aec49c4eb782699183059c6bc2"
+          ],
+          "servicio_negocio": {
+            "id": "id-c29fef62efa041a09a0f1f449fc65e11",
+            "nombre": "Confirmar la reserva"
+          },
+          "contrato": {
+            "id": "id-684d5b92ffbb4fefa001d8936128713c",
+            "nombre": "Contrato de servicio: Confirmar la reserva",
+            "entrada": "Arriendo, evaluación de riesgo aceptable, referencia del contrato firmado, comprobantes del alquiler y del seguro y autorización del bloqueo del depósito.",
+            "salida": "Arriendo en estado reserva confirmada.",
+            "reglas": "No se confirma sin riesgo aceptable, contrato firmado y pagos completos (REG-01); si falta uno, se rechaza indicando cuál."
+          }
+        },
+        {
+          "id": "id-57da84f53a9742cea51396bf297bf06d",
+          "nombre": "Enviar el aviso de reserva confirmada",
+          "codigo": "SB-31",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+          "acceso": "lectura",
+          "acceso_id": "id-862065da28af4f2988177712864cb2bf",
+          "lee_tambien": [],
+          "eventos": [
+            "id-b65aec8c4e0641b0ac0ef6c69373610f"
+          ],
+          "servicio_negocio": {
+            "id": "id-940b1b6a284743d4846e382782cd4a4e",
+            "nombre": "Enviar el aviso de reserva confirmada"
+          },
+          "contrato": {
+            "id": "id-e3e5284cecbe41648a8d588b31e44156",
+            "nombre": "Contrato de servicio: Enviar el aviso de reserva confirmada",
+            "entrada": "Arriendo con la reserva confirmada.",
+            "salida": "Aviso enviado al propietario y a la marina con el yate, las fechas y el cliente.",
+            "reglas": "Se rechaza si la reserva no está confirmada: el aviso sale solo después de confirmar (H-07)."
+          }
+        },
+        {
+          "id": "id-2a55b3149f0d4388ba3551743aa65cf4",
+          "nombre": "Obtener el nivel de riesgo del cliente",
+          "codigo": "SB-12",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+          "acceso": "escritura",
+          "acceso_id": "id-4a7df69a98244bba96965f2dae86b543",
+          "lee_tambien": [],
+          "eventos": [
+            "id-898e6b49f085471cb23b1ef1dbaa953e",
+            "id-bb4b23b9412742f89ac3ae34504a8391"
+          ],
+          "servicio_negocio": {
+            "id": "id-fd6888a3bfcc449a982901555851cbcb",
+            "nombre": "Obtener el nivel de riesgo del cliente"
+          },
+          "contrato": {
+            "id": "id-3f0507fda0fa42ecb67a0f2e7864f30e",
+            "nombre": "Contrato de servicio: Obtener el nivel de riesgo del cliente",
+            "entrada": "Arriendo y datos del cliente que autorizó compartir.",
+            "salida": "Nivel de riesgo (bajo, medio o alto) y decisión: aceptable o no se arrienda.",
+            "reglas": "Con riesgo alto el arriendo no se realiza (REG-01); aceptable es bajo o medio (V4-SUP-02). No se envían datos a la evaluadora sin la autorización del cliente (H-19)."
+          }
+        },
+        {
+          "id": "id-5be75381f2364a9cb9fa8d4247dce743",
+          "nombre": "Registrar el avance del arriendo",
+          "codigo": "SB-09",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+          "acceso": "escritura",
+          "acceso_id": "id-eacd774820384c058081b704ae2bab65",
+          "lee_tambien": [],
+          "eventos": [
+            "id-0f65cc3ebf6649e283d9b634febb03f5",
+            "id-6d63b57590714cd5a0c45b5f6e7b9580",
+            "id-8efeaef2f23441879f0f9fe08fb63a2e"
+          ],
+          "servicio_negocio": {
+            "id": "id-6ae0b61c65954576beacb7a29ff9af88",
+            "nombre": "Registrar el avance del arriendo"
+          },
+          "contrato": {
+            "id": "id-c6439672662d41ea93ee102abbe217eb",
+            "nombre": "Contrato de servicio: Registrar el avance del arriendo",
+            "entrada": "Arriendo, nuevo estado y fecha y hora del cambio.",
+            "salida": "Arriendo con el estado actualizado.",
+            "reglas": "Se rechaza cerrar el arriendo antes de terminar los ajustes de dinero, porque con ellos se cierra (E2E-01)."
+          }
+        },
+        {
+          "id": "id-9995aadff41a4a86b109d51b13dbc11c",
+          "nombre": "Registrar la solicitud de reserva",
+          "codigo": "SB-06",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+          "acceso": "escritura",
+          "acceso_id": "id-e1030088ec064bb1b87180445cdf244c",
+          "lee_tambien": [],
+          "eventos": [
+            "id-ba01aa1a0874474086ba64badf2991e3"
+          ],
+          "servicio_negocio": {
+            "id": "id-fdf9187711c74c839debc996243948f7",
+            "nombre": "Registrar la solicitud de reserva"
+          },
+          "contrato": {
+            "id": "id-465c846ee8c64d42b5f2fc36cf376cd9",
+            "nombre": "Contrato de servicio: Registrar la solicitud de reserva",
+            "entrada": "Cliente, yate, fecha de inicio, fecha de fin, licencia de navegación (número y vigencia) y autorización para el tratamiento de datos.",
+            "salida": "Arriendo con su número, en estado reserva solicitada, y ficha del cliente actualizada.",
+            "reglas": ""
+          }
+        }
+      ],
+      "eventos": [
+        {
+          "id": "id-0f65cc3ebf6649e283d9b634febb03f5",
+          "nombre": "Arriendo cerrado",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-5be75381f2364a9cb9fa8d4247dce743"
+          ]
+        },
+        {
+          "id": "id-6d63b57590714cd5a0c45b5f6e7b9580",
+          "nombre": "Arriendo iniciado",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-5be75381f2364a9cb9fa8d4247dce743"
+          ]
+        },
+        {
+          "id": "id-bb4b23b9412742f89ac3ae34504a8391",
+          "nombre": "Arriendo no realizado por riesgo alto",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-2a55b3149f0d4388ba3551743aa65cf4"
+          ]
+        },
+        {
+          "id": "id-b65aec8c4e0641b0ac0ef6c69373610f",
+          "nombre": "Aviso de reserva enviado",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-57da84f53a9742cea51396bf297bf06d"
+          ]
+        },
+        {
+          "id": "id-28e06fd82a7641228d89ded443509b64",
+          "nombre": "Reserva cancelada",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-ea0f1874f954489589820b4aa2761e3f"
+          ]
+        },
+        {
+          "id": "id-f7f775aec49c4eb782699183059c6bc2",
+          "nombre": "Reserva confirmada",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-b5e59d3c453a410580107b2287cd76d2"
+          ]
+        },
+        {
+          "id": "id-ba01aa1a0874474086ba64badf2991e3",
+          "nombre": "Reserva solicitada",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-9995aadff41a4a86b109d51b13dbc11c"
+          ]
+        },
+        {
+          "id": "id-898e6b49f085471cb23b1ef1dbaa953e",
+          "nombre": "Riesgo aceptable obtenido",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-2a55b3149f0d4388ba3551743aa65cf4"
+          ]
+        },
+        {
+          "id": "id-8efeaef2f23441879f0f9fe08fb63a2e",
+          "nombre": "Yate devuelto",
+          "agregado_id": "id-2b918a7081b74d8a96e6112d86f829c1",
+          "disparado_por": [
+            "id-5be75381f2364a9cb9fa8d4247dce743"
+          ]
+        }
+      ],
+      "politicas": [
+        {
+          "relacion_id": "id-4bb3be2830b946619f18bcacda5e4eb4",
+          "evento_id": "id-f7f775aec49c4eb782699183059c6bc2",
+          "comando_id": "id-57da84f53a9742cea51396bf297bf06d"
+        }
+      ],
+      "consultas": [
+        {
+          "id": "id-ed6830eac52c4d5aa7983fb1edd63869",
+          "nombre": "Consultar el arriendo",
+          "codigo": "SB-10",
+          "lee": [
+            {
+              "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+              "acceso_id": "id-4d7f4d13934141c099ed84fd06d65c9a"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-47df454247c847e0be29ca1bb86c09af",
+            "nombre": "Consultar el arriendo"
+          },
+          "contrato": {
+            "id": "id-cd8962c3c6d44cfb927557b1a4e45e53",
+            "nombre": "Contrato de servicio: Consultar el arriendo",
+            "entrada": "Número de arriendo.",
+            "salida": "Cliente, yate, marina, fechas y estado del arriendo.",
+            "reglas": "Se rechaza si quien consulta no participa en el arriendo, porque son datos personales del cliente (Ley 1581, H-19)."
+          }
+        },
+        {
+          "id": "id-8de1e624fe6d42b58cae281366f1e86a",
+          "nombre": "Verificar los requisitos del cliente",
+          "codigo": "SB-11",
+          "lee": [
+            {
+              "raiz_id": "id-3f15410f516e4820b86108f1896461a8",
+              "acceso_id": "id-b4f4afd2416b4583b9756f05b131f0e5"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-2d99dc8136174976b9d7f68a2ed30efe",
+            "nombre": "Verificar los requisitos del cliente"
+          },
+          "contrato": {
+            "id": "id-8dfaf8632e6042d3a86c8dcc1dbf95df",
+            "nombre": "Contrato de servicio: Verificar los requisitos del cliente",
+            "entrada": "Cliente, número y vigencia de la licencia de navegación y autorización de datos (fecha y terceros autorizados: evaluadora, aseguradora y pasarela).",
+            "salida": "Cumple o no cumple, con el motivo.",
+            "reglas": "Se rechaza sin licencia de navegación vigente (H-09, NOR-01) o sin autorización del cliente para compartir sus datos con terceros (Ley 1581, H-19)."
+          }
+        }
+      ],
+      "servicios_sa": [
+        {
+          "id": "id-2754472851d144d5b79323ab235a3f20",
+          "nombre": "Avisos y actas de las marinas",
+          "codigo": "SA-05",
+          "interfaz": {
+            "id": "id-8e8765a8065440cf8596cf26a6d141b2",
+            "nombre": "Interfaz con las marinas"
+          },
+          "contraparte": {
+            "id": "id-584b815ed5b5478a8116c2a813a5752b",
+            "nombre": "Sistemas de las marinas",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-9d498f09a5d849f19ca3878860b49690",
+              "nombre": "Actas de entrega e inspección",
+              "direccion": "entra",
+              "momento": "Todo el arriendo"
+            },
+            {
+              "id": "id-9c54e3f6559e4b3c88d7b8a48da40bc3",
+              "nombre": "Aviso de reserva; alerta de señal",
+              "direccion": "sale",
+              "momento": "Todo el arriendo"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-35bf6c8298f34e57bd9ffa99877bc6e6",
+            "nombre": "Avisos y actas de las marinas"
+          },
+          "contrato": {
+            "id": "id-b4831a192c314d018432634e6180c468",
+            "nombre": "Contrato de servicio: Avisos y actas de las marinas",
+            "entrada": "Aviso o alerta para la marina; o acta recibida de la marina.",
+            "salida": "Constancia de que el aviso llegó; o acta traducida al formato del arriendo.",
+            "reglas": "Las actas se reciben en el formato que ya usa cada marina, porque las marinas no cambian sus sistemas (MOT-04, INT-MAR)."
+          }
+        },
+        {
+          "id": "id-2a8748ebcb2c44bda5267072d3cd6c3c",
+          "nombre": "Clientes del CRM",
+          "codigo": "SA-01",
+          "interfaz": {
+            "id": "id-50762e19dd0a427ca2544391c5ab5962",
+            "nombre": "Interfaz con el CRM"
+          },
+          "contraparte": {
+            "id": "id-caf28817537c4ca4bd1558fc179f647c",
+            "nombre": "CRM",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-3802e0a5e3c948e294d1cbc90dd9270a",
+              "nombre": "Cliente y solicitud",
+              "direccion": "sale",
+              "momento": "Consulta y reserva"
+            },
+            {
+              "id": "id-0581a80e8807487e9ef45514d306561f",
+              "nombre": "Datos del cliente",
+              "direccion": "entra",
+              "momento": "Consulta y reserva"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-ad644fdca47f42b8ba22dfa7a62a88a7",
+            "nombre": "Clientes del CRM"
+          },
+          "contrato": {
+            "id": "id-9c284e04c8ad4e1092a005b88ac34d5a",
+            "nombre": "Contrato de servicio: Clientes del CRM",
+            "entrada": "Identificación del cliente, o datos del cliente y de su solicitud.",
+            "salida": "Datos del cliente con su referencia en el CRM, o confirmación del registro.",
+            "reglas": ""
+          }
+        },
+        {
+          "id": "id-18b80ed18f3d4d43a5290e01b90ca4eb",
+          "nombre": "Contratos con propietarios y clientes",
+          "codigo": "SA-02",
+          "interfaz": {
+            "id": "id-a7b78492e6714137865f37c41eb78b19",
+            "nombre": "Pantalla de registro de contratos"
+          },
+          "contraparte": {
+            "id": "id-03be3f82b87240b1bbabf2bfd90332eb",
+            "nombre": "Gestión de contratos",
+            "tipo": "BusinessFunction",
+            "externo": false,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-92ca9accc62149968734d75dbc72b362",
+              "nombre": "Contrato firmado",
+              "direccion": "entra",
+              "momento": "Reserva, después de la evaluación de riesgo; registro del yate"
+            },
+            {
+              "id": "id-bcd7145d93fb45e2b611264f8d602286",
+              "nombre": "Datos para el contrato",
+              "direccion": "sale",
+              "momento": "Reserva, después de la evaluación de riesgo; registro del yate"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-b170a04e21cc4665abdb81d9ba6eaea1",
+            "nombre": "Contratos con propietarios y clientes"
+          },
+          "contrato": {
+            "id": "id-3f0f0a61815d4247bbb2d2cf80f1ad6e",
+            "nombre": "Contrato de servicio: Contratos con propietarios y clientes",
+            "entrada": "Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.",
+            "salida": "Estado del contrato (enviado o firmado), fecha de firma y condiciones de cancelación.",
+            "reglas": "El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON)."
+          }
+        },
+        {
+          "id": "id-b11c0fb607e44ce6ba45736c036e3a0d",
+          "nombre": "Nivel de riesgo de la evaluadora",
+          "codigo": "SA-04",
+          "interfaz": {
+            "id": "id-b118a4f717304e4a943e355d2904f1f4",
+            "nombre": "Interfaz con la evaluadora de riesgo"
+          },
+          "contraparte": {
+            "id": "id-29a3f10ca36b4ceda2ed5657d162ef34",
+            "nombre": "Sistema de la empresa evaluadora de riesgo",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-ca36e9d39f464d0793eb40e0a8370a55",
+              "nombre": "Datos del cliente autorizados",
+              "direccion": "sale",
+              "momento": "Reserva, antes del contrato"
+            },
+            {
+              "id": "id-65e93633762745fe82eb0e5788387816",
+              "nombre": "Nivel de riesgo",
+              "direccion": "entra",
+              "momento": "Reserva, antes del contrato"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-0e97a5a8825341a6a90e40fc329cc037",
+            "nombre": "Nivel de riesgo de la evaluadora"
+          },
+          "contrato": {
+            "id": "id-d0d598aab81f44e3a9134075d809cf17",
+            "nombre": "Contrato de servicio: Nivel de riesgo de la evaluadora",
+            "entrada": "Datos del cliente autorizados.",
+            "salida": "Nivel de riesgo y fecha de la evaluación.",
+            "reglas": "Bajo y medio se traducen a aceptable y alto a no se arrienda (REG-01, V4-SUP-02)."
+          }
+        }
+      ],
+      "enums": [
+        {
+          "nombre": "Nivel de riesgo",
+          "valores": [
+            "bajo",
+            "medio",
+            "alto"
+          ],
+          "usado_en": [
+            {
+              "objeto_id": "id-f821ca9b471a410dbf6859cd50f53ce9",
+              "campo": "nivel"
+            }
+          ]
+        }
+      ],
+      "otros_contextos": [
+        {
+          "id": "id-6f29abc193cb4f2fa1234cec80bf0675",
+          "nombre": "Contexto Calificaciones",
+          "eventos": [
+            {
+              "id": "id-19f69c478e1c47e481a41c991690baaa",
+              "nombre": "Cliente calificado"
+            },
+            {
+              "id": "id-7680477f87b2487f8c2af8de885a11de",
+              "nombre": "Propietario calificado"
+            }
+          ]
+        },
+        {
+          "id": "id-859686865fd4465397859188d62c971c",
+          "nombre": "Contexto Cobros y depósito",
+          "eventos": [
+            {
+              "id": "id-a5729d322f444202bc1a34c7d68a46d8",
+              "nombre": "Alquiler y seguro cobrados"
+            },
+            {
+              "id": "id-498bf53911414b55828987e21aa1aa74",
+              "nombre": "Cancelación no reembolsada"
+            },
+            {
+              "id": "id-09c2a90d529d4de08b38adea6ab20ce0",
+              "nombre": "Cancelación reembolsada"
+            },
+            {
+              "id": "id-7a5f1d6d01b94f3ba9f0bc496545062f",
+              "nombre": "Cargos del cierre cobrados"
+            },
+            {
+              "id": "id-d853efb4ccfe4d5c9b75522348b303df",
+              "nombre": "Cuenta del arriendo cerrada"
+            },
+            {
+              "id": "id-20ea85b6df0f4664a60ff0b1b19a222e",
+              "nombre": "Daños descontados del depósito"
+            },
+            {
+              "id": "id-41585106baae43ab90ca920de78dc737",
+              "nombre": "Depósito bloqueado"
+            },
+            {
+              "id": "id-6128af9686a2416bada40d02108bce05",
+              "nombre": "Depósito liberado"
+            },
+            {
+              "id": "id-b13f9d27ed8d4bdd8d84224b82a64673",
+              "nombre": "Reclamo enviado a la aseguradora"
+            }
+          ]
+        },
+        {
+          "id": "id-0d93d731f6fd4b21acbf20d3cb28cf6f",
+          "nombre": "Contexto Disponibilidad de yates",
+          "eventos": [
+            {
+              "id": "id-314372c86c5e4e1981862bfbc8243d35",
+              "nombre": "Fechas apartadas"
+            },
+            {
+              "id": "id-78a96e2310bc4b3e9d6b68b5a56ec4b3",
+              "nombre": "Fechas bloqueadas"
+            },
+            {
+              "id": "id-d6d1cd177abd4faf9f86763960b16584",
+              "nombre": "Fechas desbloqueadas"
+            },
+            {
+              "id": "id-d9533d434fc748f18cada63f170e4319",
+              "nombre": "Fechas liberadas"
+            },
+            {
+              "id": "id-0b4d7ee06e05403ab9022d5232109730",
+              "nombre": "Fechas ocupadas"
+            },
+            {
+              "id": "id-4f03a460e265434e87e0081ee5018122",
+              "nombre": "Yate registrado"
+            }
+          ]
+        },
+        {
+          "id": "id-909c52d6cdf845e6927af4c62d2847fb",
+          "nombre": "Contexto Operación del arriendo",
+          "eventos": [
+            {
+              "id": "id-497addd0bf144aed8bf9f4ba01d7eac3",
+              "nombre": "Diferencias determinadas"
+            },
+            {
+              "id": "id-d83f5b5cfb764e7aaac782ffab1b12c4",
+              "nombre": "Inspección de devolución registrada"
+            },
+            {
+              "id": "id-81e0ea1bc1004b88b387861811e7e806",
+              "nombre": "Lectura registrada"
+            },
+            {
+              "id": "id-f8aec7f1160d42d4994bba6dc64d04ab",
+              "nombre": "Pérdida de señal del yate"
+            },
+            {
+              "id": "id-275970c646a74ac3ac7c206246d780ab",
+              "nombre": "Yate entregado al cliente"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
