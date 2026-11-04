@@ -53,7 +53,7 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 
 | Paso | Qué hacer | Listo cuando |
 |---|---|---|
-| J1 | Clonar el repositorio en otra carpeta y correr `generar.ps1` y `probar.ps1` desde cero, como indica el README. | **Hecho en Linux (4 nov 2026):** 19 de 19, 0 advertencias, `salida/` idéntica a la versionada. Para eso los `.ps1` quedaron multiplataforma (sección 6). **Falta** correrlos una vez en Windows, porque se cambiaron sus rutas. |
+| J1 | Clonar el repositorio en otra carpeta y correr `generar.ps1` y `probar.ps1` desde cero, como indica el README. | **Hecho en Linux (4 nov 2026):** 19 de 19, 0 advertencias, `salida/` idéntica a la versionada. Para eso los `.ps1` quedaron multiplataforma (sección 6). **Confirmado en Windows** por el equipo: también funciona. |
 | J2 | Llevar D1 y D3 al equipo. | **Hecho (4 nov 2026):** D1 y D3 decididas; además se corrigieron en el modelo las discrepancias 2, 4 y 5. |
 | J3 | G1: salida con varios contextos. | El piloto sigue dando 19 de 19 y su huella es estable en dos generaciones seguidas. |
 | J4 | G2 y G3: varios agregados e identidades nuevas. **Se reparte:** cada G se construye con el primer contexto que lo usa, porque G2 no se puede probar con el piloto (tiene un solo agregado). G3 y G5 (promedio) van con J5; G2 y G4 van con J6. | El piloto sigue en verde en cada paso. |
