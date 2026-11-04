@@ -12,12 +12,14 @@ El proyecto generado es C# con una API web de ASP.NET Core (API mínima) sobre .
 
 | Qué | Versión | Para qué |
 |---|---|---|
-| Windows con PowerShell | Windows PowerShell 5.1 o PowerShell 7 | Ejecutar `generar.ps1`, `ejecutar.ps1` y `probar.ps1`. |
-| Python, con el lanzador `py` | 3.13 | El generador. `generar.ps1` crea el entorno virtual `.venv` e instala `requirements.txt` si no existen; solo ese paso usa la red. |
-| .NET SDK | cualquier 8.0.x | Compilar y correr el proyecto generado. `salida/global.json` fija el SDK 8 (`8.0.100` con `rollForward: latestFeature`). |
-| Archi | 5.x, en `C:\Program Files\Archi` | Exportar el modelo con su línea de comandos (ACLI). Funciona aunque Archi esté abierto, pero exporta lo guardado en disco. Otra ruta: `-Archi <ruta de Archi.exe>`. |
+| PowerShell | Windows: Windows PowerShell 5.1 o PowerShell 7. Linux: PowerShell 7 (`pwsh`). | Ejecutar `generar.ps1`, `ejecutar.ps1` y `probar.ps1`. |
+| Python | 3.13. Windows: con el lanzador `py`. Linux: `python3.13` en el PATH, o el que instala `uv python install 3.13`. | El generador. `generar.ps1` crea el entorno virtual `.venv` e instala `requirements.txt` si no existen; solo ese paso usa la red. |
+| .NET SDK | cualquier 8.0.x | Compilar y correr el proyecto generado. `salida/global.json` fija el SDK 8 (`8.0.100` con `rollForward: latestFeature`). En Linux, si existe `~/.dotnet/dotnet`, los scripts usan ese, para no depender del `dotnet` del sistema. |
+| Archi | 5.x. Windows: en `C:\Program Files\Archi`. Linux: `Archi` en el PATH, `~/.local/opt/Archi/Archi` o `/opt/Archi/Archi`. | Exportar el modelo con su línea de comandos (ACLI). Funciona aunque Archi esté abierto, pero exporta lo guardado en disco. Otra ruta: `-Archi <ruta del ejecutable de Archi>`. |
 
 Las librerías de Python tienen versión fija en `requirements.txt`: pyArchimate 2.0.0, Jinja2 3.1.6, PyYAML 6.0.3 y sus dependencias.
+
+En Linux todo se instala en la carpeta del usuario, sin sudo: el SDK con `dotnet-install.sh --channel 8.0 --install-dir ~/.dotnet`, Python con `uv python install 3.13`, y PowerShell y Archi descomprimiendo sus `.tar.gz` en `~/.local/opt` (con `pwsh` enlazado en `~/.local/bin`). Probado en Ubuntu 26.04 con .NET 8.0.427, PowerShell 7.6.9 y Archi 5.10: genera exactamente los mismos archivos que en Windows (misma huella).
 
 ## Cómo ejecutarlo
 
@@ -28,6 +30,16 @@ powershell -ExecutionPolicy Bypass -File .\generar.ps1     # exporta, lee, valid
 powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1    # levanta la aplicación (Ctrl+C para detenerla)
 powershell -ExecutionPolicy Bypass -File .\probar.ps1      # ejecuta los escenarios y marca cada paso con ✓ o ✗
 ```
+
+En Linux, lo mismo con `pwsh`:
+
+```bash
+pwsh ./generar.ps1
+pwsh ./ejecutar.ps1
+pwsh ./probar.ps1      # la salida de la aplicación queda en salida/intermedio/aplicacion*.log
+```
+
+Las herramientas de Python se llaman con `.\.venv\Scripts\python.exe` en Windows y con `./.venv/bin/python` en Linux.
 
 `generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo`, `-Contexto`, `-Specs` y `-Archi`.
 

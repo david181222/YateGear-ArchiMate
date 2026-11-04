@@ -52,7 +52,7 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 
 | Paso | Qué hacer | Listo cuando |
 |---|---|---|
-| J1 | Clonar el repositorio en otra carpeta y correr `generar.ps1` y `probar.ps1` desde cero, como indica el README. | `probar.ps1` da 19 de 19. Si algo falla, se arregla y se anota en la sección 6. |
+| J1 | Clonar el repositorio en otra carpeta y correr `generar.ps1` y `probar.ps1` desde cero, como indica el README. | **Hecho en Linux (4 nov 2026):** 19 de 19, 0 advertencias, `salida/` idéntica a la versionada. Para eso los `.ps1` quedaron multiplataforma (sección 6). **Falta** correrlos una vez en Windows, porque se cambiaron sus rutas. |
 | J2 | Llevar D1 y D3 al equipo. | Las dos tienen su decisión escrita en la tabla de la sección 3. |
 | J3 | G1: salida con varios contextos. | El piloto sigue dando 19 de 19 y su huella es estable en dos generaciones seguidas. |
 | J4 | G2 y G3: varios agregados e identidades nuevas. | El piloto sigue en verde. |
@@ -94,3 +94,5 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 - El puerto (5080) se cambia en `PUERTO`, en `src/generar.py`. Para una sola vez: `-Puerto`.
 - Un cambio en el modelo se hace en Archi y se guarda en `modelo/YateGear.archimate`; después se vuelve a correr `generar.ps1`.
 - Si una revisión nueva pasa a la primera, conviene romper a propósito una copia del YAML para comprobar que de verdad detecta el error.
+- Los `.ps1` corren en Windows y en Linux (`pwsh`). Las rutas van con `/`, que sirve en los dos. Para detener la aplicación, `probar.ps1` la busca por la ruta de su ejecutable y no por el nombre, porque en Linux el nombre del proceso se corta a 15 caracteres.
+- En Linux, el venv se crea con la ruta real de Python 3.13. Si se crea desde un enlace (como el `python3.13` que `uv` deja en `~/.local/bin`), el venv no encuentra la biblioteca estándar y `ensurepip` falla con "No module named 'encodings'".

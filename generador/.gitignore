@@ -3,3 +3,4 @@ bin/
 obj/
 salida/intermedio/YateGear.xml
 __pycache__/
+salida/intermedio/*.log
