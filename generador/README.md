@@ -124,6 +124,17 @@ Además se generan `pruebas.http` y `escenarios.json` (desde los escenarios del 
 
 ## Reglas del generador
 
+### Generalidad: el generador no conoce YateGear
+
+El generador debe servir para cualquier modelo ArchiMate que siga las convenciones de diagramación de la tabla "Qué se lee del modelo", no solo para este. Por eso:
+
+- El código del generador (`src/`, `plantillas/` y los `.ps1`) solo conoce las convenciones: tipos de elemento, relaciones y propiedades. Nunca nombres de contextos, raíces, campos ni datos de un modelo en particular.
+- Lo que el modelo dice se lee del modelo. Lo que el modelo no dice o deja ambiguo (datos de entrada y salida, estados, transiciones, identidades, respuestas simuladas) se **declara** en el YAML del contexto, con `# supuesto` cuando no sale de la documentación.
+- Si a un contexto le falta algo que el código no puede inferir ni declarar en el YAML, se amplía el formato del YAML (y `specs.py` lo revisa) y se documenta. No se escribe a mano en el generador.
+- Si el modelo tiene un error o le falta un dato, se corrige el modelo en Archi, no el generador. Las correcciones quedan en "Discrepancias encontradas".
+
+Hoy quedan excepciones, que se quitan en G1 (ver PENDIENTES.md): `ejecutar.ps1` y `probar.ps1` tienen escrito el proyecto `GestionDelArriendo`; `generar.ps1` trae por defecto el contexto y el YAML del piloto; y `generar.ps1` y `huella.py` llaman `YateGear.xml` al XML exportado, en vez de tomar el nombre del modelo.
+
 ### Regla de los datos
 
 Un dato pasa de un lugar a otro por su **nombre** y su **tipo**, que son los del lenguaje ubicuo. Si la entrada de un comando trae "inicio" y el objeto de valor "Fechas del arriendo" tiene el campo "inicio", es el mismo dato. Así no hace falta escribir correspondencias, y `specs.py` puede revisar cada dato. Si un nombre puede ir a más de un destino dentro de un comando, o puede venir de dos campos de la raíz, `specs.py` lo marca como error y dice cuáles son.
@@ -195,11 +206,13 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 
 ## Discrepancias encontradas
 
-| # | Qué | Dónde | Cómo se resolvió en el piloto |
+| # | Qué | Dónde | Estado |
 |---|---|---|---|
-| 1 | SB-11 "Verificar los requisitos del cliente": el contrato de la V4 pide como entrada el cliente, la licencia y la autorización, pero la documentación del servicio en el modelo dice que revisa la ficha del cliente que guarda el arriendo. | Contrato SB-11 (V4) y servicio de aplicación SB-11 (V8). | La consulta recibe solo el número del arriendo y lee la ficha de la raíz. |
-| 2 | SA-02: la salida de su contrato ("estado del contrato, fecha de firma y condiciones de cancelación") no menciona la referencia del contrato firmado. La documentación del servicio en el modelo y V8-SUP-03 dicen que la entrega. | Contrato SA-02 (V4) y servicio SA-02 (V8, V9). | La salida simulada de SA-02 incluye "referencia del contrato firmado", que "Confirmar la reserva" guarda en la raíz. |
-| 3 | El mismo dato tiene nombres distintos entre contextos. Cobros dice "código de autorización de la pasarela" y Gestión del arriendo, "autorización del bloqueo del depósito". Operación dice "hora de entrega" y "hora de regreso", y Gestión del arriendo, "fecha y hora del cambio". Cobros guarda un "comprobante" por cobro. La Cuenta del arriendo no tiene la hora del cierre. | Campos de las raíces de la V6 y eventos entre dominios. | Los eventos que llegan se declaran con los nombres de Gestión del arriendo (supuesto). Se revisan al generar Cobros y Operación. |
+| 1 | SB-11 "Verificar los requisitos del cliente": el contrato de la V4 pide como entrada el cliente, la licencia y la autorización, pero la documentación del servicio en el modelo dice que revisa la ficha del cliente que guarda el arriendo. | Contrato SB-11 (V4) y servicio de aplicación SB-11 (V8). | **Cerrada sin cambios (D3, 4 nov 2026).** No es un error, sino un refinamiento entre niveles: la V4 dice qué se verifica, y la V6 decidió dónde viven esos datos (la ficha es la copia que guarda cada arriendo, V6-SUP-01). La consulta recibe solo el número del arriendo y lee la ficha de la raíz. |
+| 2 | SA-02: la salida de su contrato no mencionaba la referencia del contrato firmado, aunque la raíz Arriendo la guarda con fuente SA-02 y V8-SUP-03 dice que SA-02 la entrega. | Contrato SA-02 (V4). | **Corregida en el modelo (D3, 4 nov 2026):** la salida del contrato incluye la referencia del contrato firmado, en Archi y en el README principal. |
+| 3 | El mismo dato tiene nombres distintos entre contextos. Cobros dice "código de autorización de la pasarela" y Gestión del arriendo, "autorización del bloqueo del depósito". Operación dice "hora de entrega" y "hora de regreso", y Gestión del arriendo, "fecha y hora del cambio". Cobros guarda un "comprobante" por cobro. La Cuenta del arriendo no tiene la hora del cierre. | Campos de las raíces de la V6 y eventos entre dominios. | Abierta. Los eventos que llegan se declaran con los nombres de Gestión del arriendo (supuesto). Se alinean en G12 (D2). |
+| 4 | La raíz Calificación no decía a quién se califica, pero SB-30 calcula el promedio de un cliente o de un propietario. | Raíz Calificación (V6). | **Corregida en el modelo (4 nov 2026):** campo `calificado` (string), en Archi y en el README principal. |
+| 5 | Ningún campo unía un yate con su arriendo en Operación: la Lectura se identifica por el yate y el Acta de entrega por el arriendo. SB-27 revisa "las lecturas de un yate con arriendo en curso" y SB-26 devuelve el recorrido del yate arrendado. | Raíz Acta de entrega (V6), contrato SB-22 (V4). | **Corregida en el modelo (4 nov 2026):** campo `identificador del yate` (string) en el Acta de entrega, y la entrada del contrato SB-22 lo incluye. |
 
 Si la ACLI de Archi escribe `IllegalArgumentException` al exportar, alguna caja tiene una fuente sin nombre (como `|9|1`). La exportación termina y valida igual, y solo se pierde esa fuente, que el generador no usa; se arregla en Archi dándole una fuente explícita. Así se arreglaron las 6 agrupaciones de área de la V2 (D8).
 

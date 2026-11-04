@@ -607,7 +607,7 @@
             "id": "id-3f0f0a61815d4247bbb2d2cf80f1ad6e",
             "nombre": "Contrato de servicio: Contratos con propietarios y clientes",
             "entrada": "Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.",
-            "salida": "Estado del contrato (enviado o firmado), fecha de firma y condiciones de cancelación.",
+            "salida": "Estado del contrato (enviado o firmado), fecha de firma, condiciones de cancelación y, si está firmado, la referencia del contrato firmado.",
             "reglas": "El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON)."
           }
         },

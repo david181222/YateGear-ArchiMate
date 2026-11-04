@@ -708,7 +708,7 @@ Cada servicio incluido tiene un objeto Contract asociado, con nombre "Contrato d
 | SB-19 | Bloquear el depósito | Arriendo, valor del depósito y tarjeta de crédito del cliente. | Depósito bloqueado con su código de autorización y la fecha en que vence el bloqueo. | Se rechaza si el bloqueo vencería antes del cierre: la autorización en tarjeta de crédito dura 28 días (V4-SUP-07, contraste de H-10). En la práctica, la fecha de fin del arriendo no puede pasar de unos 25 días después de reservar. |
 | SB-20 | Liberar el depósito | Arriendo e inspección sin daños, o arriendo cancelado con el depósito bloqueado. | Depósito liberado y fecha de la liberación. | Se rechaza si la inspección registró daños (REG-01). Se libera en máximo 3 días después de la devolución (resultado de la V1). Si la reserva se cancela, se libera al cancelar, sin inspección (V4-SUP-09). |
 | SB-21 | Descontar daños del depósito | Arriendo, valor de los daños y evidencia. | Valor descontado, saldo liberado y valor que excede el depósito, si lo hay. | Se rechaza un descuento sin evidencia (principio "Todo cobro va con evidencia", V1). Se hace en máximo 3 días después de la devolución (resultado de la V1). El valor de los daños llega con la inspección (V4-SUP-03). |
-| SB-22 | Registrar el acta de entrega | Arriendo, fotos, nivel de combustible, hora de entrega y observaciones. | Acta de entrega registrada. | Se rechaza si el arriendo no tiene la reserva confirmada (CIE-01) o si el acta no trae fotos (H-13). |
+| SB-22 | Registrar el acta de entrega | Arriendo, identificador del yate, fotos, nivel de combustible, hora de entrega y observaciones. | Acta de entrega registrada. | Se rechaza si el arriendo no tiene la reserva confirmada (CIE-01) o si el acta no trae fotos (H-13). |
 | SB-23 | Registrar la inspección de devolución | Arriendo, fotos, nivel de combustible, hora de regreso y daños encontrados con su valor. | Acta de inspección registrada. | Se rechaza una inspección sin fotos (H-13). El valor de los daños llega con la inspección (V4-SUP-03). |
 | SB-24 | Determinar las diferencias entre entrega y devolución | Arriendo y fecha y hora de fin acordadas. | Combustible consumido, horas adicionales y daños, con la evidencia de cada uno. | Se rechaza si falta el acta de entrega o la de inspección, porque la comparación de las dos es la evidencia (H-13). |
 | SB-25 | Registrar lecturas de ubicación y combustible | Yate, posición, nivel de combustible y hora de la lectura. | Lectura guardada. | - |
@@ -718,7 +718,7 @@ Cada servicio incluido tiene un objeto Contract asociado, con nombre "Contrato d
 | SB-29 | Calificar al cliente | Arriendo cerrado y calificación. | Calificación registrada. | Una calificación por cada parte y arriendo, al cerrar el arriendo (E2E-07); se rechaza si el arriendo no está cerrado o si el propietario ya calificó. |
 | SB-30 | Consultar calificaciones promedio | Propietario o cliente. | Calificación promedio y número de calificaciones. | - |
 | SA-01 | Clientes del CRM | Identificación del cliente, o datos del cliente y de su solicitud. | Datos del cliente con su referencia en el CRM, o confirmación del registro. | - |
-| SA-02 | Contratos con propietarios y clientes | Datos del arriendo o del propietario para el contrato, o número de contrato a consultar. | Estado del contrato (enviado o firmado), fecha de firma y condiciones de cancelación. | El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON). |
+| SA-02 | Contratos con propietarios y clientes | Datos del arriendo o del propietario para el contrato, o número de contrato a consultar. | Estado del contrato (enviado o firmado), fecha de firma, condiciones de cancelación y, si está firmado, la referencia del contrato firmado. | El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON). |
 | SA-03 | Pólizas y reclamos de la aseguradora | Datos del arriendo, o datos del reclamo con su evidencia. | Número y valor de la póliza, o número y estado del reclamo. | No se envía un reclamo si el daño no supera el depósito (INT-ASE). |
 | SA-04 | Nivel de riesgo de la evaluadora | Datos del cliente autorizados. | Nivel de riesgo y fecha de la evaluación. | Bajo y medio se traducen a aceptable y alto a no se arrienda (REG-01, V4-SUP-02). |
 | SA-05 | Avisos y actas de las marinas | Aviso o alerta para la marina; o acta recibida de la marina. | Constancia de que el aviso llegó; o acta traducida al formato del arriendo. | Las actas se reciben en el formato que ya usa cada marina, porque las marinas no cambian sus sistemas (MOT-04, INT-MAR). |
@@ -1396,6 +1396,7 @@ El dominio Operación del arriendo tiene tres agregados: "Agregado Acta de entre
 | Campo | Fotos | Fuente: SB-22, H-13. |
 | Campo | Nivel de combustible | Tanque lleno. Fuente: SB-22. |
 | Campo | Hora de entrega; observaciones | Fuente: SB-22. |
+| Campo | Identificador del yate | Une el yate con su arriendo: con él, Operación sabe qué yate tiene un arriendo en curso (SB-26, SB-27). Fuente: SB-22. |
 
 Invariante del agregado: no se registra sin fotos (H-13). Regla de comando: SB-22 rechaza el acta si el arriendo no tiene la reserva confirmada (CIE-01), porque ese estado está en el agregado Arriendo. Fuente: H-13; E2E-01, INT-MAR, CIE-01; contrato de SB-22.
 
@@ -1444,6 +1445,7 @@ El dominio Calificaciones tiene un agregado, "Agregado Calificación", con 2 com
 | Raíz | Calificación | La que se dan cliente y propietario al cerrar un arriendo. Identidad: el arriendo y quién califica. Realiza "Calificación" (V4). |
 | Campo | Quién califica | Cliente o propietario. Fuente: SB-28, SB-29. |
 | Campo | Calificación dada | Fuente: SB-28, SB-29, SP-06. |
+| Campo | Calificado | Quien recibe la calificación: la referencia al CRM del cliente o el identificador del propietario, según quién califica. SB-30 promedia por este campo. Fuente: SB-28, SB-29, SB-30. |
 
 Invariante del agregado: una calificación por cada parte y arriendo; lo garantiza su identidad, formada por el arriendo y quien califica (E2E-07, V6-DEC-15). Regla de comando: SB-28 y SB-29 solo se ejecutan con el arriendo cerrado (E2E-07), estado que está en el agregado Arriendo. Fuente: H-16; E2E-07; contratos de SB-28 y SB-29.
 

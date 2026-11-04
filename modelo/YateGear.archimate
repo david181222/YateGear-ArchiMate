@@ -1144,7 +1144,7 @@ Reglas: Se rechaza un descuento sin evidencia (principio &quot;Todo cobro va con
         </element>
         <element xsi:type="archimate:Contract" name="Contrato de servicio: Registrar el acta de entrega" id="id-cebe80de47aa4662af8631258f3353b5">
           <documentation>Contrato del servicio SB-22 &quot;Registrar el acta de entrega&quot;.
-Entrada: Arriendo, fotos, nivel de combustible, hora de entrega y observaciones.
+Entrada: Arriendo, identificador del yate, fotos, nivel de combustible, hora de entrega y observaciones.
 Salida: Acta de entrega registrada.
 Reglas: Se rechaza si el arriendo no tiene la reserva confirmada (CIE-01) o si el acta no trae fotos (H-13).</documentation>
           <property key="Servicio" value="SB-22"/>
@@ -1225,7 +1225,7 @@ Reglas:</documentation>
         <element xsi:type="archimate:Contract" name="Contrato de servicio: Contratos con propietarios y clientes" id="id-3f0f0a61815d4247bbb2d2cf80f1ad6e">
           <documentation>Contrato del servicio SA-02 &quot;Contratos con propietarios y clientes&quot;.
 Entrada: Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.
-Salida: Estado del contrato (enviado o firmado), fecha de firma y condiciones de cancelación.
+Salida: Estado del contrato (enviado o firmado), fecha de firma, condiciones de cancelación y, si está firmado, la referencia del contrato firmado.
 Reglas: El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON).</documentation>
           <property key="Servicio" value="SA-02"/>
           <property key="Capa" value="5. Servicios de la capa anticorrupción (Anti-corruption Layer Service)"/>
@@ -1779,7 +1779,7 @@ Fuente: contrato de SB-05 (V4); V4-SUP-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Acta de entrega" id="id-f4fb995872c5435f8ccb7e85e17cbee9">
         <documentation>Raíz del agregado Acta de entrega: registro de la marina al entregar el yate. Identidad: la del arriendo.
-Campos de la raíz: fotos, nivel de combustible (tanque lleno), hora de entrega y observaciones.
+Campos de la raíz: fotos, nivel de combustible (tanque lleno), hora de entrega, observaciones e identificador del yate, que une el yate con su arriendo (SB-26, SB-27).
 Realiza el objeto de negocio &quot;Acta de entrega&quot; de la V4.
 Fuente: H-13; contrato de SB-22 (V4); conversación E2E-01, INT-MAR.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
@@ -1787,6 +1787,7 @@ Fuente: H-13; contrato de SB-22 (V4); conversación E2E-01, INT-MAR.</documentat
         <property key="Campo: nivel de combustible" value="decimal"/>
         <property key="Campo: hora de entrega" value="DateTime"/>
         <property key="Campo: observaciones" value="string?"/>
+        <property key="Campo: identificador del yate" value="string"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Registrar el acta de entrega" id="id-8addfcc26ad744b8a15ea09a54227d4d">
         <documentation>Comando del agregado Acta de entrega. Realiza SB-22 &quot;Registrar el acta de entrega&quot; de la V4. Guarda el acta, las fotos y el nivel de combustible que reporta la marina al entregar el yate.
@@ -1860,12 +1861,13 @@ Fuente: H-12; conversación INT-GPS, EXC-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Calificación" id="id-e848e3b4bf284a969c9a0a9d2e4de26f">
         <documentation>Raíz del agregado Calificación: la que se dan cliente y propietario al cerrar un arriendo. Identidad: el arriendo y quién califica.
-Campos de la raíz: quién califica y la calificación dada.
+Campos de la raíz: quién califica, la calificación dada y el calificado: la referencia al CRM del cliente o el identificador del propietario, según quién califica. SB-30 promedia por este campo.
 Realiza el objeto de negocio &quot;Calificación&quot; de la V4.
 Fuente: H-16; contratos de SB-28, SB-29 y SP-06 (V4); conversación E2E-07.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
         <property key="Campo: quién califica" value="enum Parte que califica(cliente, propietario)"/>
         <property key="Campo: calificación dada" value="int"/>
+        <property key="Campo: calificado" value="string"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Calificar al propietario" id="id-b058bd36e7784e5ea81ab24c8dd3a4bb">
         <documentation>Comando del agregado Calificación. Realiza SB-28 &quot;Calificar al propietario&quot; de la V4. El cliente califica al propietario por su experiencia con el yate.

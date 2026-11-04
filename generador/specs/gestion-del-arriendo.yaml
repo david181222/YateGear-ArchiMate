@@ -272,7 +272,7 @@ servicios_sa:
   Contratos con propietarios y clientes:          # contrato SA-02
     entrada:
       número del arriendo: string                 # supuesto: el contrato del cliente se consulta por su arriendo
-    salida:                                       # estado del contrato, fecha de firma y condiciones de cancelación; la referencia: V8-SUP-03
+    salida:                                       # estado del contrato, fecha de firma, condiciones de cancelación y la referencia del contrato firmado
       referencia del contrato firmado: string
       estado del contrato: enum Estado del contrato(enviado, firmado)   # supuesto: nombre del enum
       fecha de firma: DateOnly?
