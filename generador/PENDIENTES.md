@@ -44,7 +44,7 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 | D5 | Cómo sabe Calificaciones que el arriendo está cerrado (SB-28 y SB-29 solo se permiten con el arriendo cerrado). | (a) Calificaciones guarda su copia de los "Arriendo cerrado" que recibe. (b) Queda como regla escrita a mano en `ValidarReglas`. | (a): la V8 dice que Calificaciones toma el arriendo cerrado tal como lo define Gestión del arriendo, y cada contexto guarda su propia copia (V8-DEC-04). Se marca como supuesto. | José | J5 | |
 | D6 | Pérdida de señal (SB-27): cada cuánto se revisa y desde cuántos minutos sin lecturas se avisa (V4-SUP-04). | Valores en el YAML. | Un parámetro en el YAML y un endpoint de prueba que fuerce la revisión, para que `probar.ps1` no tenga que esperar. | José | J7 | |
 | D7 | Cómo se escriben en el YAML las políticas con varios disparos (SB-17). | Extender `junto_con` a las políticas internas y agregar "uno de". | Esa misma. | Santiago | S2 | |
-| D8 | Fuentes de las 6 agrupaciones de área de la V2 (opcional). | Arreglarlas en Archi o dejarlas. | Arreglarlas: así desaparecen los 6 errores que muestra la exportación. | José | Cuando pueda | |
+| D8 | Fuentes de las 6 agrupaciones de área de la V2 (opcional). | Arreglarlas en Archi o dejarlas. | Arreglarlas: así desaparecen los 6 errores que muestra la exportación. | José | Cuando pueda | **Arreglado (4 nov 2026):** las 6 agrupaciones de la V2 tienen fuente explícita (Sans 9, negrita). La exportación sale sin errores. |
 
 ## 4. Reparto del trabajo
 
@@ -89,7 +89,8 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 - Los `.ps1` van en UTF-8 con BOM. Sin BOM, Windows PowerShell 5.1 rompe las tildes.
 - Los `.g.cs` no se editan, porque el generador los reescribe. El código a mano va en los `.cs` manuales, que el generador crea una sola vez y nunca sobrescribe.
 - `dotnet run` puede dejar procesos `GestionDelArriendo.exe` vivos. Si la compilación falla porque el `.exe` "está siendo usado por otro proceso", hay que detenerlos.
-- La ACLI exporta lo que está **guardado** en disco, y funciona aunque Archi esté abierto. Los 6 errores `IllegalArgumentException` de la V2 son esperados (D8).
+- La ACLI exporta lo que está **guardado** en disco, y funciona aunque Archi esté abierto. Los 6 errores `IllegalArgumentException` de la V2 ya no salen (D8). Si vuelve a salir uno, alguna caja quedó con una fuente sin nombre.
+- Antes de editar en Archi, revisa que el modelo abierto sea `modelo/YateGear.archimate` del repositorio (Archi recuerda los modelos abiertos antes, y puede haber copias viejas en otras carpetas).
 - En el modelo, todo se busca por tipo y por relación, nunca solo por nombre. Las agrupaciones del canvas de la V11 también agregan comandos y eventos: solo cuentan las "Agregado ...".
 - El puerto (5080) se cambia en `PUERTO`, en `src/generar.py`. Para una sola vez: `-Puerto`.
 - Un cambio en el modelo se hace en Archi y se guarda en `modelo/YateGear.archimate`; después se vuelve a correr `generar.ps1`.

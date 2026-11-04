@@ -4457,7 +4457,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
           <feature name="deriveElementLineColor" value="false"/>
           <content>Capacidad impactada por la aplicación</content>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-cdf1b33cfe954ffcb2c7bbc4d095e056" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-91ad4241aa344c69b988aa417dd60a08" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-cdf1b33cfe954ffcb2c7bbc4d095e056" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-91ad4241aa344c69b988aa417dd60a08" type="1">
           <bounds x="40" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-49e37cdbffd24b6eaccf2951b10addbd" fillColor="#D98880" archimateElement="id-0ce823ca86ea4ece8ec876ed07dde36e">
@@ -4470,7 +4470,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="15" y="194" width="190" height="65"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-d539c06c9bf34cbfa4e473f2f1f60954" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-109bb52ebcd24fff932f2455c48eb8fb" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-d539c06c9bf34cbfa4e473f2f1f60954" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-109bb52ebcd24fff932f2455c48eb8fb" type="1">
           <bounds x="290" y="80" width="425" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-659397718b2640cf9c3829b8a01738b9" fillColor="#7FB3D5" archimateElement="id-bb470d63486b4dc3bec2b5b1ccfaca63">
@@ -4499,7 +4499,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="15" y="194" width="190" height="65"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-19910213eb9245519c1cdca556bfc3d9" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-96274de615f64f2894959ac0bcf06fb0" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-19910213eb9245519c1cdca556bfc3d9" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-96274de615f64f2894959ac0bcf06fb0" type="1">
           <bounds x="745" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-24452a81eabf4b3eb94f083bda2ea465" lineWidth="3" lineColor="#7B1FA2" fillColor="#7FB3D5" archimateElement="id-27dfa6ebc5e147ffb6af3db9c12a68e1">
@@ -4515,7 +4515,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <feature name="deriveElementLineColor" value="false"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-2e949d63d9564a9e96f04d87b661ab44" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-f3ce5bf7a5ed4702b5c311fe7bd4e141" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-2e949d63d9564a9e96f04d87b661ab44" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-f3ce5bf7a5ed4702b5c311fe7bd4e141" type="1">
           <bounds x="995" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-fd0af0816dd141cc893baa3fcf2031d2" lineWidth="3" lineColor="#7B1FA2" fillColor="#7FB3D5" archimateElement="id-888a79f729ec4d4da8245d3aa613d75d">
@@ -4537,7 +4537,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="15" y="348" width="190" height="65"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-076ef7d4d79a4ca4a0566778e2171d32" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-e9f5e8e2f8c64631b39f7be428519414" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-076ef7d4d79a4ca4a0566778e2171d32" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-e9f5e8e2f8c64631b39f7be428519414" type="1">
           <bounds x="1245" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-8234a679b1b3444b994dfb9161c05919" fillColor="#7FB3D5" archimateElement="id-37b405ea7c744c95bec2cc569b2b68bc">
@@ -4548,7 +4548,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <feature name="deriveElementLineColor" value="false"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-84dfb8472eef488491a7b8c53dae26f9" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-928fa90337204e8fa5a5a7c2f889ab77" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-84dfb8472eef488491a7b8c53dae26f9" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-928fa90337204e8fa5a5a7c2f889ab77" type="1">
           <bounds x="1495" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-589f0dd702e5416983708ace4a4146d2" fillColor="#A9DFBF" archimateElement="id-66692219783f46fca2c7a25e135cdfe2">

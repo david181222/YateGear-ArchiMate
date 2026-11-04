@@ -201,7 +201,7 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 | 2 | SA-02: la salida de su contrato ("estado del contrato, fecha de firma y condiciones de cancelación") no menciona la referencia del contrato firmado. La documentación del servicio en el modelo y V8-SUP-03 dicen que la entrega. | Contrato SA-02 (V4) y servicio SA-02 (V8, V9). | La salida simulada de SA-02 incluye "referencia del contrato firmado", que "Confirmar la reserva" guarda en la raíz. |
 | 3 | El mismo dato tiene nombres distintos entre contextos. Cobros dice "código de autorización de la pasarela" y Gestión del arriendo, "autorización del bloqueo del depósito". Operación dice "hora de entrega" y "hora de regreso", y Gestión del arriendo, "fecha y hora del cambio". Cobros guarda un "comprobante" por cobro. La Cuenta del arriendo no tiene la hora del cierre. | Campos de las raíces de la V6 y eventos entre dominios. | Los eventos que llegan se declaran con los nombres de Gestión del arriendo (supuesto). Se revisan al generar Cobros y Operación. |
 
-Advertencia conocida: al exportar, la ACLI de Archi escribe 6 errores `IllegalArgumentException` porque las 6 agrupaciones de área de la V2 tienen la fuente `|9|1`, sin nombre. La exportación termina y valida, y solo se pierde esa fuente, que el generador no usa. Se arregla en Archi dándoles una fuente explícita.
+Si la ACLI de Archi escribe `IllegalArgumentException` al exportar, alguna caja tiene una fuente sin nombre (como `|9|1`). La exportación termina y valida igual, y solo se pierde esa fuente, que el generador no usa; se arregla en Archi dándole una fuente explícita. Así se arreglaron las 6 agrupaciones de área de la V2 (D8).
 
 ## Supuestos
 
