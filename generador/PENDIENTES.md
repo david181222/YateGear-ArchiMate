@@ -1,14 +1,28 @@
 # Pendientes del generador
 
-Estado al 3 de noviembre de 2026. Edwin terminó el piloto (Contexto Gestión del arriendo). **Ahora sigue José y, cuando José termine, Santiago.** Aquí está lo que falta, lo que hay que decidir y quién hace cada cosa. Cada quien actualiza este archivo al terminar su parte: marca lo que cerró y escribe las decisiones tomadas.
+Estado al 4 de noviembre de 2026. Edwin terminó el piloto (Contexto Gestión del arriendo) y José lleva J1 a J6 (ver "Estado actual"). **Ahora sigue José con J7 y, cuando José termine, Santiago.** Aquí está lo que falta, lo que hay que decidir y quién hace cada cosa. Cada quien actualiza este archivo al terminar su parte: marca lo que cerró y escribe las decisiones tomadas.
 
 Cómo funciona el generador y cómo se ejecuta: [README.md](README.md).
 
 ## 1. Qué está hecho (parte de Edwin)
 
+Las cifras de esta sección son las de la entrega del piloto (3 de noviembre); las de hoy están en "Estado actual".
+
 - El generador completo para un contexto: exporta el modelo con la ACLI de Archi, lo lee con pyArchimate, valida el modelo y el YAML, y genera el proyecto C# (.NET 8) con sus tres capas: estructura, transiciones de estado y eventos de otros contextos. Compila con cero advertencias.
 - El piloto, "Contexto Gestión del arriendo": `probar.ps1` pasa los 19 pasos de sus 4 escenarios. REG-01 está escrita a mano en `salida/GestionDelArriendo/Comandos/ConfirmarLaReserva.cs`.
 - Es determinista: el mismo modelo y el mismo YAML dan la misma huella. La trazabilidad está completa (161 filas), con 33 supuestos (GEN-SUP-02 a 34) y 3 discrepancias documentadas en el README. GEN-SUP-01 se retiró porque la tecnología es una decisión del equipo.
+
+### Estado actual (4 de noviembre, después de J6)
+
+| Qué | Hoy | Cómo se recalcula |
+|---|---|---|
+| Contextos generados | 3 de 5: Gestión del arriendo, Calificaciones y Disponibilidad de yates (faltan Operación del arriendo y Cobros y depósito). | `generar.py` lista los generados y los que no tienen YAML. |
+| Pasos de los escenarios | 47, todos en verde: 19, 10 y 18. | `probar.ps1` |
+| Trazabilidad | 296 filas: 163, 47 y 86; todos los elementos de los tres contextos están. | `src/revisar_trazabilidad.py salida/intermedio/modelo-ddd.json salida` |
+| Supuestos | 47: GEN-SUP-02 a 48 (GEN-SUP-01 se retiró). | Tablas "Supuestos" del README. |
+| Discrepancias | 8: la 1 cerrada sin cambios, la 3 abierta (G12, D2) y las otras 6 corregidas en el modelo. | Tabla "Discrepancias encontradas" del README. |
+
+Estas cifras cambian con cada contexto: al terminar uno, se actualiza esta tabla.
 
 ## 2. Lo que le falta al generador
 

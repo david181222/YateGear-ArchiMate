@@ -347,9 +347,9 @@ escenarios:
         espera: Reserva cancelada
     - Registrar el avance del arriendo:           # rechazo a propósito: un arriendo cancelado no empieza
         con: {nuevo estado: en curso}
-        espera: 409
+        espera: {código: 409, estado actual: cancelado}
 
   Confirmar sin riesgo evaluado:                  # ARR-0004
     - Registrar la solicitud de reserva
     - Confirmar la reserva:                       # REG-01 (escrita a mano en ConfirmarLaReserva.cs): falta el riesgo aceptable
-        espera: 422
+        espera: {código: 422, regla: REG-01}

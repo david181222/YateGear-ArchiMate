@@ -128,12 +128,12 @@ escenarios:
   Calificar sin arriendo cerrado:                 # rechazo a propósito: no llegó "Arriendo cerrado"
     - Calificar al cliente:
         con: {número del arriendo: ARR-0099, calificación dada: 3}
-        espera: 409
+        espera: {código: 409, requiere: Arriendo cerrado}
 
   Calificar dos veces:                            # rechazo a propósito: una calificación por cada parte y arriendo
     - Calificar al propietario:
         con: {número del arriendo: ARR-0001, calificación dada: 1}
-        espera: 409
+        espera: {código: 409, identidad: ARR-0001/Cliente}
 
   Sin calificaciones:
     - Consultar calificaciones promedio:

@@ -82,7 +82,7 @@ GET {{base}}/consultas/consultar-calificaciones-promedio?calificado=PROP-0001
 # ==============================================================================
 
 ### Calificar sin arriendo cerrado · paso 1: Calificar al cliente
-# Comando. Espera: HTTP 409.
+# Comando. Espera: HTTP 409 y requiere = Arriendo cerrado.
 POST {{base}}/comandos/calificar-al-cliente
 Content-Type: application/json
 
@@ -96,7 +96,7 @@ Content-Type: application/json
 # ==============================================================================
 
 ### Calificar dos veces · paso 1: Calificar al propietario
-# Comando. Espera: HTTP 409.
+# Comando. Espera: HTTP 409 y identidad = ARR-0001/Cliente.
 POST {{base}}/comandos/calificar-al-propietario
 Content-Type: application/json
 

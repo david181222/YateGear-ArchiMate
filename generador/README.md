@@ -202,6 +202,10 @@ Un dato pasa de un lugar a otro por su **nombre** y su **tipo**, que son los del
 | 2. Transiciones | `desde` y `a` del YAML: 409 si el estado no lo permite, y cambio de estado al guardar. |
 | 3. Eventos de otros contextos | Endpoint por evento. Con `junto_con`, los eventos que ya llegaron se guardan en memoria por número del arriendo; mientras falte alguno la respuesta es 202, y cuando llega el último se dispara el comando con los datos de todos. |
 
+### Qué borra el generador
+
+El generador recuerda lo que escribió en la generación anterior (`salida/intermedio/archivos-generados.txt`, que se versiona) y borra lo que ya no genera: por ejemplo, los archivos de un comando que se quitó del modelo, o los de un contexto cuyo YAML se quitó (o que se dejó fuera con `-Specs`). También borra los `.g.cs` sueltos en las carpetas de los proyectos. Nunca borra un archivo manual: si queda sin su `.g.cs`, o en la carpeta de un contexto que ya no se genera, avisa al final ("AVISO manual huérfano" o "AVISO ... tiene código a mano de un contexto que ya no se genera"). Qué hacer con el aviso: rescatar del archivo lo que sirva (por ejemplo, una regla escrita a mano) y borrarlo a mano, o volver a poner el elemento en el modelo o el YAML.
+
 ### Archivos manuales
 
 Cada comando y cada consulta tiene un archivo `.cs` que el generador crea **una sola vez** y nunca sobrescribe. Trae:
@@ -218,9 +222,9 @@ Si un manual queda sin su `.g.cs` (por ejemplo, porque se quitó un comando), el
 
 ## Escenarios y pruebas
 
-La sección `escenarios` del YAML define pruebas de punta a punta. Un paso es un comando, una consulta o un evento de otro contexto. `con` fija valores de su entrada, y `espera` dice el resultado: un evento, un código HTTP (409, 422, 404 o 202) o, en una consulta, `{dato de la salida: valor, ...}`. Sin `espera`, el paso debe responder 2xx.
+La sección `escenarios` del YAML define pruebas de punta a punta. Un paso es un comando, una consulta o un evento de otro contexto. `con` fija valores de su entrada, y `espera` dice el resultado: un evento, un código HTTP (409, 422, 404 o 202), un rechazo con su motivo (`{código: 422, regla: REG-02}`; los campos que se pueden afirmar son `regla`, `requiere`, `identidad`, `operación` y `estado actual`, los de la respuesta de error) o, en una consulta, `{dato de la salida: valor, ...}` (en una lista, cuántos elementos tiene). Sin `espera`, el paso debe responder 2xx. Conviene afirmar el motivo de cada rechazo a propósito: dos rechazos distintos pueden tener el mismo código (en Calificaciones, los dos 409).
 
-Cada paso tiene su identidad. Un comando que crea la raíz recibe la siguiente (el consecutivo, que una solicitud rechazada no gasta, o la que se forma con sus datos), y se revisa que la respuesta la traiga; los demás pasos la toman de `con` o, si no, de la última identidad con el mismo nombre de dato en el escenario (regla de los datos: el calendario de un yate tiene la identidad del yate). Un evento de otro contexto que llega con su propia identidad la toma de `con`. Los consecutivos siguen de un escenario al siguiente, en orden, porque todos corren contra la misma aplicación.
+Cada paso tiene su identidad. Un comando que crea la raíz recibe la siguiente (el consecutivo, que una solicitud rechazada no gasta, o la que se forma con sus datos), y se revisa que la respuesta la traiga; los demás pasos la toman de `con` o, si no, de la última identidad con el mismo nombre de dato en el escenario (regla de los datos: el calendario de un yate tiene la identidad del yate). Un evento de otro contexto que llega con su propia identidad la toma de `con`. Los consecutivos siguen de un escenario al siguiente, en orden, porque todos corren contra la misma aplicación. Por eso **los escenarios dependen de su orden**: "Calificar dos veces" responde 409 porque "Calificaciones mutuas" corrió antes. Reordenarlos o correr uno solo puede cambiar sus resultados. El generador avisa (sin detenerse) cuando un paso crea una identidad que ya creó otro paso anterior sin esperar el 409, o usa una raíz que ningún paso anterior creó sin esperar el 404.
 
 `specs.py` revisa que los escenarios estén bien escritos: que los nombres existan, que los valores de `con` sean válidos y que `espera` sea un evento que ese paso puede publicar, un código permitido o datos de la salida de la consulta con valores válidos. No simula los datos. De los escenarios salen `pruebas/<Proyecto>/pruebas.http` y `escenarios.json`, y `probar.ps1` los ejecuta.
 
@@ -257,7 +261,7 @@ Disponibilidad de yates:
 - Todo se ordena por nombre o por ID. Hay dos excepciones, porque ahí el orden tiene significado: los campos van en el orden del modelo, y los pasos de las pruebas en el orden del YAML.
 - Sin fechas ni horas en lo generado. Todo en UTF-8 sin BOM y con fin de línea LF. `.gitattributes` (`* text=auto eol=lf`) hace que git entregue LF en todas las máquinas.
 - Cada archivo generado empieza con `// Generado desde ArchiMate: <tipo> "<nombre>" (<código>, <ID>).`. En `.csproj` y `.sln` va en la segunda y en la tercera línea, porque su formato lo exige. Los `.json` y el `.csv` no admiten comentarios.
-- `salida/trazabilidad/<Proyecto>.csv` tiene una fila por cada elemento o relación del contexto, con las columnas ID ArchiMate, tipo, nombre, archivo generado y clase. Para revisarlo: `.\.venv\Scripts\python.exe src\revisar_trazabilidad.py salida\intermedio\modelo-ddd.json salida`.
+- `salida/trazabilidad/<Proyecto>.csv` tiene una fila por cada elemento o relación del contexto. El proyecto `Integracion` (el bus entre contextos) no tiene filas, porque es infraestructura y no sale de ningún elemento del modelo; el host sí aparece, en la fila del contexto que registra. Las columnas son ID ArchiMate, tipo, nombre, archivo generado y clase. Para revisarlo: `.\.venv\Scripts\python.exe src\revisar_trazabilidad.py salida\intermedio\modelo-ddd.json salida`.
 - El código generado compila con cero advertencias.
 
 ## Validaciones

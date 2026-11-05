@@ -140,7 +140,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 422,
-            "texto": "HTTP 422"
+            "campos": {
+              "regla": "REG-02"
+            },
+            "texto": "HTTP 422 y regla = REG-02"
           }
         },
         {
@@ -160,7 +163,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 422,
-            "texto": "HTTP 422"
+            "campos": {
+              "regla": "REG-01"
+            },
+            "texto": "HTTP 422 y regla = REG-01"
           }
         },
         {
@@ -246,7 +252,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 422,
-            "texto": "HTTP 422"
+            "campos": {
+              "regla": "INT-CON"
+            },
+            "texto": "HTTP 422 y regla = INT-CON"
           }
         },
         {
@@ -269,7 +278,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 422,
-            "texto": "HTTP 422"
+            "campos": {
+              "regla": "NOR-01"
+            },
+            "texto": "HTTP 422 y regla = NOR-01"
           }
         }
       ]

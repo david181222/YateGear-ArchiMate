@@ -858,6 +858,10 @@ class Generador:
         qs = {q["nombre"]: q for q in self.consultas}
         ext = {x["nombre"]: x for x in self.externos}
         escenarios, contador = [], {}
+        # Coherencia (H-J5-02): las raíces que crean los pasos anteriores, en el orden en que corren (los escenarios
+        # comparten la aplicación). Solo avisa: a veces repetir una identidad o usar una raíz inexistente es a propósito.
+        creadas: dict[tuple, str] = {}
+        self.avisos_escenarios = []
         for nombre_e, pasos in self.s["escenarios"].items():
             actual, primera, lista = {}, None, []
             for i, paso in enumerate(pasos, 1):
@@ -865,7 +869,7 @@ class Generador:
                 op = op or {}
                 con = op.get("con") or {}
                 esp = op.get("espera")
-                rechazo = isinstance(esp, int)
+                rechazo = isinstance(esp, int) or (isinstance(esp, dict) and "código" in esp)
 
                 def cuerpo(campos, identidad=None, nombre_id=None):
                     b = {nombre_id: identidad} if identidad is not None else {}
@@ -937,12 +941,31 @@ class Generador:
                             ident = datos.get(id_json)
                         else:
                             ident = None
+                if r and ident:
+                    clave, donde = (raiz_paso, ident), f'escenario "{nombre_e}", paso {i} ("{nombre}")'
+                    espera_codigo = esp if isinstance(esp, int) else (esp.get("código") if isinstance(esp, dict) else None)
+                    crea_aqui = (nombre in cmd and (cmd[nombre]["crea"] or cmd[nombre]["si_no_existe"])) or \
+                                (nombre in ext and ext[nombre]["comando"] and cmd[ext[nombre]["comando"]]["si_no_existe"])
+                    if nombre in cmd and cmd[nombre]["crea"]:
+                        if clave in creadas and espera_codigo != 409:
+                            self.avisos_escenarios.append(f'{donde}: crea "{ident}", que ya creó {creadas[clave]}; '
+                                                          "si se espera el rechazo, escribe espera: 409")
+                    elif not crea_aqui and clave not in creadas and espera_codigo != 404:
+                        self.avisos_escenarios.append(f'{donde}: usa "{ident}" ({raiz_paso}), que ningún paso anterior creó; '
+                                                      "si se espera que no exista, escribe espera: 404")
+                    if not rechazo:
+                        creadas.setdefault(clave, donde)
                 if r and ident and not rechazo:
                     actual[r["id_nombre"]] = ident
                 if esp is None:
                     espera = {"tipo": "exito", "texto": "HTTP 2xx"}
-                elif rechazo:
+                elif isinstance(esp, int):
                     espera = {"tipo": "codigo", "valor": esp, "texto": f"HTTP {esp}"}
+                elif isinstance(esp, dict) and "código" in esp:   # rechazo con su motivo (campos de la respuesta)
+                    campos_e = {specs.CAMPOS_DE_ERROR[k]: (nombres.pascal(v) if k == "estado actual" else v)
+                                for k, v in esp.items() if k != "código"}
+                    espera = {"tipo": "codigo", "valor": esp["código"], "campos": campos_e,
+                              "texto": f'HTTP {esp["código"]} y ' + ", ".join(f"{k} = {v}" for k, v in esp.items() if k != "código")}
                 elif isinstance(esp, str):
                     espera = {"tipo": "evento", "valor": esp, "texto": f'HTTP 2xx y el evento "{esp}"'}
                 else:                                   # {dato de la salida: valor, ...}; en una lista, su número
@@ -1203,6 +1226,7 @@ class Solucion:
 
         return {"escritos": escritos, "creados": creados, "conservados": conservados, "borrados": borrados,
                 "huerfanos": [x for g in gs for x in g.huerfanos], "sueltas": sueltas,
+                "avisos_escenarios": [(g.ctx["nombre"], a) for g in gs for a in getattr(g, "avisos_escenarios", [])],
                 "contextos": [(g.ctx["nombre"], g.proyecto, len(set(g.traza))) for g in gs]}
 
 
@@ -1247,6 +1271,8 @@ def main():
         print("  borrado (generado que ya no corresponde):", x)
     for x in res["huerfanos"]:
         print("  AVISO manual huérfano (no se borra ni se compila; revísalo):", x)
+    for ctx_nombre, a in res["avisos_escenarios"]:
+        print(f"  AVISO {ctx_nombre}, {a}")
     for x in res["sueltas"]:
         print(f"  AVISO {x}/ tiene código a mano de un contexto que ya no se genera (no se borra ni se compila; revísalo)")
 

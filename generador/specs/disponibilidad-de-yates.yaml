@@ -239,10 +239,10 @@ escenarios:
         espera: Fechas ocupadas
     - Definir las fechas bloqueadas del yate:     # rechazo a propósito: REG-02, fechas con reserva confirmada
         con: {inicio: "2026-03-11", fin: "2026-03-11", acción: bloquear}
-        espera: 422
+        espera: {código: 422, regla: REG-02}
     - Reserva solicitada:                         # rechazo a propósito: REG-01, otro arriendo en esas fechas
         con: {número del arriendo: ARR-0002, identificador del yate: YATE-0001, inicio: "2026-03-12", fin: "2026-03-14"}
-        espera: 422
+        espera: {código: 422, regla: REG-01}
     - Reserva cancelada:
         con: {número del arriendo: ARR-0001, identificador del yate: YATE-0001, inicio: "2026-03-10", fin: "2026-03-12"}
         espera: Fechas liberadas
@@ -256,10 +256,10 @@ escenarios:
   Registro rechazado:
     - Registrar yate en el inventario:            # rechazo a propósito: INT-CON, el propietario no tiene contrato firmado
         con: {propietario: PROP-SIN-CONTRATO, documentos al día ante la DIMAR: true}
-        espera: 422
+        espera: {código: 422, regla: INT-CON}
     - Registrar yate en el inventario:            # rechazo a propósito: NOR-01, documentos ante la DIMAR vencidos
         con: {propietario: PROP-0002, documentos al día ante la DIMAR: false}
-        espera: 422
+        espera: {código: 422, regla: NOR-01}
 
   Otra marina:
     - Registrar yate en el inventario:            # YATE-0002 (los rechazados no gastan número)

@@ -188,7 +188,7 @@ Content-Type: application/json
 }
 
 ### Cancelación · paso 3: Registrar el avance del arriendo
-# Comando. Espera: HTTP 409.
+# Comando. Espera: HTTP 409 y estado actual = cancelado.
 POST {{base}}/comandos/registrar-el-avance-del-arriendo
 Content-Type: application/json
 
@@ -224,7 +224,7 @@ Content-Type: application/json
 }
 
 ### Confirmar sin riesgo evaluado · paso 2: Confirmar la reserva
-# Comando. Espera: HTTP 422.
+# Comando. Espera: HTTP 422 y regla = REG-01.
 POST {{base}}/comandos/confirmar-la-reserva
 Content-Type: application/json
 

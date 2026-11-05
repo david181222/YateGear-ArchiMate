@@ -69,8 +69,9 @@ def main():
             esp, exito = p["espera"], 200 <= codigo < 300
             if esp["tipo"] == "exito":
                 ok = exito
-            elif esp["tipo"] == "codigo":
-                ok = codigo == esp["valor"]
+            elif esp["tipo"] == "codigo":             # y, si los dice, los campos de la respuesta de error
+                ok = codigo == esp["valor"] and all(isinstance(cuerpo, dict) and cuerpo.get(k) == v
+                                                    for k, v in (esp.get("campos") or {}).items())
             elif esp["tipo"] == "evento":
                 ok = exito and esp["valor"] in eventos
             else:

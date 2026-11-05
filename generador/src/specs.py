@@ -23,6 +23,9 @@ import yaml
 import tipos
 
 ESCRIBEN = ("escritura", "lectura y escritura")
+# Campos de una respuesta de error que un escenario puede afirmar (espera: {código: ..., campo: valor}), y su nombre en JSON.
+CAMPOS_DE_ERROR = {"regla": "regla", "requiere": "requiere", "identidad": "identidad", "operación": "operacion",
+                   "estado actual": "estadoActual"}
 
 
 # ------------------------------------------------------------ YAML sin claves repetidas
@@ -926,6 +929,11 @@ class Revisor:
                 elif nombre in qs_y:
                     tipo = "consulta"
                     campos = {k: tipos.interpretar(v) for k, v in ((qs_y[nombre] or {}).get("entrada") or {}).items()}
+                    if (qs_y[nombre] or {}).get("sobre") != "todas":   # por identidad: la de su raíz puede ir en con
+                        q_m = next((q for q in ctx["consultas"] if q["nombre"] == nombre), None)
+                        r_q = self.raiz_por_id.get(q_m["lee"][0]["raiz_id"]) if q_m and q_m["lee"] else None
+                        if r_q:
+                            campos.setdefault(r_q["id_nombre"], tipos.interpretar("string"))
                 elif nombre in ext:
                     tipo = "evento de otro contexto"
                     x = ext[nombre] or {}
@@ -957,6 +965,19 @@ class Revisor:
                         if esp not in posibles:
                             self.error(f"{dp} > espera", f'"{esp}" no es un evento que publique "{cmd}" (directo o por una política); '
                                                          f'posibles: {", ".join(sorted(posibles))}')
+                elif isinstance(esp, dict) and "código" in esp:
+                    # Un rechazo con su motivo: el código y los campos de la respuesta de error (H-J5-01).
+                    esp = self.mapa(esp, f"{dp} > espera", ["código"] + list(CAMPOS_DE_ERROR))
+                    cod = esp.get("código")
+                    if not isinstance(cod, int) or isinstance(cod, bool) or cod not in codigos[tipo]:
+                        self.error(f"{dp} > espera", f"el código {cod!r} no se permite en un {tipo}; se permiten {sorted(codigos[tipo])}")
+                    if len(esp) == 1:
+                        self.aviso(f"{dp} > espera", "con solo el código, escribe espera: <código>")
+                    for k, v in esp.items():
+                        if k != "código" and not isinstance(v, str):
+                            self.error(f"{dp} > espera > {k}", "es un texto")
+                    if "estado actual" in esp:
+                        self.estados_validos(esp["estado actual"], f"{dp} > espera > estado actual")
                 elif isinstance(esp, dict):
                     if tipo != "consulta":
                         self.error(f"{dp} > espera", "espera: {dato: valor, ...} solo va en una consulta")
@@ -981,6 +1002,8 @@ class Revisor:
                                 self.error(f"{dp} > espera", f'el valor {v!r} no es válido para "{k}" ({salida_q[k]["tipo"]})')
                 else:
                     self.error(f"{dp} > espera", "espera es un evento, un código HTTP o {dato de la salida: valor, ...}")
+        # Un comando que dispara un evento de otro contexto usado en los escenarios también se prueba.
+        llamados |= {(ext[n] or {}).get("dispara") for n in llamados if n in ext and isinstance(ext[n], dict)}
         for n in sorted((set(entradas_cmd) | set(qs_y) | set(ext)) - llamados):
             self.aviso("escenarios", f'"{n}" no aparece en ningún escenario: pruebas.http no lo llamará')
 

@@ -161,7 +161,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 409,
-            "texto": "HTTP 409"
+            "campos": {
+              "requiere": "Arriendo cerrado"
+            },
+            "texto": "HTTP 409 y requiere = Arriendo cerrado"
           }
         }
       ]
@@ -185,7 +188,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 409,
-            "texto": "HTTP 409"
+            "campos": {
+              "identidad": "ARR-0001/Cliente"
+            },
+            "texto": "HTTP 409 y identidad = ARR-0001/Cliente"
           }
         }
       ]

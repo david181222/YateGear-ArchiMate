@@ -343,7 +343,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 409,
-            "texto": "HTTP 409"
+            "campos": {
+              "estadoActual": "Cancelado"
+            },
+            "texto": "HTTP 409 y estado actual = cancelado"
           }
         }
       ]
@@ -397,7 +400,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 422,
-            "texto": "HTTP 422"
+            "campos": {
+              "regla": "REG-01"
+            },
+            "texto": "HTTP 422 y regla = REG-01"
           }
         }
       ]

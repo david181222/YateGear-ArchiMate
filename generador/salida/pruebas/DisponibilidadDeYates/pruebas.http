@@ -71,7 +71,7 @@ Content-Type: application/json
 }
 
 ### Registro y ocupación · paso 7: Definir las fechas bloqueadas del yate
-# Comando. Espera: HTTP 422.
+# Comando. Espera: HTTP 422 y regla = REG-02.
 POST {{base}}/comandos/definir-las-fechas-bloqueadas-del-yate
 Content-Type: application/json
 
@@ -83,7 +83,7 @@ Content-Type: application/json
 }
 
 ### Registro y ocupación · paso 8: Reserva solicitada
-# Evento de otro contexto. Espera: HTTP 422.
+# Evento de otro contexto. Espera: HTTP 422 y regla = REG-01.
 POST {{base}}/eventos-externos/reserva-solicitada
 Content-Type: application/json
 
@@ -127,7 +127,7 @@ Content-Type: application/json
 # ==============================================================================
 
 ### Registro rechazado · paso 1: Registrar yate en el inventario
-# Comando. Espera: HTTP 422.
+# Comando. Espera: HTTP 422 y regla = INT-CON.
 POST {{base}}/comandos/registrar-yate-en-el-inventario
 Content-Type: application/json
 
@@ -142,7 +142,7 @@ Content-Type: application/json
 }
 
 ### Registro rechazado · paso 2: Registrar yate en el inventario
-# Comando. Espera: HTTP 422.
+# Comando. Espera: HTTP 422 y regla = NOR-01.
 POST {{base}}/comandos/registrar-yate-en-el-inventario
 Content-Type: application/json
 
