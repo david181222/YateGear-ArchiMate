@@ -41,7 +41,7 @@ pwsh ./probar.ps1      # la salida de la aplicación queda en salida/intermedio/
 
 Las herramientas de Python se llaman con `.\.venv\Scripts\python.exe` en Windows y con `./.venv/bin/python` en Linux.
 
-`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`) y `-Archi`.
+`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`) y `-Archi`. Ojo: `salida/` queda con exactamente los contextos que se generan, así que con `-Specs` se borran los archivos generados de los demás (nunca su código a mano); vuelven al generar todo.
 
 `ejecutar.ps1` levanta la aplicación (el host, con todos los contextos) desde `salida/`, para que `dotnet` use el SDK 8 de `salida/global.json`. Con la aplicación arriba, cada `salida/pruebas/<Proyecto>/pruebas.http` se puede ejecutar llamada por llamada con la extensión REST Client de VS Code o con Visual Studio.
 

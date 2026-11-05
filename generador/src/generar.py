@@ -41,7 +41,8 @@ INFRAESTRUCTURA = ("IRaiz", "IEvento", "Repositorio", "Bitacora", "RegistroDeBit
                    "RespuestaDeComando", "ReglaIncumplida", "NoEncontrado", "DatoFaltante", "Politicas", "Program",
                    "TransicionInvalida", "Estados", "EsperaDeEventos", "RespuestaDeEventoExterno",
                    "ReceptorDeEventosExternos", "Registro", "LectorDeEventos", "IdentidadRepetida",
-                   "FaltaEventoRequerido", "MemoriaDeEventos")
+                   "FaltaEventoRequerido", "MemoriaDeEventos",
+                   "Json", "BusEntreContextos", "EventoEntreContextos")     # del bus entre contextos, que todo contexto importa
 MIEMBROS_RESERVADOS = {"Manejar", "ValidarReglas", "Publicar", "Llamar"}
 
 
@@ -797,6 +798,17 @@ class Generador:
                         else:
                             valores = {**{k: valor_json(v, self.tipos_raiz[k]) for k, v in (c["spec"].get("valores") or {}).items()},
                                        **{e["nombre"]: datos[nombres.camel(e["nombre"])] for e in c["entrada_campos"]}}
+                            for g in c["spec"].get("guarda") or []:     # {campo: dato}: el campo vale lo que el dato
+                                if isinstance(g, dict):
+                                    campo, dato = next(iter(g.items()))
+                                    if dato in valores:
+                                        valores.setdefault(campo, valores[dato])
+                            faltan = [parte for parte in r["id_de"] if parte not in valores]
+                            if faltan:
+                                raise ErrorDeGeneracion(
+                                    f'escenario "{nombre_e}", paso {i}: la identidad que forma "{nombre}" usa '
+                                    f'{", ".join(chr(34) + x + chr(34) for x in faltan)}, que no sale de su entrada ni de sus valores '
+                                    f'(sale de un evento o de un servicio SA); los escenarios solo calculan la identidad con esos dos')
                             ident = "/".join(str(valores[parte]) for parte in r["id_de"])
                         if not rechazo:
                             actual = ident

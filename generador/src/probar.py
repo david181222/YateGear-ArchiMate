@@ -55,7 +55,7 @@ def main():
 
     total = fallas = 0
     for e in esc["escenarios"]:
-        print(f'\nEscenario "{e["nombre"]}" ({e["identidad"]})')
+        print(f'\nEscenario "{e["nombre"]}"' + (f' ({e["identidad"]})' if e["identidad"] else ""))
         for p in e["pasos"]:
             total += 1
             antes = len(bitacora())
