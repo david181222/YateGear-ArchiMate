@@ -53,6 +53,7 @@ public static class Registro
         app.MapPost("/calificaciones/eventos-externos/arriendo-cerrado",
             (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirArriendoCerrado(evento), Recibido));
 
+
         // Bitácora (infraestructura, no sale del modelo): eventos y llamadas a los servicios SA simulados, en orden.
         app.MapGet("/calificaciones/bitacora", (Bitacora bitacora) => bitacora.Todo());
     }

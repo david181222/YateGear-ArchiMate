@@ -79,6 +79,7 @@ public static class Registro
         app.MapPost("/gestion-del-arriendo/eventos-externos/yate-entregado-al-cliente",
             (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirYateEntregadoAlCliente(evento), Recibido));
 
+
         // Bitácora (infraestructura, no sale del modelo): eventos y llamadas a los servicios SA simulados, en orden.
         app.MapGet("/gestion-del-arriendo/bitacora", (Bitacora bitacora) => bitacora.Todo());
     }

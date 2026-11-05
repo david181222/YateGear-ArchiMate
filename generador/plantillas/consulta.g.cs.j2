@@ -68,6 +68,9 @@ public sealed partial class {{ q.manejador }}(Repositorio<{{ raiz.clase }}> repo
         ValidarReglas(datos);
 {% if q.lista %}
         var elementos = raices{% if q.filtro_manual %}.Where({{ raiz.var }} => Incluir(datos, {{ raiz.var }})){% endif %}
+{% for o in q.orden %}
+
+            .{{ "OrderBy" if loop.first else "ThenBy" }}({{ raiz.var }} => {{ o }}){% endfor %}
 
             .Select({{ raiz.var }} => new {{ q.elemento }}({% for c in q.elemento_campos %}{{ c.expr }}{{ ", " if not loop.last }}{% endfor %}))
             .ToList();

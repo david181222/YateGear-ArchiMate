@@ -65,7 +65,8 @@ def main():
             codigo, cuerpo = llamar(p["metodo"], base + p["ruta"], p["cuerpo"])
             nuevos = bitacora()[antes:]
             ident = p.get("identidad")
-            eventos = [n["nombre"] for n in nuevos if n["tipo"] == "evento" and (n["datos"] or {}).get("identidad") == ident]
+            # Los eventos de la raíz del paso; un paso sin identidad (un comando sobre todas las raíces) acepta los de cualquiera.
+            eventos = [n["nombre"] for n in nuevos if n["tipo"] == "evento" and (ident is None or (n["datos"] or {}).get("identidad") == ident)]
             esp, exito = p["espera"], 200 <= codigo < 300
             if esp["tipo"] == "exito":
                 ok = exito

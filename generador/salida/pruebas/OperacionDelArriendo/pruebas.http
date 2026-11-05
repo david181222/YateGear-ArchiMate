@@ -1,0 +1,209 @@
+# Generado desde ArchiMate: ApplicationComponent "Contexto Operación del arriendo" (id-909c52d6cdf845e6927af4c62d2847fb).
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
+# "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
+# y revisa solo; aquí se pueden ejecutar uno por uno.
+# Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
+# de empezar. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+
+@base = http://localhost:5080/operacion-del-arriendo
+
+# ==============================================================================
+# Escenario 1: Entrega, seguimiento y devolución (ARR-0001)
+# ==============================================================================
+
+### Entrega, seguimiento y devolución · paso 1: Reserva confirmada
+# Evento de otro contexto. Espera: HTTP 2xx.
+POST {{base}}/eventos-externos/reserva-confirmada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "inicio": "2026-03-10",
+  "fin": "2026-03-12"
+}
+
+### Entrega, seguimiento y devolución · paso 2: Acta de entrega recibida
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Yate entregado al cliente".
+POST {{base}}/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "fotos": [
+    "entrega-1.jpg"
+  ],
+  "nivelDeCombustible": 100,
+  "horaDeEntrega": "2026-03-10T09:00:00",
+  "observaciones": "observaciones"
+}
+
+### Entrega, seguimiento y devolución · paso 3: Lectura del proveedor
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Lectura registrada".
+POST {{base}}/sa/ubicacion-y-combustible-del-proveedor/lectura-del-proveedor
+Content-Type: application/json
+
+{
+  "identificadorDelYate": "YATE-0001",
+  "latitud": 100,
+  "longitud": 100,
+  "nivelDeCombustible": 90,
+  "horaDeLaLectura": "2026-03-10T10:00:00"
+}
+
+### Entrega, seguimiento y devolución · paso 4: Lectura del proveedor
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Lectura registrada".
+POST {{base}}/sa/ubicacion-y-combustible-del-proveedor/lectura-del-proveedor
+Content-Type: application/json
+
+{
+  "identificadorDelYate": "YATE-0001",
+  "latitud": 100,
+  "longitud": 100,
+  "nivelDeCombustible": 80,
+  "horaDeLaLectura": "2026-03-10T11:00:00"
+}
+
+### Entrega, seguimiento y devolución · paso 5: Consultar ubicación y combustible del yate
+# Consulta. Espera: HTTP 2xx y recorrido = 2.
+GET {{base}}/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=ARR-0001
+
+### Entrega, seguimiento y devolución · paso 6: Detectar la pérdida de señal
+# Comando. Espera: HTTP 2xx.
+POST {{base}}/comandos/detectar-la-perdida-de-senal
+Content-Type: application/json
+
+{
+  "minutosSinLecturas": 30,
+  "ahora": "2026-03-10T11:20:00"
+}
+
+### Entrega, seguimiento y devolución · paso 7: Detectar la pérdida de señal
+# Comando. Espera: HTTP 2xx y el evento "Pérdida de señal del yate".
+POST {{base}}/comandos/detectar-la-perdida-de-senal
+Content-Type: application/json
+
+{
+  "minutosSinLecturas": 30,
+  "ahora": "2026-03-10T12:00:00"
+}
+
+### Entrega, seguimiento y devolución · paso 8: Acta de inspección recibida
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Diferencias determinadas".
+POST {{base}}/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "fotos": [
+    "regreso-1.jpg"
+  ],
+  "nivelDeCombustible": 60,
+  "horaDeRegreso": "2026-03-13T15:00:00",
+  "danosEncontrados": [
+    {
+      "descripcion": "Rayón en el casco",
+      "valor": 200
+    }
+  ]
+}
+
+### Entrega, seguimiento y devolución · paso 9: Consultar ubicación y combustible del yate
+# Consulta. Espera: HTTP 422 y regla = V8.
+GET {{base}}/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=ARR-0001
+
+# ==============================================================================
+# Escenario 2: Actas rechazadas (ARR-0003)
+# ==============================================================================
+
+### Actas rechazadas · paso 1: Acta de entrega recibida
+# Mensaje de un servicio sa. Espera: HTTP 409 y requiere = Reserva confirmada.
+POST {{base}}/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0099",
+  "identificadorDelYate": "YATE-0001",
+  "fotos": [
+    "x.jpg"
+  ],
+  "nivelDeCombustible": 100,
+  "horaDeEntrega": "2026-03-10T09:00:00",
+  "observaciones": "observaciones"
+}
+
+### Actas rechazadas · paso 2: Acta de entrega recibida
+# Mensaje de un servicio sa. Espera: HTTP 409 y identidad = ARR-0001.
+POST {{base}}/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "fotos": [
+    "x.jpg"
+  ],
+  "nivelDeCombustible": 100,
+  "horaDeEntrega": "2026-03-10T09:00:00",
+  "observaciones": "observaciones"
+}
+
+### Actas rechazadas · paso 3: Reserva confirmada
+# Evento de otro contexto. Espera: HTTP 2xx.
+POST {{base}}/eventos-externos/reserva-confirmada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "inicio": "2026-04-01",
+  "fin": "2026-04-02"
+}
+
+### Actas rechazadas · paso 4: Acta de entrega recibida
+# Mensaje de un servicio sa. Espera: HTTP 422 y regla = H-13.
+POST {{base}}/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "identificadorDelYate": "YATE-0002",
+  "fotos": [],
+  "nivelDeCombustible": 100,
+  "horaDeEntrega": "2026-04-01T09:00:00",
+  "observaciones": "observaciones"
+}
+
+### Actas rechazadas · paso 5: Reserva confirmada
+# Evento de otro contexto. Espera: HTTP 2xx.
+POST {{base}}/eventos-externos/reserva-confirmada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0003",
+  "inicio": "2026-05-01",
+  "fin": "2026-05-02"
+}
+
+### Actas rechazadas · paso 6: Acta de inspección recibida
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Inspección de devolución registrada".
+POST {{base}}/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0003",
+  "fotos": [
+    "y.jpg"
+  ],
+  "nivelDeCombustible": 100,
+  "horaDeRegreso": "2026-05-02T18:00:00",
+  "danosEncontrados": []
+}
+
+### Actas rechazadas · paso 7: Determinar las diferencias entre entrega y devolución
+# Comando. Espera: HTTP 404.
+POST {{base}}/comandos/determinar-las-diferencias-entre-entrega-y-devolucion
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0003"
+}

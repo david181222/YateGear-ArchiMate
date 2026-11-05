@@ -2702,6 +2702,18 @@ Fuente: EXC-02, D-03; V6, sección 9; V4-SUP-02.</documentation>
       <element xsi:type="archimate:RealizationRelationship" id="id-3d9bc0f246c340bc86521ae979d6a9e1" source="id-2bd3d028a61f4311b25dce71e63ff7e1" target="id-62bb9df0a395496a8b5f71a0a7e285fe"/>
       <element xsi:type="archimate:RealizationRelationship" id="id-1c1e8fa1b6fc48079bf18c8c50e1447a" source="id-e8e67f96248f447ba5e0975a82342240" target="id-fccb23713f1f452385791ada758278f7"/>
       <element xsi:type="archimate:AggregationRelationship" id="id-6acffacd9d5e4d6984b83e7a5e1048b2" source="id-bed34d916f84441ba22218b87c55451c" target="id-60d66be6c035440b8fc779d9918f6ae0"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-d8502f48545c5e0c8a6e31798c758ac5" source="id-29d996ed0b0e4d8b8ba622da657f9388" target="id-f4fb995872c5435f8ccb7e85e17cbee9" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
+      <element xsi:type="archimate:AccessRelationship" id="id-f713fc86cff95c7a82ab7c80ea76faf7" source="id-29d996ed0b0e4d8b8ba622da657f9388" target="id-2856d4f6a4b0480a86d14826dd18dedf" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
+      <element xsi:type="archimate:AccessRelationship" id="id-4bd06352df91511ba0c4de158e5a3319" source="id-c742e57f7d34406c8162646ca3080c19" target="id-f4fb995872c5435f8ccb7e85e17cbee9" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
+      <element xsi:type="archimate:AccessRelationship" id="id-14530e863a185898a8f1cc688852259a" source="id-c742e57f7d34406c8162646ca3080c19" target="id-2856d4f6a4b0480a86d14826dd18dedf" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
       <element xsi:type="archimate:AccessRelationship" id="id-4d177ec47e5e4f2b92c5e7de315814e2" source="id-60d66be6c035440b8fc779d9918f6ae0" target="id-e1d1c15205ba48a4a268ba022590c305"/>
       <element xsi:type="archimate:AggregationRelationship" id="id-589236991ac04d20a7d7a020f3410b71" source="id-bed34d916f84441ba22218b87c55451c" target="id-ca9597cf3052403c99ebbb59510f497b"/>
       <element xsi:type="archimate:AccessRelationship" id="id-a59a394459944498a7787dca7f6a1a27" source="id-ca9597cf3052403c99ebbb59510f497b" target="id-79b4e5f58e944efeb2843c21a189f6eb" accessType="3"/>

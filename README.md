@@ -1430,7 +1430,9 @@ Invariante del agregado: una lectura no se modifica. Reglas de comando: SB-25 as
 | Acta de inspección | Registrar la inspección de devolución | SB-23 | Escritura | Inspección de devolución registrada | - |
 | Acta de inspección | Determinar las diferencias entre entrega y devolución | SB-24 | Lectura; lee también la raíz del Acta de entrega | Diferencias determinadas | - |
 | Lectura de ubicación y combustible | Registrar lecturas de ubicación y combustible | SB-25 | Escritura | Lectura registrada | - |
-| Lectura de ubicación y combustible | Detectar la pérdida de señal | SB-27 | Lectura | Pérdida de señal del yate | Pérdida de señal del yate |
+| Lectura de ubicación y combustible | Detectar la pérdida de señal | SB-27 | Lectura; lee también las raíces del Acta de entrega y del Acta de inspección, para saber qué arriendos están en curso | Pérdida de señal del yate | Pérdida de señal del yate |
+
+La consulta SB-26 lee, además de las lecturas, las raíces del Acta de entrega y del Acta de inspección: SB-26 y SB-27 solo actúan con un arriendo en curso (V8), y un arriendo está en curso si tiene acta de entrega y todavía no tiene acta de inspección.
 
 ### V6.5 - Calificaciones
 

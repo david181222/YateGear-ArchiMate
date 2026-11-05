@@ -63,6 +63,7 @@ public static class Registro
         app.MapPost("/disponibilidad-de-yates/eventos-externos/reserva-solicitada",
             (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirReservaSolicitada(evento), Recibido));
 
+
         // Bitácora (infraestructura, no sale del modelo): eventos y llamadas a los servicios SA simulados, en orden.
         app.MapGet("/disponibilidad-de-yates/bitacora", (Bitacora bitacora) => bitacora.Todo());
     }

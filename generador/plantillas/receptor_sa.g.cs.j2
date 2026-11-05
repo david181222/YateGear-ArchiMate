@@ -1,0 +1,40 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a YateGear por este servicio SA
+// (recibe del YAML). No editar: el generador reescribe este archivo.
+#nullable enable
+using System.Text.Json;
+
+namespace {{ ns }};
+{% for x in mensajes %}
+
+/// <summary>Mensaje "{{ x.nombre | xml }}" que "{{ sa.nombre | xml }}" recibe del sistema externo. Dispara "{{ x.comando | xml }}".</summary>
+{{ m.record(x.clase, x.datos, ";") }}
+{% endfor %}
+
+/// <summary>Recibe lo que "{{ sa.contraparte.nombre | xml }}" le envía a YateGear por "{{ sa.nombre | xml }}" ({{ sa.codigo }})
+/// y dispara el comando de cada mensaje, con sus datos por nombre.</summary>
+/// <remarks>
+/// <para>{{ sa.contrato.nombre | xml }} ({{ sa.contrato.id }}). Entrada: {{ sa.contrato.entrada | xml }}</para>
+/// <para>Interfaz "{{ sa.interfaz.nombre | xml }}" ({{ sa.interfaz.id }}).</para>
+/// </remarks>
+public sealed class {{ receptor }}(
+    Bitacora bitacora,
+{% for d in manejadores %}
+    {{ d.cs }} {{ d.var }}{{ "," if not loop.last }}
+{% endfor %}
+)
+{
+{% for x in mensajes %}
+{% if not loop.first %}
+
+{% endif %}
+    /// <summary>Lee "{{ x.nombre | xml }}" desde JSON (si falta un dato obligatorio, DatoFaltante: 422) y dispara "{{ x.comando | xml }}".</summary>
+    public RespuestaDeComando {{ x.metodo }}(JsonElement json)
+    {
+        var mensaje = LectorDeEventos.Leer<{{ x.clase }}>(json{% if x.obligatorios %}, {{ x.obligatorios }}{% endif %});
+        bitacora.Anotar("mensaje recibido", {{ x.titulo | cadena }}, mensaje);
+        return {{ x.manejador_var }}.Manejar(new {{ x.comando_clase }}({{ x.args | join(", ") }}));
+    }
+{% endfor %}
+}

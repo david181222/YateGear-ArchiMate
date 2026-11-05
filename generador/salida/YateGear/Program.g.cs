@@ -13,11 +13,13 @@ builder.Services.AddSingleton<BusEntreContextos>();
 YateGear.Calificaciones.Registro.AgregarServicios(builder.Services);         // Contexto Calificaciones
 YateGear.DisponibilidadDeYates.Registro.AgregarServicios(builder.Services);         // Contexto Disponibilidad de yates
 YateGear.GestionDelArriendo.Registro.AgregarServicios(builder.Services);         // Contexto Gestión del arriendo
+YateGear.OperacionDelArriendo.Registro.AgregarServicios(builder.Services);         // Contexto Operación del arriendo
 
 var app = builder.Build();
 YateGear.Calificaciones.Registro.MapearEndpoints(app);
 YateGear.DisponibilidadDeYates.Registro.MapearEndpoints(app);
 YateGear.GestionDelArriendo.Registro.MapearEndpoints(app);
+YateGear.OperacionDelArriendo.Registro.MapearEndpoints(app);
 
 // Infraestructura (no sale del modelo): los contextos generados y los eventos que pasaron por el bus entre contextos.
 app.MapGet("/contextos", () => new[]
@@ -25,6 +27,7 @@ app.MapGet("/contextos", () => new[]
     new { nombre = "Contexto Calificaciones", ruta = "/calificaciones" },
     new { nombre = "Contexto Disponibilidad de yates", ruta = "/disponibilidad-de-yates" },
     new { nombre = "Contexto Gestión del arriendo", ruta = "/gestion-del-arriendo" },
+    new { nombre = "Contexto Operación del arriendo", ruta = "/operacion-del-arriendo" },
 });
 app.MapGet("/eventos-entre-contextos", (BusEntreContextos bus) => bus.Historial());
 

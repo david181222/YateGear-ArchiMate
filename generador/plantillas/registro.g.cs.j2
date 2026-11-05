@@ -41,6 +41,20 @@ public static class Registro
 {% for q in consultas %}
         servicios.AddSingleton<{{ q.manejador }}>();
 {% endfor %}
+{% if receptores_sa %}
+
+        // Lo que reciben los servicios SA (G7): un receptor por SA.
+{% for x in receptores_sa %}
+        servicios.AddSingleton<{{ x.clase }}>();
+{% endfor %}
+{% endif %}
+{% if temporizadores %}
+
+        // Comandos que corren solos cada cierto tiempo (temporizador del YAML, G8).
+{% for x in temporizadores %}
+        servicios.AddHostedService<{{ x.clase }}>();
+{% endfor %}
+{% endif %}
 {% if externos %}
 
         // Eventos de otros contextos (capa 3): receptor y espera de los que deben llegar juntos.
@@ -72,6 +86,17 @@ public static class Registro
 {% for x in externos %}
         app.MapPost("{{ x.ruta }}",
             (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.Recibir{{ x.clase }}(evento), Recibido));
+{% endfor %}
+{% endif %}
+
+{% if receptores_sa %}
+
+        // Lo que reciben los servicios SA (G7): POST con el mensaje en JSON. Si falta un dato obligatorio responde 422.
+{% for x in receptores_sa %}
+{% for msj in x.mensajes %}
+        app.MapPost("{{ msj.ruta }}",
+            (JsonElement mensaje, {{ x.clase }} receptor) => Ejecutar(() => receptor.{{ msj.metodo }}(mensaje)));
+{% endfor %}
 {% endfor %}
 {% endif %}
 

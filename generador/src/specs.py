@@ -56,7 +56,7 @@ def cargar_yaml(ruta: str):
 
 def mismo_tipo(a: dict, b: dict) -> bool:
     """Igual base, lista y enum. El sufijo ? no cuenta: un dato opcional puede ir donde va uno obligatorio."""
-    return a["base"] == b["base"] and a["lista"] == b["lista"] and a["enum"] == b["enum"]
+    return a["base"] == b["base"] and a["lista"] == b["lista"] and a["enum"] == b["enum"] and a.get("objeto") == b.get("objeto")
 
 
 def valor_valido(v, t: dict) -> bool:
@@ -66,6 +66,10 @@ def valor_valido(v, t: dict) -> bool:
         uno = {**t, "lista": False, "opcional": False}
         return isinstance(v, list) and all(valor_valido(x, uno) for x in v)
     b = t["base"]
+    if b == "objeto":                     # un elemento de List<objeto de valor>: {campo: valor, ...}
+        campos = tipos.OBJETOS.get(t["objeto"], {})
+        return isinstance(v, dict) and set(v) <= set(campos) and all(
+            (k in v and valor_valido(v[k], ct)) or (k not in v and ct["opcional"]) for k, ct in campos.items())
     if b == "enum":
         return isinstance(v, str) and v in t["enum"]["valores"]
     if b == "string":
@@ -224,6 +228,29 @@ class Revisor:
                 out.append(k)
         return out
 
+    def revisar_temporizador(self, x, ent: dict, d: str):
+        """temporizador: {cada minutos: N, con: {dato: valor}, ahora: dato}. El comando corre solo cada N minutos con
+        los valores de con y la hora actual en el dato de ahora; todo dato obligatorio de su entrada debe quedar cubierto."""
+        x = self.mapa(x, d, ["cada minutos", "con", "ahora"], ["cada minutos"])
+        cada = x.get("cada minutos")
+        if not isinstance(cada, int) or isinstance(cada, bool) or cada < 1:
+            self.error(d, "cada minutos es un entero mayor que 0")
+        cubiertos = set()
+        for k, v in self.mapa(x.get("con"), f"{d} > con").items():
+            if k not in ent:
+                self.error(f"{d} > con", f'"{k}" no está en la entrada del comando')
+            elif not valor_valido(v, ent[k]):
+                self.error(f"{d} > con", f'el valor {v!r} no es válido para "{k}" ({ent[k]["tipo"]})')
+            cubiertos.add(k)
+        if "ahora" in x:
+            ahora = x["ahora"]
+            if ahora not in ent or ent[ahora]["base"] != "DateTime" or ent[ahora]["lista"]:
+                self.error(f"{d} > ahora", f'"{ahora}" debe ser un dato DateTime de la entrada')
+            cubiertos.add(ahora)
+        for k, t in ent.items():
+            if not t["opcional"] and k not in cubiertos:
+                self.error(d, f'el comando necesita "{k}" y el temporizador no lo da (con o ahora)')
+
     OPERACIONES_LISTA = ("agregar", "reemplazar", "quitar")
 
     def revisar_guarda(self, guarda: list, bolsa: dict, propios: set, d: str, campos_raiz: dict, vos: dict,
@@ -249,6 +276,15 @@ class Revisor:
                     continue
                 if op == "agregar":
                     claves = None
+                elif isinstance(op, dict) and len(op) == 1 and next(iter(op)) == "todos":
+                    # {lista: {todos: dato}}: la lista entera se reemplaza con un dato de tipo List<objeto de valor>.
+                    dato = op["todos"]
+                    if not isinstance(dato, str) or dato not in bolsa:
+                        self.error(d, f'"{nombre_vo}" se guarda entera con "{dato}", que el comando no tiene')
+                    elif bolsa[dato].get("objeto") != nombre_vo or not bolsa[dato]["lista"]:
+                        self.error(d, f'"{dato}" es {bolsa[dato]["tipo"]}; para guardar "{nombre_vo}" entera debe ser List<{nombre_vo}>')
+                    destinos.setdefault(nombre_vo, []).append("todos")
+                    continue
                 elif isinstance(op, dict) and len(op) == 1 and next(iter(op)) in ("reemplazar", "quitar"):
                     op, claves = next(iter(op.items()))
                     claves = self.lista(claves, f"{d} > {nombre_vo} > {op}")
@@ -259,7 +295,8 @@ class Revisor:
                     if not claves:
                         self.error(d, f'{op} necesita la clave: los campos con que se encuentra el elemento de "{nombre_vo}"')
                 else:
-                    self.error(d, f'en "{nombre_vo}" (una lista) se escribe agregar, {{reemplazar: [claves]}} o {{quitar: [claves]}}')
+                    self.error(d, f'en "{nombre_vo}" (una lista) se escribe agregar, {{reemplazar: [claves]}}, {{quitar: [claves]}} '
+                                  f'o {{todos: dato}}')
                     continue
                 pedir_vo(v, solo=set(claves) if op == "quitar" else None)
                 if op != "quitar":
@@ -352,8 +389,8 @@ class Revisor:
                     if not t_parte:
                         continue
                     componentes[parte] = t_parte
-                if t_parte["lista"] or t_parte["opcional"] or t_parte["base"] not in ("string", "int", "enum"):
-                    self.error(dp, f'una parte de la identidad es string, int o enum, obligatoria; aquí es {t_parte["tipo"]}')
+                if t_parte["lista"] or t_parte["opcional"] or t_parte["base"] not in ("string", "int", "enum", "DateOnly", "DateTime"):
+                    self.error(dp, f'una parte de la identidad es string, int, enum, DateOnly o DateTime, obligatoria; aquí es {t_parte["tipo"]}')
                 id_de.append(parte)
         estado_t = self.tipo(r.get("estado"), f"raices > {nombre_raiz} > estado")
         if estado_t and (estado_t["base"] != "enum" or estado_t["opcional"]):
@@ -405,6 +442,9 @@ class Revisor:
         ctx = ctxs[s["contexto"]]
         for e in ctx["enums"]:
             self.enums[e["nombre"]] = e["valores"]
+        # Los objetos de valor del contexto se pueden usar como List<objeto de valor> en la entrada (G4).
+        tipos.usar_objetos({v["nombre"]: {c["nombre"]: c for c in v["campos"]}
+                            for a in ctx["agregados"] for v in a["objetos_valor"]})
 
         # ---- raíces
         agregados = {a["raiz"]["id"]: a for a in ctx["agregados"]}
@@ -425,10 +465,23 @@ class Revisor:
         sas_y = self.mapa(s.get("servicios_sa"), "servicios_sa")
         self.cubre("servicios_sa", sas_y, sas_m, "servicio SA")
         sas = {}
+        self.mensajes_crudos: dict[str, dict] = {}      # SA -> mensajes que recibe (G7), se revisan después de los comandos
         for n in sorted(set(sas_y) & set(sas_m)):
             d = f"servicios_sa > {n}"
-            x = self.mapa(sas_y[n], d, ["entrada", "salida", "respuesta_por_defecto", "casos"],
-                          ["entrada", "salida", "respuesta_por_defecto"])
+            # Un SA que llama YateGear (sale) declara entrada, salida y respuestas simuladas; uno que recibe lo que el
+            # sistema externo le envía a YateGear (G7) declara recibe. Puede tener las dos partes.
+            x = self.mapa(sas_y[n], d, ["entrada", "salida", "respuesta_por_defecto", "casos", "recibe"],
+                          [] if "recibe" in (sas_y[n] or {}) else ["entrada", "salida", "respuesta_por_defecto"])
+            sale = any(k in x for k in ("entrada", "salida", "respuesta_por_defecto"))
+            if sale:
+                for k in ("entrada", "salida", "respuesta_por_defecto"):
+                    if k not in x:
+                        self.error(d, f'falta la clave "{k}" (un SA que YateGear llama declara entrada, salida y respuesta_por_defecto)')
+            direcciones = {f["direccion"] for f in sas_m[n]["flujos"]}
+            if "recibe" in x and "entra" not in direcciones:
+                self.error(f"{d} > recibe", "en el modelo ningún flujo entra por la interfaz de este SA: no recibe nada")
+            if "recibe" in x:
+                self.mensajes_crudos[n] = self.mapa(x["recibe"], f"{d} > recibe")
             ent = self.campos(x.get("entrada"), f"{d} > entrada", libres=True)
             sal = self.campos(x.get("salida"), f"{d} > salida")
 
@@ -442,7 +495,8 @@ class Revisor:
                     elif not valor_valido(v, sal[k]):
                         self.error(donde, f'el valor {v!r} no es válido para "{k}" ({sal[k]["tipo"]})')
 
-            respuesta(x.get("respuesta_por_defecto"), f"{d} > respuesta_por_defecto")
+            if sale:
+                respuesta(x.get("respuesta_por_defecto"), f"{d} > respuesta_por_defecto")
             for i, caso in enumerate(self.lista(x.get("casos"), f"{d} > casos"), 1):
                 caso = self.mapa(caso, f"{d} > casos {i}", ["si", "respuesta"], ["si", "respuesta"])
                 self.condicion(caso.get("si"), ent, f"{d} > casos {i} > si")
@@ -469,7 +523,18 @@ class Revisor:
                 continue
             con_raiz, todos, campos_raiz, vos, base, estado_t, nombre_raiz = self.usar(rc)
             c = self.mapa(cmds_y[n], d, ["crea", "desde", "a", "entrada", "valores", "requiere", "usa", "guarda", "eventos",
-                                         "resultados"], ["entrada"])
+                                         "resultados", "sobre", "temporizador"], ["entrada"])
+            todas = c.get("sobre") == "todas"             # G8: revisa todas las raíces y publica un evento por cada elegida
+            if "sobre" in c and not todas:
+                self.error(f"{d} > sobre", 'en un comando solo se permite "sobre: todas"')
+            if todas:
+                for k in ("crea", "desde", "a", "valores", "requiere", "usa", "guarda", "resultados"):
+                    if k in c:
+                        self.error(d, f"un comando sobre todas las raíces no lleva {k}: solo elige raíces y publica sus eventos")
+                if m["acceso"] in ESCRIBEN:
+                    self.error(d, f"un comando sobre todas las raíces no escribe, y en el modelo su acceso es de {m['acceso']}")
+            elif "temporizador" in c:
+                self.error(f"{d} > temporizador", "el temporizador va en un comando sobre: todas")
             crea = c.get("crea", False)
             if crea not in (True, False, "si_no_existe"):
                 self.error(d, "crea es true, false o si_no_existe")
@@ -495,7 +560,9 @@ class Revisor:
             ent = self.campos(c.get("entrada"), f"{d} > entrada", permitidos=(self.id_nombre,) if crea and rc["recibida"] else ())
             if crea and rc["recibida"] and self.id_nombre not in ent:
                 self.error(f"{d} > entrada", f'crea "{nombre_raiz}", cuya identidad es recibida: falta "{self.id_nombre}" en la entrada')
-            entradas_cmd[n] = {"entrada": ent, "crea": crea, "raiz": nombre_raiz}
+            entradas_cmd[n] = {"entrada": ent, "crea": crea, "raiz": nombre_raiz, "todas": todas}
+            if todas and "temporizador" in c:
+                self.revisar_temporizador(c["temporizador"], ent, f"{d} > temporizador")
             # El comando que crea la raíz no tiene raíz ni identidad hasta que la guarda (la identidad se
             # asigna al guardar, después de ValidarReglas): sus SA y condiciones solo usan entrada y SA.
             bolsa = {} if crea else dict(con_raiz)
@@ -533,6 +600,13 @@ class Revisor:
                 propios |= set(datos_ev)
                 for k in datos_ev:
                     origenes_cmd.setdefault(k, []).append(f'evento "{ev}"')
+
+            # Otras raíces que el comando lee en el modelo (G6): se cargan por el dato con el nombre de su identidad.
+            if not todas:
+                for lt in m["lee_tambien"]:
+                    otra = self.raiz_por_id.get(lt["raiz_id"])
+                    if otra and otra["id_nombre"] not in bolsa:
+                        self.error(d, f'lee también "{otra["nombre"]}" y para cargarla hace falta "{otra["id_nombre"]}", que el comando no tiene')
 
             # Servicios SA que usa, en orden: piden datos de la bolsa y le agregan su salida.
             for sa in self.lista(c.get("usa"), f"{d} > usa"):
@@ -586,7 +660,7 @@ class Revisor:
                 del_yaml = set(self.lista(c["eventos"], f"{d} > eventos"))
                 if "a" in c and lectura:
                     self.error(d, "el comando solo lee la raíz: no puede cambiar el estado (a)")
-                if not crea and desde is None:
+                if not crea and not todas and desde is None:
                     self.error(d, "falta desde: los estados desde los que se permite el comando")
             else:
                 res = self.mapa(c["resultados"], f"{d} > resultados")
@@ -639,6 +713,47 @@ class Revisor:
         for nr in self.raices:
             if nr not in crean_por_raiz:
                 self.error("comandos", f'ningún comando crea la raíz "{nr}" (crea: true o crea: si_no_existe)')
+        # ---- mensajes que reciben los SA (G7): disparan un comando, como un evento de otro contexto, y pueden crear la raíz.
+        self.mensajes_sa = {}
+        for sa, mensajes in sorted(self.mensajes_crudos.items()):
+            for msj, x in sorted(mensajes.items()):
+                d = f"servicios_sa > {sa} > recibe > {msj}"
+                x = self.mapa(x, d, ["dispara", "con", "datos"], ["dispara", "datos"])
+                cmd = x.get("dispara")
+                if cmd not in entradas_cmd:
+                    self.error(d, f'dispara "{cmd}", que no es un comando especificado del contexto')
+                    continue
+                if entradas_cmd[cmd]["todas"]:
+                    self.error(d, f'"{cmd}" es un comando sobre todas las raíces: un mensaje no lo dispara')
+                    continue
+                if msj in entradas_cmd or msj in (s.get("consultas") or {}) or msj in (s.get("eventos_de_otros_contextos") or {}):
+                    self.error(d, f'"{msj}" ya es el nombre de un comando, una consulta o un evento: los nombres no se repiten')
+                rc = self.raices[entradas_cmd[cmd]["raiz"]]
+                self.usar(rc)
+                no_crea = not entradas_cmd[cmd]["crea"]
+                datos = self.campos(x.get("datos"), f"{d} > datos", permitidos=(self.id_nombre,))
+                if no_crea and self.id_nombre not in datos:
+                    self.error(f"{d} > datos", f'dispara "{cmd}", que trabaja sobre una raíz existente: debe traer "{self.id_nombre}"')
+                ent = entradas_cmd[cmd]["entrada"]
+                aporta = {k: v for k, v in datos.items() if not (no_crea and k == self.id_nombre)}
+                for k, v in self.mapa(x.get("con"), f"{d} > con").items():
+                    if k not in ent:
+                        self.error(f"{d} > con", f'"{k}" no está en la entrada de "{cmd}"')
+                    elif not valor_valido(v, ent[k]):
+                        self.error(f"{d} > con", f'el valor {v!r} no es válido para "{k}" ({ent[k]["tipo"]})')
+                    else:
+                        aporta[k] = ent[k]
+                for k, tk in aporta.items():
+                    if k in ent and not mismo_tipo(ent[k], tk):
+                        self.error(d, f'"{k}" llega como {tk["tipo"]} y "{cmd}" lo espera como {ent[k]["tipo"]}')
+                    elif k not in ent:
+                        self.aviso(d, f'"{k}" no está en la entrada de "{cmd}": el comando no lo usa')
+                for k, tk in ent.items():
+                    if not tk["opcional"] and k not in aporta:
+                        self.error(d, f'"{cmd}" necesita "{k}" y el mensaje no lo trae (ni con)')
+                if sa in sas:
+                    sas[sa]["usado_por"].append(f'recibe "{msj}"')
+                self.mensajes_sa[msj] = {"sa": sa, "dispara": cmd, "datos": datos}
         for sa, info in sorted(sas.items()):
             if not info["usado_por"]:
                 self.error("servicios_sa", f'ningún comando usa "{sa}" (V9-DEC-03)')
@@ -692,7 +807,7 @@ class Revisor:
         for n in sorted(set(qs_y) & set(qs_m)):
             d = f"consultas > {n}"
             q = self.mapa(qs_y[n], d, ["entrada", "sobre", "de", "filtro", "filtro_manual", "salida", "agrega", "lista",
-                                       "calculados"], ["entrada"])
+                                       "orden", "calculados"], ["entrada"])
             if "salida" not in q and "calculados" not in q:
                 self.error(d, "debe tener salida o calculados")
             # La raíz de la consulta: la única que lee, o la que dice "de" (sobre cuál recorre, si lee varias).
@@ -714,7 +829,7 @@ class Revisor:
             if "sobre" in q:
                 self.revisar_consulta_sobre_todas(q, d, con_raiz)
                 continue
-            for k in ("filtro", "filtro_manual", "agrega", "lista"):
+            for k in ("filtro", "filtro_manual", "agrega", "lista", "orden"):
                 if k in q:
                     self.error(d, f"{k} solo va con sobre: todas")
             bolsa = dict(con_raiz)
@@ -850,9 +965,13 @@ class Revisor:
             if not isinstance(q.get("lista"), str) or not q["lista"].strip():
                 self.error(d, "sin agrega, la consulta devuelve una lista: di su nombre con lista (por ejemplo, lista: yates disponibles)")
             self.pide(con_raiz, sal, f"{d} > salida", "un elemento de la lista")
+            for dato in self.lista(q.get("orden"), f"{d} > orden"):      # de menor a mayor, en el orden escrito
+                if dato not in con_raiz or con_raiz[dato]["lista"]:
+                    self.error(f"{d} > orden", f'"{dato}" no es un dato de la raíz (que no sea una lista) por el que se pueda ordenar')
             return
-        if "lista" in q:
-            self.error(f"{d} > lista", "con agrega la consulta devuelve agregaciones, no una lista")
+        for k in ("lista", "orden"):
+            if k in q:
+                self.error(f"{d} > {k}", "con agrega la consulta devuelve agregaciones, no una lista")
         agrega = self.mapa(q.get("agrega"), f"{d} > agrega")
         for k in sorted(set(sal) - set(agrega)):
             self.error(f"{d} > agrega", f'falta cómo se calcula "{k}": en una consulta sobre todas, cada dato de la salida es una agregación')
@@ -903,7 +1022,8 @@ class Revisor:
                     out |= alcanzables(otro, vistos)
             return out
 
-        codigos = {"comando": {404, 409, 422}, "consulta": {404, 422}, "evento de otro contexto": {202, 404, 409, 422}}
+        codigos = {"comando": {404, 409, 422}, "consulta": {404, 422}, "evento de otro contexto": {202, 404, 409, 422},
+                   "mensaje de un servicio SA": {404, 409, 422}}
         llamados = set()
         for nombre_e, pasos in esc.items():
             d = f"escenarios > {nombre_e}"
@@ -934,6 +1054,9 @@ class Revisor:
                         r_q = self.raiz_por_id.get(q_m["lee"][0]["raiz_id"]) if q_m and q_m["lee"] else None
                         if r_q:
                             campos.setdefault(r_q["id_nombre"], tipos.interpretar("string"))
+                elif nombre in self.mensajes_sa:
+                    tipo = "mensaje de un servicio SA"
+                    campos = dict(self.mensajes_sa[nombre]["datos"])
                 elif nombre in ext:
                     tipo = "evento de otro contexto"
                     x = ext[nombre] or {}
@@ -941,7 +1064,7 @@ class Revisor:
                     if x.get("identidad", self.id_nombre) != self.id_nombre:   # su identidad no es la de la raíz: va en con
                         campos[x["identidad"]] = tipos.interpretar("string")
                 else:
-                    self.error(dp, f'"{nombre}" no es un comando, una consulta ni un evento de otro contexto del YAML')
+                    self.error(dp, f'"{nombre}" no es un comando, una consulta, un evento de otro contexto ni un mensaje de un SA del YAML')
                     continue
                 for k, v in self.mapa(op.get("con"), f"{dp} > con").items():
                     if k not in campos:
@@ -960,7 +1083,8 @@ class Revisor:
                     if tipo == "consulta":
                         self.error(f"{dp} > espera", "una consulta no publica eventos; usa espera: {estado: ...} o un código")
                     else:
-                        cmd = nombre if tipo == "comando" else (ext[nombre] or {}).get("dispara")
+                        cmd = nombre if tipo == "comando" else self.mensajes_sa[nombre]["dispara"] if tipo == "mensaje de un servicio SA" \
+                            else (ext[nombre] or {}).get("dispara")
                         posibles = alcanzables(cmd)
                         if esp not in posibles:
                             self.error(f"{dp} > espera", f'"{esp}" no es un evento que publique "{cmd}" (directo o por una política); '
@@ -1004,6 +1128,7 @@ class Revisor:
                     self.error(f"{dp} > espera", "espera es un evento, un código HTTP o {dato de la salida: valor, ...}")
         # Un comando que dispara un evento de otro contexto usado en los escenarios también se prueba.
         llamados |= {(ext[n] or {}).get("dispara") for n in llamados if n in ext and isinstance(ext[n], dict)}
+        llamados |= {self.mensajes_sa[n]["dispara"] for n in llamados if n in self.mensajes_sa}
         for n in sorted((set(entradas_cmd) | set(qs_y) | set(ext)) - llamados):
             self.aviso("escenarios", f'"{n}" no aparece en ningún escenario: pruebas.http no lo llamará')
 

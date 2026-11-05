@@ -2566,7 +2566,16 @@
           "raiz_id": "id-6858d99a4eb2404d8c0fce1abfc1d10e",
           "acceso": "lectura",
           "acceso_id": "id-ed60ff42252e43a1b577b0fcdb9acaca",
-          "lee_tambien": [],
+          "lee_tambien": [
+            {
+              "raiz_id": "id-2856d4f6a4b0480a86d14826dd18dedf",
+              "acceso_id": "id-14530e863a185898a8f1cc688852259a"
+            },
+            {
+              "raiz_id": "id-f4fb995872c5435f8ccb7e85e17cbee9",
+              "acceso_id": "id-4bd06352df91511ba0c4de158e5a3319"
+            }
+          ],
           "eventos": [
             "id-f8aec7f1160d42d4994bba6dc64d04ab"
           ],
@@ -2742,6 +2751,14 @@
             {
               "raiz_id": "id-6858d99a4eb2404d8c0fce1abfc1d10e",
               "acceso_id": "id-cf3728795b3946378fe1a8151411a2f1"
+            },
+            {
+              "raiz_id": "id-f4fb995872c5435f8ccb7e85e17cbee9",
+              "acceso_id": "id-d8502f48545c5e0c8a6e31798c758ac5"
+            },
+            {
+              "raiz_id": "id-2856d4f6a4b0480a86d14826dd18dedf",
+              "acceso_id": "id-f713fc86cff95c7a82ab7c80ea76faf7"
             }
           ],
           "servicio_negocio": {

@@ -23,6 +23,13 @@
       "ruta_base": "/gestion-del-arriendo",
       "escenarios": "pruebas/GestionDelArriendo/escenarios.json",
       "trazabilidad": "trazabilidad/GestionDelArriendo.csv"
+    },
+    {
+      "nombre": "Contexto Operación del arriendo",
+      "proyecto": "OperacionDelArriendo",
+      "ruta_base": "/operacion-del-arriendo",
+      "escenarios": "pruebas/OperacionDelArriendo/escenarios.json",
+      "trazabilidad": "trazabilidad/OperacionDelArriendo.csv"
     }
   ]
 }

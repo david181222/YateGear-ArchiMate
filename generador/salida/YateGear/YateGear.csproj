@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Calificaciones\Calificaciones.csproj" />
     <ProjectReference Include="..\DisponibilidadDeYates\DisponibilidadDeYates.csproj" />
     <ProjectReference Include="..\GestionDelArriendo\GestionDelArriendo.csproj" />
+    <ProjectReference Include="..\OperacionDelArriendo\OperacionDelArriendo.csproj" />
     <ProjectReference Include="..\Integracion\Integracion.csproj" />
   </ItemGroup>
 </Project>
