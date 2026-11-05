@@ -1,17 +1,20 @@
-﻿# Genera el proyecto C# de un contexto desde el modelo ArchiMate de YateGear.
-# Pasos: entorno de Python, exportar con la ACLI de Archi, extraer, revisar el YAML, generar y compilar.
+﻿# Genera la solución C# desde un modelo ArchiMate: un proyecto por cada contexto que tiene YAML en specs/,
+# más el host que los levanta y el bus entre contextos.
+# Pasos: entorno de Python, exportar con la ACLI de Archi, extraer, revisar los YAML, generar y compilar.
 # Se detiene en el primer paso que falle y dice cuál.
 #
 # Uso (desde la carpeta generador):
 #   powershell -ExecutionPolicy Bypass -File .\generar.ps1     (Windows)
 #   pwsh ./generar.ps1                                          (Linux)
+#   ... -Specs specs/uno.yaml,specs/otro.yaml                   (solo esos contextos)
+#
+# -Modelo: por defecto, el único .archimate de ../modelo. -Specs: por defecto, todos los specs/*.yaml.
 #
 # Las rutas van con "/", que sirve en Windows y en Linux.
 # Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
 param(
-    [string]$Modelo = "../modelo/YateGear.archimate",
-    [string]$Contexto = "Contexto Gestión del arriendo",
-    [string]$Specs = "specs/gestion-del-arriendo.yaml",
+    [string]$Modelo = "",
+    [string[]]$Specs = @(),
     [string]$Archi = ""
 )
 
@@ -29,7 +32,6 @@ if (-not $Archi) {
     $Archi = $candidatos | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
     if (-not $Archi) { $Archi = $candidatos[-1] }
 }
-$xml = Join-Path $PSScriptRoot "salida/intermedio/YateGear.xml"
 $json = "salida/intermedio/modelo-ddd.json"
 
 function Paso([string]$numero, [string]$texto) {
@@ -65,7 +67,14 @@ if (-not (Test-Path $py)) {
 }
 
 Paso 2 "Exportar el modelo al formato de intercambio con la ACLI de Archi"
+if (-not $Modelo) {
+    $modelos = @(Get-ChildItem "../modelo" -Filter "*.archimate" -File -ErrorAction SilentlyContinue)
+    if ($modelos.Count -ne 1) { Fallo "en ../modelo hay $($modelos.Count) archivos .archimate; di cuál con -Modelo." }
+    $Modelo = $modelos[0].FullName
+}
 if (-not (Test-Path $Modelo)) { Fallo "no existe el modelo $Modelo." }
+# El XML se llama como el modelo: salida/intermedio/<modelo>.xml (no se versiona).
+$xml = Join-Path $PSScriptRoot ("salida/intermedio/" + [System.IO.Path]::GetFileNameWithoutExtension($Modelo) + ".xml")
 if (-not (Test-Path $Archi)) { Fallo "no existe $Archi. Usa el parámetro -Archi con la ruta del ejecutable de Archi." }
 $modeloAbs = (Resolve-Path $Modelo).Path
 # El "| Out-Host" hace que PowerShell espere a que Archi termine.
@@ -73,16 +82,23 @@ $modeloAbs = (Resolve-Path $Modelo).Path
 if ($LASTEXITCODE -ne 0) { Fallo "la ACLI de Archi terminó con código $LASTEXITCODE." }
 if (-not (Test-Path $xml)) { Fallo "la ACLI no escribió $xml." }
 
-Paso 3 "Extraer el contexto a modelo-ddd.json"
-& $py src/extraer.py $xml $Contexto $json
+Paso 3 "Extraer los contextos a modelo-ddd.json"
+& $py src/extraer.py $xml $json
 if ($LASTEXITCODE -ne 0) { Fallo "la extracción encontró errores en el modelo (ver arriba)." }
 
-Paso 4 "Revisar el YAML contra el modelo"
-& $py src/specs.py $json $Specs
-if ($LASTEXITCODE -ne 0) { Fallo "el YAML no cumple con el modelo (ver arriba)." }
+Paso 4 "Revisar cada YAML contra el modelo"
+# Con -File, "-Specs a,b" llega como un solo texto: se separa por comas.
+$Specs = @($Specs | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+if ($Specs.Count -eq 0) { $Specs = @(Get-ChildItem "specs" -Filter "*.yaml" -File | Sort-Object Name | ForEach-Object { "specs/" + $_.Name }) }
+if ($Specs.Count -eq 0) { Fallo "no hay ningún YAML en specs/: escribe uno por cada contexto que quieras generar." }
+foreach ($s in $Specs) {
+    Write-Host "-- $s"
+    & $py src/specs.py $json $s
+    if ($LASTEXITCODE -ne 0) { Fallo "$s no cumple con el modelo (ver arriba)." }
+}
 
-Paso 5 "Generar el proyecto C#"
-& $py src/generar.py $json $Specs salida
+Paso 5 "Generar la solución C#"
+& $py src/generar.py $json salida @Specs
 if ($LASTEXITCODE -ne 0) { Fallo "la generación falló (ver arriba)." }
 
 Paso 6 "Compilar con .NET 8"

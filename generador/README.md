@@ -2,7 +2,7 @@
 
 Este generador construye la primera versión de la aplicación de YateGear a partir del modelo de Archi (`../modelo/YateGear.archimate`) y de un archivo de especificaciones por contexto (`specs/*.yaml`). Es determinista: no usa IA ni red, y el mismo modelo con el mismo YAML da siempre los mismos archivos.
 
-El piloto genera un solo contexto, **"Contexto Gestión del arriendo"**. Los otros cuatro contextos se harán con el mismo generador cuando el piloto esté aprobado. Lo que falta, las decisiones pendientes y el reparto del trabajo están en [PENDIENTES.md](PENDIENTES.md).
+Genera un proyecto por cada contexto que tiene YAML en `specs/`, y los levanta todos en un solo programa (D1). Hoy tiene YAML el piloto, **"Contexto Gestión del arriendo"**; los otros cuatro contextos se agregan escribiendo su YAML. Lo que falta, las decisiones pendientes y el reparto del trabajo están en [PENDIENTES.md](PENDIENTES.md).
 
 ## Tecnología
 
@@ -41,18 +41,20 @@ pwsh ./probar.ps1      # la salida de la aplicación queda en salida/intermedio/
 
 Las herramientas de Python se llaman con `.\.venv\Scripts\python.exe` en Windows y con `./.venv/bin/python` en Linux.
 
-`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo`, `-Contexto`, `-Specs` y `-Archi`.
+`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`) y `-Archi`.
 
-`ejecutar.ps1` levanta la aplicación desde `salida/`, para que `dotnet` use el SDK 8 de `salida/global.json`. Con la aplicación arriba, `salida/pruebas.http` se puede ejecutar llamada por llamada con la extensión REST Client de VS Code o con Visual Studio.
+`ejecutar.ps1` levanta la aplicación (el host, con todos los contextos) desde `salida/`, para que `dotnet` use el SDK 8 de `salida/global.json`. Con la aplicación arriba, cada `salida/pruebas/<Proyecto>/pruebas.http` se puede ejecutar llamada por llamada con la extensión REST Client de VS Code o con Visual Studio.
 
-`probar.ps1` compila, levanta la aplicación, ejecuta los escenarios de `salida/escenarios.json`, la detiene y termina con código 1 si algún paso falla.
+`probar.ps1` compila, levanta la aplicación, ejecuta los escenarios de cada contexto (`salida/pruebas/<Proyecto>/escenarios.json`), la detiene y termina con código 1 si algún paso falla. Con `-Contexto "<nombre del contexto o del proyecto>"` prueba solo ese.
+
+Los dos leen de `salida/contextos.json` qué proyecto levantar, en qué puerto y qué contextos hay, así que no tienen escrito ningún nombre del modelo.
 
 ### Puerto
 
 La aplicación usa el puerto **5080**. Si está ocupado:
 
-- Para una sola vez: `.\ejecutar.ps1 -Puerto 5090` o `.\probar.ps1 -Puerto 5090`. Si usas `pruebas.http`, cambia también su línea `@base`.
-- Para cambiarlo siempre: cambia `PUERTO` en `src/generar.py` y vuelve a generar. De ahí salen `salida/GestionDelArriendo/Properties/launchSettings.json` y `salida/pruebas.http`. No se edita `launchSettings.json` a mano, porque el generador lo reescribe.
+- Para una sola vez: `.\ejecutar.ps1 -Puerto 5090` o `.\probar.ps1 -Puerto 5090`. Si usas un `pruebas.http`, cambia también su línea `@base`.
+- Para cambiarlo siempre: cambia `PUERTO` en `src/generar.py` y vuelve a generar. De ahí salen `salida/<Host>/Properties/launchSettings.json`, `salida/contextos.json` y los `pruebas.http`. No se editan a mano, porque el generador los reescribe.
 
 ## Cómo funciona
 
@@ -60,14 +62,15 @@ La aplicación usa el puerto **5080**. Si está ocupado:
 modelo/YateGear.archimate
    |  ACLI de Archi: --loadModel ... --xmlexchange.export ...
    v
-salida/intermedio/YateGear.xml          formato de intercambio (Open Exchange); no se versiona
-   |  src/extraer.py (pyArchimate): lee, valida el modelo y toma un contexto
+salida/intermedio/<modelo>.xml          formato de intercambio (Open Exchange); no se versiona
+   |  src/extraer.py (pyArchimate): lee, valida el modelo y toma todos sus contextos
    v
-salida/intermedio/modelo-ddd.json  <--  specs/gestion-del-arriendo.yaml
-   |  src/specs.py: revisa el YAML contra el JSON
+salida/intermedio/modelo-ddd.json  <--  specs/*.yaml (uno por contexto)
+   |  src/specs.py: revisa cada YAML contra el JSON
    |  src/generar.py + plantillas/*.j2 (Jinja2)
    v
-salida/   proyecto C# (.NET 8), pruebas.http, escenarios.json, trazabilidad.csv
+salida/   solución C# (.NET 8): un proyecto por contexto con YAML, el host y el bus entre contextos;
+          contextos.json, y pruebas/ y trazabilidad/ por contexto
    |  dotnet build
    v
 ejecutar.ps1 / probar.ps1
@@ -83,7 +86,7 @@ Se lee el XML de intercambio y no el `.archimate` directo, porque los dos dan lo
 | `src/` | El generador en Python: `leer.py`, `tipos.py`, `extraer.py`, `specs.py`, `nombres.py`, `generar.py`, y las herramientas de prueba `comparar_lectura.py`, `huella.py`, `revisar_trazabilidad.py` y `probar.py`. |
 | `plantillas/` | Una plantilla Jinja2 por tipo de archivo generado. |
 | `specs/` | Un YAML de especificaciones por contexto. Su comentario inicial explica cada sección. |
-| `salida/` | Lo generado. Se versiona todo, salvo `bin/`, `obj/` y `intermedio/YateGear.xml`. |
+| `salida/` | Lo generado. Se versiona todo, salvo `bin/`, `obj/`, el XML exportado (`intermedio/*.xml`) y los registros de la aplicación (`intermedio/*.log`). |
 
 ## Qué se lee del modelo
 
@@ -107,20 +110,29 @@ Todo se busca por tipo y por relación, nunca solo por nombre, porque hay nombre
 
 | Elemento del modelo | Qué genera en `salida/` |
 |---|---|
-| Contexto | El proyecto `GestionDelArriendo.csproj`, `Program.g.cs` (servicios, políticas y endpoints) y su entrada en `YateGear.sln`. |
+| Contexto (con YAML) | Un proyecto biblioteca, `<Proyecto>/<Proyecto>.csproj`, con `Registro.g.cs` (servicios, políticas y endpoints), su referencia en el host y su entrada en la `.sln`. El nombre del proyecto sale del contexto sin "Contexto ": "Contexto Gestión del arriendo" --> `GestionDelArriendo`. |
+| Modelo | La solución `<Modelo>.sln`, el host `<Modelo>/` (un solo programa que registra todos los contextos, con un solo puerto) y `contextos.json`, que dice a los scripts qué hay. |
 | Agregado y raíz | Clase parcial con su identidad, su `Estado` (enum) y sus campos, y una propiedad por composición: Uno --> `T`, Cero o uno --> `T?`, Muchos --> `List<T>`. |
 | Objeto de valor | `sealed record` con sus campos. |
 | Tipos `enum` (del modelo o del YAML) | `enum` de C#. En JSON viaja como texto, por ejemplo `"Medio"` o `"EnCurso"`. |
-| Comando | El record del comando, un manejador parcial (`.g.cs`), un endpoint `POST /gestion-del-arriendo/comandos/<comando>` y un archivo manual (`.cs`). |
+| Comando | El record del comando, un manejador parcial (`.g.cs`), un endpoint `POST /<contexto>/comandos/<comando>` (por ejemplo `/gestion-del-arriendo/comandos/confirmar-la-reserva`) y un archivo manual (`.cs`). |
 | Contrato | Comentarios XML en el manejador (entrada, salida y reglas). Sus reglas aparecen además como comentario en `ValidarReglas`, en el archivo manual. |
 | Evento | Record del evento, con la identidad y sus datos. |
 | Política | Una suscripción en el bus de eventos, en `Politicas.g.cs`. |
-| Consulta | Records de entrada y salida, un manejador, un endpoint `GET /gestion-del-arriendo/consultas/<consulta>/{numeroDelArriendo}` y un archivo manual. |
+| Consulta | Records de entrada y salida, un manejador, un endpoint `GET /<contexto>/consultas/<consulta>/{identidad}` y un archivo manual. |
 | Servicio SA | Interfaz, records de entrada y salida, y una implementación simulada que responde con los valores del YAML. |
-| Interfaz, contraparte y flujos | Comentarios en el servicio SA y filas en `trazabilidad.csv`. |
-| Evento de otro contexto (del YAML) | Record del evento, un método en `ReceptorDeEventosExternos` y un endpoint `POST /gestion-del-arriendo/eventos-externos/<evento>`. |
+| Interfaz, contraparte y flujos | Comentarios en el servicio SA y filas en la trazabilidad del contexto. |
+| Evento de otro contexto (del YAML) | Record del evento, un método en `ReceptorDeEventosExternos` que lo lee desde JSON y revisa sus datos obligatorios, y un endpoint `POST /<contexto>/eventos-externos/<evento>`. |
 
-Además se generan `pruebas.http` y `escenarios.json` (desde los escenarios del YAML), `trazabilidad.csv`, `global.json` y la infraestructura.
+Además se generan, por contexto, `pruebas/<Proyecto>/pruebas.http` y `pruebas/<Proyecto>/escenarios.json` (desde los escenarios del YAML) y `trazabilidad/<Proyecto>.csv`; y para toda la solución, `global.json`, el proyecto `Integracion` (bus entre contextos) y la infraestructura de cada contexto.
+
+### Comunicación entre contextos (D1)
+
+Todos los contextos corren en un solo programa. Cada uno publica sus eventos en su bus y, además, en el **bus entre contextos** (`Integracion/BusEntreContextos.g.cs`), por su nombre en el modelo y en JSON. Ningún proyecto de contexto referencia a otro: solo el host los conoce a todos, y cada contexto lee los eventos que le llegan con sus propios records de `EventosExternos`.
+
+Un evento de otro contexto, venga por su endpoint de prueba o por el bus, se lee con `LectorDeEventos`: si le falta un dato obligatorio (o llega en `null`), responde 422 con "Falta el dato ..." y el nombre del dato en el modelo. Así se nota de inmediato si el contexto que publica lo llama distinto (D2).
+
+`GET /eventos-entre-contextos` muestra los eventos que pasaron por el bus y los errores de sus suscriptores; `GET /contextos`, los contextos que levantó el programa. Las suscripciones entre contextos todavía no se conectan: se hacen en G12.
 
 ## Reglas del generador
 
@@ -133,7 +145,7 @@ El generador debe servir para cualquier modelo ArchiMate que siga las convencion
 - Si a un contexto le falta algo que el código no puede inferir ni declarar en el YAML, se amplía el formato del YAML (y `specs.py` lo revisa) y se documenta. No se escribe a mano en el generador.
 - Si el modelo tiene un error o le falta un dato, se corrige el modelo en Archi, no el generador. Las correcciones quedan en "Discrepancias encontradas".
 
-Hoy quedan excepciones, que se quitan en G1 (ver PENDIENTES.md): `ejecutar.ps1` y `probar.ps1` tienen escrito el proyecto `GestionDelArriendo`; `generar.ps1` trae por defecto el contexto y el YAML del piloto; y `generar.ps1` y `huella.py` llaman `YateGear.xml` al XML exportado, en vez de tomar el nombre del modelo.
+Los nombres del modelo que antes estaban escritos en los scripts (el proyecto, el contexto, el YAML y el XML del piloto) se quitaron en G1: hoy salen del modelo, de `specs/` o de `salida/contextos.json`.
 
 ### Regla de los datos
 
@@ -171,7 +183,7 @@ Si un manual queda sin su `.g.cs` (por ejemplo, porque se quitó un comando), el
 
 ### Bitácora
 
-`GET /gestion-del-arriendo/bitacora` muestra en orden los eventos publicados, los eventos recibidos de otros contextos, las llamadas a los servicios SA simulados y los errores de las políticas. Es **infraestructura del piloto y no sale del modelo**: sirve para ver el flujo y la usa `probar.ps1`. También son infraestructura el repositorio en memoria, el bus de eventos y la espera de eventos.
+`GET /<contexto>/bitacora` (por ejemplo `/gestion-del-arriendo/bitacora`) muestra en orden los eventos publicados, los eventos recibidos de otros contextos, las llamadas a los servicios SA simulados y los errores de las políticas. Es **infraestructura del piloto y no sale del modelo**: sirve para ver el flujo y la usa `probar.ps1`. También son infraestructura el repositorio en memoria, el bus de eventos y la espera de eventos.
 
 ## Escenarios y pruebas
 
@@ -192,7 +204,7 @@ La sección `escenarios` del YAML define pruebas de punta a punta. Cada escenari
 - Todo se ordena por nombre o por ID. Hay dos excepciones, porque ahí el orden tiene significado: los campos van en el orden del modelo, y los pasos de las pruebas en el orden del YAML.
 - Sin fechas ni horas en lo generado. Todo en UTF-8 sin BOM y con fin de línea LF. `.gitattributes` (`* text=auto eol=lf`) hace que git entregue LF en todas las máquinas.
 - Cada archivo generado empieza con `// Generado desde ArchiMate: <tipo> "<nombre>" (<código>, <ID>).`. En `.csproj` y `.sln` va en la segunda y en la tercera línea, porque su formato lo exige. Los `.json` y el `.csv` no admiten comentarios.
-- `salida/trazabilidad.csv` tiene una fila por cada elemento o relación del contexto, con las columnas ID ArchiMate, tipo, nombre, archivo generado y clase. Para revisarlo: `.\.venv\Scripts\python.exe src\revisar_trazabilidad.py salida\intermedio\modelo-ddd.json salida`.
+- `salida/trazabilidad/<Proyecto>.csv` tiene una fila por cada elemento o relación del contexto, con las columnas ID ArchiMate, tipo, nombre, archivo generado y clase. Para revisarlo: `.\.venv\Scripts\python.exe src\revisar_trazabilidad.py salida\intermedio\modelo-ddd.json salida`.
 - El código generado compila con cero advertencias.
 
 ## Validaciones
@@ -263,9 +275,9 @@ Del YAML del piloto. Cada uno está marcado `# supuesto` en `specs/gestion-del-a
 | GEN-SUP-33 | Avisos y actas de las marinas > entrada | El aviso lleva también la marina a la que va. |
 | GEN-SUP-34 | Avisos y actas de las marinas > respuesta_por_defecto | Valor de prueba: AVISO-RECIBIDO. |
 
-## Limitaciones conocidas del piloto
+## Limitaciones conocidas
 
-- Un solo agregado por contexto. Las entidades (Cobro) y los objetos de valor con Cardinalidad Muchos en `guarda` todavía no se generan; el generador se detiene con un mensaje claro si los encuentra. Se harán con Cobros y depósito.
+- Un solo agregado por contexto (G2). Las entidades (G9) y los objetos de valor con Cardinalidad Muchos en `guarda` (G4) todavía no se generan; el generador se detiene con un mensaje claro si los encuentra.
 - Los servicios SA se llaman antes de `ValidarReglas`, porque las reglas usan sus respuestas (REG-01 necesita el estado del contrato). Por eso una solicitud rechazada por una regla ya consultó al CRM simulado.
-- Los eventos que este contexto publica hacia otros contextos se registran en la bitácora, pero nadie los escucha todavía: esos contextos no se generan en el piloto.
-- `ejecutar.ps1` y `probar.ps1` están escritos para el proyecto `GestionDelArriendo`.
+- Los eventos que un contexto publica llegan al bus entre contextos, pero nadie se suscribe todavía (G12). Mientras tanto, los eventos de otros contextos se prueban con sus endpoints.
+- Si se quita el YAML de un contexto, el generador borra sus archivos generados pero no su código a mano: avisa que esa carpeta quedó suelta.

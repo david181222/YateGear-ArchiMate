@@ -1,12 +1,16 @@
-"""Extrae un contexto del modelo ArchiMate y escribe modelo-ddd.json.
+"""Extrae los contextos del modelo ArchiMate y escribe modelo-ddd.json.
 
-Todo se busca por tipo y por relación del modelo; el único nombre que se usa
-para buscar es el del contexto. Nunca se leen los anidamientos de las vistas.
+Todo se busca por tipo y por relación del modelo, nunca por nombre. Un contexto es
+un componente de aplicación al que se le asigna al menos un proceso de aplicación
+con la propiedad "Servicio básico V4". Nunca se leen los anidamientos de las vistas.
+
+Sin nombres de contexto, extrae todos. Con nombres, solo esos (los demás quedan
+como "otros_contextos" de cada uno, igual que siempre).
 
 Si una validación falla, junta todos los errores, los muestra y termina con
 código 1 sin escribir el JSON.
 
-uso: python src/extraer.py <modelo.xml | modelo.archimate> "<Contexto ...>" <salida.json>
+uso: python src/extraer.py <modelo.xml | modelo.archimate> <salida.json> ["<Contexto ...>" ...]
 """
 from __future__ import annotations
 
@@ -109,6 +113,12 @@ class Extractor:
         return ({"id": sn, "nombre": self.c(sn).nombre},
                 {"id": k.id, "nombre": k.nombre, "entrada": texto["Entrada"],
                  "salida": texto["Salida"], "reglas": texto["Reglas"]})
+
+    def contextos(self) -> list[str]:
+        """Nombres de los contextos del modelo, por orden alfabético."""
+        return sorted({c.nombre for c in self.g.elementos("ApplicationComponent")
+                       if any(self.c(r.destino).prop(P_CODIGO_SB)
+                              for r in self.salen(c.id, "Assignment", "ApplicationProcess"))})
 
     # ------------------------------------------------------------ contexto
     def extraer(self, nombre_ctx: str) -> dict | None:
@@ -377,12 +387,16 @@ def resumen(ctx: dict) -> list[str]:
 def main():
     for s in (sys.stdout, sys.stderr):
         s.reconfigure(encoding="utf-8")
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 3:
         sys.exit(__doc__)
-    ruta_modelo, nombre_ctx, ruta_json = sys.argv[1:]
+    ruta_modelo, ruta_json, *nombres_ctx = sys.argv[1:]
     g = leer.leer(ruta_modelo)
     ex = Extractor(g)
-    ctx = ex.extraer(nombre_ctx)
+    nombres_ctx = nombres_ctx or ex.contextos()
+    if not nombres_ctx:
+        ex.error("contexto", "el modelo no tiene contextos: ningún componente de aplicación tiene asignado un proceso "
+                             f"con la propiedad {P_CODIGO_SB}")
+    ctxs = [ex.extraer(n) for n in nombres_ctx]
     for a in ex.avisos:
         print("AVISO:", a)
     if ex.errores:
@@ -392,11 +406,12 @@ def main():
         sys.exit(1)
     salida = {
         "generado_desde": {"modelo_id": g.id, "modelo_nombre": g.nombre, "archivo": Path(ruta_modelo).name},
-        "contextos": [ctx],
+        "contextos": ctxs,
     }
     texto = json.dumps(salida, ensure_ascii=False, indent=2) + "\n"
     Path(ruta_json).write_bytes(texto.encode("utf-8"))      # UTF-8 sin BOM y fin de línea LF
-    print("\n".join(resumen(ctx)))
+    for ctx in ctxs:
+        print("\n".join(resumen(ctx)))
     print(f"\nEscrito: {ruta_json}")
 
 

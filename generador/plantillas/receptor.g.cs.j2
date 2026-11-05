@@ -2,6 +2,8 @@
 // Capa 3: recibe los eventos de otros contextos y dispara el comando de este contexto
 // (eventos_de_otros_contextos del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
+using System.Text.Json;
+
 namespace {{ ns }};
 
 /// <summary>Recibe los eventos de otros contextos. Si un evento tiene junto_con, espera a que lleguen todos
@@ -34,5 +36,9 @@ public sealed class ReceptorDeEventosExternos(
 {% endif %}
         return RespuestaDeEventoExterno.Ejecutado({{ x.manejador_var }}.Manejar(new {{ x.comando_clase }}({{ x.args | join(", ") }})));
     }
+
+    /// <summary>Lee "{{ x.nombre | xml }}" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
+    public RespuestaDeEventoExterno Recibir{{ x.clase }}(JsonElement json) =>
+        Recibir(LectorDeEventos.Leer<{{ x.clase }}>(json, {{ x.obligatorios }}));
 {% endfor %}
 }

@@ -1,16 +1,18 @@
-"""Genera el proyecto C# de un contexto desde modelo-ddd.json y su YAML de especificaciones.
+"""Genera la solución C# desde modelo-ddd.json y los YAML de especificaciones, uno por contexto.
 
-Capa 1: la estructura completa. Compila, corre y recorre el flujo, pero no valida
-ni cambia estados; solo pone el estado inicial al crear la raíz (capa 2: Fase 5).
+Cada contexto con YAML es un proyecto (biblioteca) con su registro: servicios, políticas y
+endpoints. Un proyecto host, con el nombre del modelo, los levanta todos en un solo programa,
+y el proyecto Integracion tiene el bus entre contextos (D1): los eventos viajan por nombre y
+en JSON, y ningún contexto referencia a otro. Los contextos sin YAML no se generan.
 
-Primero revisa el YAML con specs.py; si hay errores, no genera nada.
+Primero revisa cada YAML con specs.py; si hay errores, no genera nada.
 Escribe:
-  - los archivos generados (.g.cs y los de proyecto), siempre;
+  - los archivos generados (.g.cs, los de proyecto, pruebas y contextos.json), siempre;
   - los archivos manuales (.cs), solo si no existen;
-  - trazabilidad.csv.
-Borra los .g.cs que ya no corresponden y avisa de los manuales huérfanos.
+  - trazabilidad/<Proyecto>.csv, uno por contexto.
+Borra los archivos generados que ya no corresponden y avisa de los manuales huérfanos.
 
-uso: python src/generar.py <modelo-ddd.json> <specs.yaml> <carpeta de salida>
+uso: python src/generar.py <modelo-ddd.json> <carpeta de salida> <specs.yaml> [<specs.yaml> ...]
 """
 from __future__ import annotations
 
@@ -33,10 +35,12 @@ DIR_PLANTILLAS = Path(__file__).resolve().parent.parent / "plantillas"
 TIPO_PROYECTO_CS = "9A19103F-16F7-4668-BE54-9A1E7A4F7556"     # tipo de proyecto "C# SDK" en una solución
 CARPETAS_MANUALES = ("Comandos", "Consultas")
 PUERTO = 5080                       # puerto de la aplicación: launchSettings.json y pruebas.http
+INTEGRACION = "Integracion"         # proyecto con el bus entre contextos (D1)
+ARCHIVOS_GENERADOS = "intermedio/archivos-generados.txt"   # para borrar los que ya no corresponden
 INFRAESTRUCTURA = ("IRaiz", "IEvento", "Repositorio", "Bitacora", "RegistroDeBitacora", "BusDeEventos",
                    "RespuestaDeComando", "ReglaIncumplida", "NoEncontrado", "DatoFaltante", "Politicas", "Program",
                    "TransicionInvalida", "Estados", "EsperaDeEventos", "RespuestaDeEventoExterno",
-                   "ReceptorDeEventosExternos")
+                   "ReceptorDeEventosExternos", "Registro", "LectorDeEventos")
 MIEMBROS_RESERVADOS = {"Manejar", "ValidarReglas", "Publicar", "Llamar"}
 
 
@@ -155,7 +159,10 @@ class Generador:
         self.ctx = next(c for c in modelo["contextos"] if c["nombre"] == spec["contexto"])
         dominio = self.ctx["nombre"].removeprefix("Contexto ")
         self.proyecto = nombres.pascal(dominio)
-        self.ns = f'{nombres.pascal(modelo["generado_desde"]["modelo_nombre"])}.{self.proyecto}'
+        self.ns_modelo = nombres.pascal(modelo["generado_desde"]["modelo_nombre"])
+        self.ns = f'{self.ns_modelo}.{self.proyecto}'
+        self.ns_integracion = f'{self.ns_modelo}.{INTEGRACION}'
+        self.pruebas = f"pruebas/{self.proyecto}"           # pruebas.http y escenarios.json del contexto
         self.ruta_base = "/" + nombres.ruta(dominio)
         self.archivos: dict[str, str] = {}
         self.manuales: dict[str, str] = {}
@@ -215,7 +222,8 @@ class Generador:
         self.traza.append((id_, tipo, nombre, archivo, clase))
 
     def render(self, plantilla: str, destino: str, manual: bool = False, **datos):
-        texto = self.env.get_template(plantilla).render(ns=self.ns, puerto=PUERTO, **datos)
+        texto = self.env.get_template(plantilla).render(ns=self.ns, ns_integracion=self.ns_integracion,
+                                                        puerto=PUERTO, **datos)
         if "\r" in texto:
             raise ErrorDeGeneracion(f"{plantilla}: la salida tiene fin de línea CRLF")
         (self.manuales if manual else self.archivos)[destino] = texto
@@ -227,7 +235,7 @@ class Generador:
             raise ErrorDeGeneracion("el piloto genera un contexto con un solo agregado")
         ag = ags[0]
         if ag["entidades"]:
-            raise ErrorDeGeneracion(f'"{ag["nombre"]}" tiene entidades; el generador todavía no las genera (se harán con Cobros y depósito)')
+            raise ErrorDeGeneracion(f'"{ag["nombre"]}" tiene entidades; el generador todavía no las genera (G9)')
         r = ag["raiz"]
         sr = self.s["raices"][r["nombre"]]
         ident = sr["identidad"]
@@ -510,7 +518,7 @@ class Generador:
             for x in ("clase", "datos", "manejador"):
                 self.traza_de(mc["id"], "ApplicationProcess", mc["nombre"], com["archivo"], n[x])
             self.traza_de(mc["id"], "ApplicationProcess", mc["nombre"], com["manual"], f'{n["manejador"]} (manual)')
-            self.traza_de(mc["id"], "ApplicationProcess", mc["nombre"], f"{self.proyecto}/Program.g.cs", f'POST {com["ruta"]}')
+            self.traza_de(mc["id"], "ApplicationProcess", mc["nombre"], f"{self.proyecto}/Registro.g.cs", f'POST {com["ruta"]}')
             if mc["acceso_id"]:
                 self.traza_de(mc["acceso_id"], "Access", f'{mc["nombre"]} -> {r["nombre"]} ({mc["acceso"]})', com["archivo"], n["manejador"])
             for lt in mc["lee_tambien"]:
@@ -564,7 +572,7 @@ class Generador:
             for x in ("clase", "salida", "datos", "manejador"):
                 self.traza_de(mq["id"], "ApplicationService", mq["nombre"], q["archivo"], n[x])
             self.traza_de(mq["id"], "ApplicationService", mq["nombre"], q["manual"], f'{n["manejador"]} (manual)')
-            self.traza_de(mq["id"], "ApplicationService", mq["nombre"], f"{self.proyecto}/Program.g.cs", f'GET {q["ruta"]}')
+            self.traza_de(mq["id"], "ApplicationService", mq["nombre"], f"{self.proyecto}/Registro.g.cs", f'GET {q["ruta"]}')
             for lee in mq["lee"]:
                 self.traza_de(lee["acceso_id"], "Access", f'{mq["nombre"]} -> {r["nombre"]} (lectura)', q["archivo"], n["manejador"])
             self.traza_de(mq["servicio_negocio"]["id"], "BusinessService", mq["servicio_negocio"]["nombre"], q["archivo"], n["manejador"])
@@ -632,12 +640,16 @@ class Generador:
                     args.append(f'{origen[0]}.{c["prop"]}')
             var_m = nombres.camel(cmd["nombre"])
             manejadores[var_m] = {"cs": cmd["manejador"], "var": var_m}
+            # Datos que deben venir en el JSON (D1): la identidad y los que no son opcionales. Si falta uno, DatoFaltante.
+            obligatorios = [(nombres.camel(r["id_nombre"]), r["id_nombre"])] + [
+                (nombres.camel(d["nombre"]), d["nombre"]) for d in datos if not d["tipo"]["opcional"]]
             x = {"nombre": nombre, "clase": clase, "id": catalogo[(se["de"], nombre)], "de": se["de"],
                  "parametros": params, "comando": cmd["nombre"], "comando_clase": cmd["clase"], "manejador_var": var_m,
                  "junto_con": junto, "grupo": [cs_cadena(g) for g in grupo] if junto else [],
                  "grupo_nombre": cs_cadena(cmd["nombre"]), "variables": variables, "args": args,
                  "ruta": f'{self.ruta_base}/eventos-externos/{nombres.ruta(nombre)}',
-                 "datos_campos": datos}
+                 "datos_campos": datos,
+                 "obligatorios": ", ".join(f"({cs_cadena(p)}, {cs_cadena(n)})" for p, n in obligatorios)}
             self.externos.append(x)
             archivo = f"{self.proyecto}/EventosExternos/{clase}.g.cs"
             self.render("evento_externo.g.cs.j2", archivo, x=x, raiz=r,
@@ -645,7 +657,7 @@ class Generador:
             receptor = f"{self.proyecto}/EventosExternos/ReceptorDeEventosExternos.g.cs"
             self.traza_de(x["id"], "ApplicationEvent", nombre, archivo, clase)
             self.traza_de(x["id"], "ApplicationEvent", nombre, receptor, "ReceptorDeEventosExternos")
-            self.traza_de(x["id"], "ApplicationEvent", nombre, f"{self.proyecto}/Program.g.cs", f'POST {x["ruta"]}')
+            self.traza_de(x["id"], "ApplicationEvent", nombre, f"{self.proyecto}/Registro.g.cs", f'POST {x["ruta"]}')
         if self.externos:
             ctx = self.ctx
             self.render("receptor.g.cs.j2", f"{self.proyecto}/EventosExternos/ReceptorDeEventosExternos.g.cs",
@@ -747,7 +759,7 @@ class Generador:
         orden = [crea] + [c for c in por_yaml if not c["crea"]]
         principal = nueva_identidad()
         for c in orden:
-            nota = f"Crea el arriendo {principal}." if c["crea"] else f"Sobre {principal}."
+            nota = f"Crea la raíz {principal}." if c["crea"] else f"Sobre {principal}."
             pruebas.append(llamada(c, principal, nota))
         q_yaml = list(self.s["consultas"])
         for q in sorted(self.consultas, key=lambda q: q_yaml.index(q["nombre"])):
@@ -775,8 +787,9 @@ class Generador:
                 pruebas.append(bitacora)
         return pruebas
 
-    # ------------------------------------------------------------ todo
-    def generar(self) -> dict:
+    # ------------------------------------------------------------ todo el contexto
+    def generar(self) -> "Generador":
+        """Prepara en memoria los archivos del contexto. Los escribe Solucion."""
         self.preparar_raiz()
         self.preparar_sas()
         self.preparar_eventos()
@@ -792,34 +805,29 @@ class Generador:
         self.render("enums.g.cs.j2", f"{p}/Dominio/Enums.g.cs", enums=enums, cabecera=cab_ctx)
         self.render("infraestructura.g.cs.j2", f"{p}/Infraestructura/Infraestructura.g.cs", cabecera=cab_ctx)
         self.render("politicas.g.cs.j2", f"{p}/Politicas/Politicas.g.cs", politicas=self.politicas, cabecera=cab_ctx)
-        self.render("program.g.cs.j2", f"{p}/Program.g.cs", cabecera=cab_ctx, raiz=r, sas=list(self.sas.values()),
-                    comandos=self.comandos, consultas=self.consultas, externos=self.externos, ruta_base=self.ruta_base)
-        self.render("launchSettings.json.j2", f"{p}/Properties/launchSettings.json", proyecto=p)
-        self.render("global.json.j2", "global.json")
-        guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f'archimate:{ctx["id"]}')).upper()
-        self.render("solucion.sln.j2", f'{nombres.pascal(self.m["generado_desde"]["modelo_nombre"])}.sln',
-                    proyecto=p, guid=guid, tipo_proyecto=TIPO_PROYECTO_CS,
-                    cabecera=self.cabecera("Model", self.m["generado_desde"]["modelo_nombre"], self.m["generado_desde"]["modelo_id"]))
+        self.render("registro.g.cs.j2", f"{p}/Registro.g.cs", cabecera=cab_ctx, contexto=ctx["nombre"], raiz=r,
+                    sas=list(self.sas.values()), comandos=self.comandos, consultas=self.consultas,
+                    externos=self.externos, ruta_base=self.ruta_base)
+        self.escenarios_json = None
         if self.s.get("escenarios"):
             escenarios = self.preparar_escenarios()
             pruebas = self.pruebas_de_escenarios(escenarios)
-            self.archivos["escenarios.json"] = json.dumps(
-                {"generado_desde": self.cabecera("ApplicationComponent", ctx["nombre"], ctx["id"]),
-                 "ruta_base": self.ruta_base, "escenarios": escenarios}, ensure_ascii=False, indent=2) + "\n"
-            self.traza_de(ctx["id"], "ApplicationComponent", ctx["nombre"], "escenarios.json", "")
+            self.escenarios_json = f"{self.pruebas}/escenarios.json"
+            self.archivos[self.escenarios_json] = json.dumps(
+                {"generado_desde": cab_ctx, "ruta_base": self.ruta_base, "escenarios": escenarios},
+                ensure_ascii=False, indent=2) + "\n"
+            self.traza_de(ctx["id"], "ApplicationComponent", ctx["nombre"], self.escenarios_json, "")
         else:
             escenarios, pruebas = [], self.preparar_pruebas()
-        self.render("pruebas.http.j2", "pruebas.http", cabecera=cab_ctx, ruta_base=self.ruta_base, pruebas=pruebas,
-                    con_escenarios=bool(escenarios), primero=r["prefijo"] + "1".zfill(r["digitos"]))
-        for archivo, clase in [(f"{p}/{p}.csproj", ""), (f"{p}/Program.g.cs", "Program"),
+        self.render("pruebas.http.j2", f"{self.pruebas}/pruebas.http", cabecera=cab_ctx, ruta_base=self.ruta_base,
+                    pruebas=pruebas, con_escenarios=bool(escenarios), primero=r["prefijo"] + "1".zfill(r["digitos"]))
+        for archivo, clase in [(f"{p}/{p}.csproj", ""), (f"{p}/Registro.g.cs", "Registro"),
                                (f"{p}/Infraestructura/Infraestructura.g.cs", "infraestructura"),
-                               (f"{p}/Dominio/Enums.g.cs", "enums"), (f"{p}/Properties/launchSettings.json", ""),
-                               ("global.json", ""), (f'{nombres.pascal(self.m["generado_desde"]["modelo_nombre"])}.sln', ""),
-                               ("pruebas.http", "")]:
+                               (f"{p}/Dominio/Enums.g.cs", "enums"), (f"{self.pruebas}/pruebas.http", "")]:
             self.traza_de(ctx["id"], "ApplicationComponent", ctx["nombre"], archivo, clase)
 
         # Manuales huérfanos: un .cs manual sin su .g.cs. No se borran; se sacan de la compilación.
-        huerfanos = []
+        self.huerfanos = []
         for carpeta in CARPETAS_MANUALES:
             d = self.salida / p / carpeta
             if d.is_dir():
@@ -828,20 +836,98 @@ class Generador:
                         continue
                     rel = f"{p}/{carpeta}/{f.name}"
                     if f"{p}/{carpeta}/{f.stem}.g.cs" not in self.archivos:
-                        huerfanos.append(rel)
-        self.render("proyecto.csproj.j2", f"{p}/{p}.csproj", cabecera=cab_ctx,
+                        self.huerfanos.append(rel)
+        self.render("proyecto.csproj.j2", f"{p}/{p}.csproj", cabecera=cab_ctx, integracion=INTEGRACION,
                     huerfanos=[{"ruta": h.removeprefix(f"{p}/").replace("/", "\\"),
                                 "falta": h.removeprefix(f"{p}/").removesuffix(".cs").replace("/", "\\") + ".g.cs"}
-                               for h in huerfanos])
+                               for h in self.huerfanos])
+        return self
 
-        # Escribir.
+    def trazabilidad_csv(self) -> str:
+        buf = io.StringIO()
+        w = csv.writer(buf, lineterminator="\n")
+        w.writerow(["ID ArchiMate", "tipo", "nombre", "archivo generado", "clase"])
+        for fila in sorted(set(self.traza)):
+            w.writerow(fila)
+        return buf.getvalue()
+
+
+# ------------------------------------------------------------ solución
+
+class Solucion:
+    """Junta los contextos en una solución: host, bus entre contextos (Integracion), .sln y contextos.json."""
+
+    def __init__(self, modelo: dict, specs_: list[dict], salida: Path):
+        self.m, self.salida = modelo, salida
+        self.modelo_nombre = modelo["generado_desde"]["modelo_nombre"]
+        self.host = nombres.pascal(self.modelo_nombre)
+        self.generadores = [Generador(modelo, s, salida) for s in specs_]
+        proyectos = [g.proyecto for g in self.generadores]
+        for nombre in sorted(set(proyectos)):
+            if proyectos.count(nombre) > 1:
+                raise ErrorDeGeneracion(f'dos YAML generan el mismo proyecto "{nombre}" (el mismo contexto)')
+        for g in self.generadores:
+            if g.proyecto in (self.host, INTEGRACION):
+                raise ErrorDeGeneracion(f'el contexto "{g.ctx["nombre"]}" da el proyecto "{g.proyecto}", '
+                                        f'que es el nombre del host o del bus entre contextos')
+        self.env = self.generadores[0].env if self.generadores else None
+
+    def render(self, plantilla: str, **datos) -> str:
+        texto = self.env.get_template(plantilla).render(puerto=PUERTO, **datos)
+        if "\r" in texto:
+            raise ErrorDeGeneracion(f"{plantilla}: la salida tiene fin de línea CRLF")
+        return texto
+
+    def generar(self) -> dict:
+        for g in self.generadores:
+            g.generar()
+        gs = sorted(self.generadores, key=lambda g: g.proyecto)
+        archivos, manuales = {}, {}
+        for g in gs:
+            archivos.update(g.archivos)
+            manuales.update(g.manuales)
+
+        mid = self.m["generado_desde"]["modelo_id"]
+        cab = Generador.cabecera("Model", self.modelo_nombre, mid)
+        ns_integracion = f"{self.host}.{INTEGRACION}"
+        contextos = [{"nombre": g.ctx["nombre"], "id": g.ctx["id"], "proyecto": g.proyecto, "ns": g.ns,
+                      "ruta_base": g.ruta_base} for g in gs]
+        h, i = self.host, INTEGRACION
+        archivos[f"{h}/{h}.csproj"] = self.render("host.csproj.j2", cabecera=cab, contextos=contextos, integracion=i)
+        archivos[f"{h}/Program.g.cs"] = self.render("host_program.g.cs.j2", cabecera=cab, contextos=contextos,
+                                                     ns_integracion=ns_integracion)
+        archivos[f"{h}/Properties/launchSettings.json"] = self.render("launchSettings.json.j2", proyecto=h)
+        archivos[f"{i}/{i}.csproj"] = self.render("integracion.csproj.j2", cabecera=cab, ns_integracion=ns_integracion)
+        archivos[f"{i}/BusEntreContextos.g.cs"] = self.render("integracion.g.cs.j2", cabecera=cab,
+                                                               ns_integracion=ns_integracion)
+        archivos["global.json"] = self.render("global.json.j2")
+
+        def guid(semilla: str) -> str:
+            return str(uuid.uuid5(uuid.NAMESPACE_URL, f"archimate:{semilla}")).upper()
+
+        proyectos = sorted([{"nombre": g.proyecto, "guid": guid(g.ctx["id"])} for g in gs]
+                           + [{"nombre": h, "guid": guid(mid)}, {"nombre": i, "guid": guid(f"{mid}:{i}")}],
+                           key=lambda x: x["nombre"])
+        sln = f"{h}.sln"
+        archivos[sln] = self.render("solucion.sln.j2", cabecera=cab, proyectos=proyectos, tipo_proyecto=TIPO_PROYECTO_CS)
+        archivos["contextos.json"] = json.dumps(
+            {"generado_desde": cab, "host": h, "puerto": PUERTO,
+             "contextos": [{"nombre": g.ctx["nombre"], "proyecto": g.proyecto, "ruta_base": g.ruta_base,
+                            "escenarios": g.escenarios_json, "trazabilidad": f"trazabilidad/{g.proyecto}.csv"}
+                           for g in gs]}, ensure_ascii=False, indent=2) + "\n"
+        for g in gs:
+            for archivo in (f"{h}/Program.g.cs", f"{h}/{h}.csproj", sln, "global.json", "contextos.json"):
+                g.traza_de(g.ctx["id"], "ApplicationComponent", g.ctx["nombre"], archivo, "")
+            archivos[f"trazabilidad/{g.proyecto}.csv"] = g.trazabilidad_csv()
+
+        # Escribir. Lo generado se reescribe siempre; un manual solo si no existe.
         escritos, creados, conservados, borrados = 0, [], [], []
-        for rel, texto in sorted(self.archivos.items()):
+        for rel, texto in sorted(archivos.items()):
             destino = self.salida / rel
             destino.parent.mkdir(parents=True, exist_ok=True)
             destino.write_bytes(texto.encode("utf-8"))
             escritos += 1
-        for rel, texto in sorted(self.manuales.items()):
+        for rel, texto in sorted(manuales.items()):
             destino = self.salida / rel
             if destino.exists():
                 conservados.append(rel)
@@ -849,54 +935,78 @@ class Generador:
                 destino.parent.mkdir(parents=True, exist_ok=True)
                 destino.write_bytes(texto.encode("utf-8"))
                 creados.append(rel)
-        for f in sorted((self.salida / p).rglob("*.g.cs")):
-            rel = f.relative_to(self.salida).as_posix()
-            if rel.split("/")[1] in ("bin", "obj"):
-                continue
-            if rel not in self.archivos:
+
+        # Borrar lo generado que ya no corresponde: lo de la generación anterior que ya no se genera,
+        # y los .g.cs sueltos en las carpetas de los proyectos. Los manuales nunca se borran.
+        lista = self.salida / ARCHIVOS_GENERADOS
+        anteriores = lista.read_text(encoding="utf-8").splitlines() if lista.is_file() else []
+        sobran = {a for a in anteriores if a and a not in archivos and a not in manuales}
+        for g in gs:
+            for f in (self.salida / g.proyecto).rglob("*.g.cs"):
+                rel = f.relative_to(self.salida).as_posix()
+                if rel.split("/")[1] not in ("bin", "obj") and rel not in archivos:
+                    sobran.add(rel)
+        for rel in sorted(sobran):
+            f = self.salida / rel
+            if f.is_file():
                 f.unlink()
                 borrados.append(rel)
-        buf = io.StringIO()
-        w = csv.writer(buf, lineterminator="\n")
-        w.writerow(["ID ArchiMate", "tipo", "nombre", "archivo generado", "clase"])
-        for fila in sorted(set(self.traza)):
-            w.writerow(fila)
-        (self.salida / "trazabilidad.csv").write_bytes(buf.getvalue().encode("utf-8"))
+        lista.parent.mkdir(parents=True, exist_ok=True)
+        lista.write_bytes(("\n".join(sorted(archivos)) + "\n").encode("utf-8"))
+
+        # Carpetas con código a mano de un contexto que ya no se genera (se quitó su YAML): no se borran.
+        proyectos = {g.proyecto for g in gs} | {h, i}
+        sueltas = sorted(d.name for d in self.salida.iterdir()
+                         if d.is_dir() and d.name not in proyectos and any(d.rglob("*.cs")))
+
         return {"escritos": escritos, "creados": creados, "conservados": conservados, "borrados": borrados,
-                "huerfanos": huerfanos, "filas_traza": len(set(self.traza))}
+                "huerfanos": [x for g in gs for x in g.huerfanos], "sueltas": sueltas,
+                "contextos": [(g.ctx["nombre"], g.proyecto, len(set(g.traza))) for g in gs]}
 
 
 def main():
     for f in (sys.stdout, sys.stderr):
         f.reconfigure(encoding="utf-8")
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4:
         sys.exit(__doc__)
-    ruta_json, ruta_yaml, ruta_salida = sys.argv[1:]
+    ruta_json, ruta_salida, *rutas_yaml = sys.argv[1:]
     modelo = json.loads(Path(ruta_json).read_text(encoding="utf-8"))
-    try:
-        spec = specs.cargar_yaml(ruta_yaml)
-    except Exception as e:                                  # YAML mal escrito o clave repetida
-        sys.exit(f"ERROR al leer {ruta_yaml}: {e}")
-    rev = specs.Revisor(modelo, spec, ruta_yaml)
-    rev.id_nombre = ""
-    rev.revisar()
-    if rev.errores:
-        print(f"El YAML no cumple con el modelo ({len(rev.errores)} error(es)); no se generó nada:", file=sys.stderr)
-        for e in rev.errores:
+    specs_, errores = [], []
+    for ruta_yaml in rutas_yaml:
+        try:
+            spec = specs.cargar_yaml(ruta_yaml)
+        except Exception as e:                              # YAML mal escrito o clave repetida
+            sys.exit(f"ERROR al leer {ruta_yaml}: {e}")
+        rev = specs.Revisor(modelo, spec, ruta_yaml)
+        rev.id_nombre = ""
+        rev.revisar()
+        errores += [f"{ruta_yaml}: {e}" for e in rev.errores]
+        specs_.append(spec)
+    if errores:
+        print(f"Los YAML no cumplen con el modelo ({len(errores)} error(es)); no se generó nada:", file=sys.stderr)
+        for e in errores:
             print("  ERROR", e, file=sys.stderr)
         sys.exit(1)
     try:
-        res = Generador(modelo, spec, Path(ruta_salida)).generar()
+        res = Solucion(modelo, specs_, Path(ruta_salida)).generar()
     except (ErrorDeGeneracion, nombres.NombreInvalido) as e:
         sys.exit(f"ERROR de generación: {e}")
-    print(f"Archivos generados: {res['escritos']}; filas de trazabilidad: {res['filas_traza']}")
+    generados = {n for n, _, _ in res["contextos"]}
+    for ctx in modelo["contextos"]:
+        if ctx["nombre"] not in generados:
+            print(f'Sin YAML (no se genera): {ctx["nombre"]}')
+    for nombre, proyecto, filas in res["contextos"]:
+        print(f"Generado: {nombre} -> {proyecto} ({filas} filas de trazabilidad)")
+    print(f"Archivos generados: {res['escritos']}")
     print(f"Manuales creados: {len(res['creados'])}; conservados sin tocar: {len(res['conservados'])}")
     for x in res["creados"]:
         print("  creado:", x)
     for x in res["borrados"]:
-        print("  borrado (.g.cs que ya no corresponde):", x)
+        print("  borrado (generado que ya no corresponde):", x)
     for x in res["huerfanos"]:
         print("  AVISO manual huérfano (no se borra ni se compila; revísalo):", x)
+    for x in res["sueltas"]:
+        print(f"  AVISO {x}/ tiene código a mano de un contexto que ya no se genera (no se borra ni se compila; revísalo)")
 
 
 if __name__ == "__main__":

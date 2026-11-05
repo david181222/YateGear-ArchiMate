@@ -1,6 +1,6 @@
 .venv/
 bin/
 obj/
-salida/intermedio/YateGear.xml
+salida/intermedio/*.xml
 __pycache__/
 salida/intermedio/*.log

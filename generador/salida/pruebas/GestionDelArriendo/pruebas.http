@@ -1,9 +1,9 @@
 # Generado desde ArchiMate: ApplicationComponent "Contexto Gestión del arriendo" (id-fdcc9b19f08a492f8ccd5dd4559926bc).
-# Escenarios del YAML (sección escenarios): cada uno tiene su propio arriendo y se ejecuta en orden.
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
 # "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
 # y revisa solo; aquí se pueden ejecutar uno por uno.
 # Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
-# de empezar para que el primer arriendo sea ARR-0001. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+# de empezar para que la primera raíz sea ARR-0001. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
 
 @base = http://localhost:5080/gestion-del-arriendo
 

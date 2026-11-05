@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- {{ cabecera }} -->
+  <!-- Programa (host): levanta todos los contextos en un solo proceso, con el bus entre contextos (D1). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+{% for c in contextos %}
+    <ProjectReference Include="..\{{ c.proyecto }}\{{ c.proyecto }}.csproj" />
+{% endfor %}
+    <ProjectReference Include="..\{{ integracion }}\{{ integracion }}.csproj" />
+  </ItemGroup>
+</Project>

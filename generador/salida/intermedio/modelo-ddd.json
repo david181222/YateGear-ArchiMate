@@ -6,6 +6,1608 @@
   },
   "contextos": [
     {
+      "id": "id-6f29abc193cb4f2fa1234cec80bf0675",
+      "nombre": "Contexto Calificaciones",
+      "agregados": [
+        {
+          "id": "id-b2c84f08d55e4ba0ab2e14427cf5ada9",
+          "nombre": "Agregado Calificación",
+          "raiz": {
+            "id": "id-e848e3b4bf284a969c9a0a9d2e4de26f",
+            "nombre": "Calificación",
+            "campos": [
+              {
+                "nombre": "quién califica",
+                "tipo": "enum Parte que califica(cliente, propietario)",
+                "base": "enum",
+                "lista": false,
+                "opcional": false,
+                "enum": {
+                  "nombre": "Parte que califica",
+                  "valores": [
+                    "cliente",
+                    "propietario"
+                  ]
+                }
+              },
+              {
+                "nombre": "calificación dada",
+                "tipo": "int",
+                "base": "int",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "calificado",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": []
+        }
+      ],
+      "comandos": [
+        {
+          "id": "id-bc9ac3247ce043cfbaf82400004826b8",
+          "nombre": "Calificar al cliente",
+          "codigo": "SB-29",
+          "agregado_id": "id-b2c84f08d55e4ba0ab2e14427cf5ada9",
+          "raiz_id": "id-e848e3b4bf284a969c9a0a9d2e4de26f",
+          "acceso": "escritura",
+          "acceso_id": "id-4af77df3ff7d47068655f527baf668e1",
+          "lee_tambien": [],
+          "eventos": [
+            "id-19f69c478e1c47e481a41c991690baaa"
+          ],
+          "servicio_negocio": {
+            "id": "id-a527caed9bb24be8b7a18d595986b424",
+            "nombre": "Calificar al cliente"
+          },
+          "contrato": {
+            "id": "id-f8d6e31e5be242919d71ef22e34a7824",
+            "nombre": "Contrato de servicio: Calificar al cliente",
+            "entrada": "Arriendo cerrado y calificación.",
+            "salida": "Calificación registrada.",
+            "reglas": "Una calificación por cada parte y arriendo, al cerrar el arriendo (E2E-07); se rechaza si el arriendo no está cerrado o si el propietario ya calificó."
+          }
+        },
+        {
+          "id": "id-b058bd36e7784e5ea81ab24c8dd3a4bb",
+          "nombre": "Calificar al propietario",
+          "codigo": "SB-28",
+          "agregado_id": "id-b2c84f08d55e4ba0ab2e14427cf5ada9",
+          "raiz_id": "id-e848e3b4bf284a969c9a0a9d2e4de26f",
+          "acceso": "escritura",
+          "acceso_id": "id-ca607e2cc23f4d40870f2549897d63c6",
+          "lee_tambien": [],
+          "eventos": [
+            "id-7680477f87b2487f8c2af8de885a11de"
+          ],
+          "servicio_negocio": {
+            "id": "id-ffefcf9db5cc44e2b460af1e53495558",
+            "nombre": "Calificar al propietario"
+          },
+          "contrato": {
+            "id": "id-c5fdbb67cdcb45b8a47cdc8a46a4f270",
+            "nombre": "Contrato de servicio: Calificar al propietario",
+            "entrada": "Arriendo cerrado y calificación.",
+            "salida": "Calificación registrada.",
+            "reglas": "Una calificación por cada parte y arriendo, al cerrar el arriendo (E2E-07); se rechaza si el arriendo no está cerrado o si el cliente ya calificó."
+          }
+        }
+      ],
+      "eventos": [
+        {
+          "id": "id-19f69c478e1c47e481a41c991690baaa",
+          "nombre": "Cliente calificado",
+          "agregado_id": "id-b2c84f08d55e4ba0ab2e14427cf5ada9",
+          "disparado_por": [
+            "id-bc9ac3247ce043cfbaf82400004826b8"
+          ]
+        },
+        {
+          "id": "id-7680477f87b2487f8c2af8de885a11de",
+          "nombre": "Propietario calificado",
+          "agregado_id": "id-b2c84f08d55e4ba0ab2e14427cf5ada9",
+          "disparado_por": [
+            "id-b058bd36e7784e5ea81ab24c8dd3a4bb"
+          ]
+        }
+      ],
+      "politicas": [],
+      "consultas": [
+        {
+          "id": "id-f3d1d639b7ec477aa112072ed01dd0f4",
+          "nombre": "Consultar calificaciones promedio",
+          "codigo": "SB-30",
+          "lee": [
+            {
+              "raiz_id": "id-e848e3b4bf284a969c9a0a9d2e4de26f",
+              "acceso_id": "id-c8b40dcceacb4116a366303148b32586"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-4ab0c68883be4f879f9e0da5f2d83334",
+            "nombre": "Consultar calificaciones promedio"
+          },
+          "contrato": {
+            "id": "id-4227bf7b674d46d4b77aa11bd3e6a029",
+            "nombre": "Contrato de servicio: Consultar calificaciones promedio",
+            "entrada": "Propietario o cliente.",
+            "salida": "Calificación promedio y número de calificaciones.",
+            "reglas": ""
+          }
+        }
+      ],
+      "servicios_sa": [],
+      "enums": [
+        {
+          "nombre": "Parte que califica",
+          "valores": [
+            "cliente",
+            "propietario"
+          ],
+          "usado_en": [
+            {
+              "objeto_id": "id-e848e3b4bf284a969c9a0a9d2e4de26f",
+              "campo": "quién califica"
+            }
+          ]
+        }
+      ],
+      "otros_contextos": [
+        {
+          "id": "id-859686865fd4465397859188d62c971c",
+          "nombre": "Contexto Cobros y depósito",
+          "eventos": [
+            {
+              "id": "id-a5729d322f444202bc1a34c7d68a46d8",
+              "nombre": "Alquiler y seguro cobrados"
+            },
+            {
+              "id": "id-498bf53911414b55828987e21aa1aa74",
+              "nombre": "Cancelación no reembolsada"
+            },
+            {
+              "id": "id-09c2a90d529d4de08b38adea6ab20ce0",
+              "nombre": "Cancelación reembolsada"
+            },
+            {
+              "id": "id-7a5f1d6d01b94f3ba9f0bc496545062f",
+              "nombre": "Cargos del cierre cobrados"
+            },
+            {
+              "id": "id-d853efb4ccfe4d5c9b75522348b303df",
+              "nombre": "Cuenta del arriendo cerrada"
+            },
+            {
+              "id": "id-20ea85b6df0f4664a60ff0b1b19a222e",
+              "nombre": "Daños descontados del depósito"
+            },
+            {
+              "id": "id-41585106baae43ab90ca920de78dc737",
+              "nombre": "Depósito bloqueado"
+            },
+            {
+              "id": "id-6128af9686a2416bada40d02108bce05",
+              "nombre": "Depósito liberado"
+            },
+            {
+              "id": "id-b13f9d27ed8d4bdd8d84224b82a64673",
+              "nombre": "Reclamo enviado a la aseguradora"
+            }
+          ]
+        },
+        {
+          "id": "id-0d93d731f6fd4b21acbf20d3cb28cf6f",
+          "nombre": "Contexto Disponibilidad de yates",
+          "eventos": [
+            {
+              "id": "id-314372c86c5e4e1981862bfbc8243d35",
+              "nombre": "Fechas apartadas"
+            },
+            {
+              "id": "id-78a96e2310bc4b3e9d6b68b5a56ec4b3",
+              "nombre": "Fechas bloqueadas"
+            },
+            {
+              "id": "id-d6d1cd177abd4faf9f86763960b16584",
+              "nombre": "Fechas desbloqueadas"
+            },
+            {
+              "id": "id-d9533d434fc748f18cada63f170e4319",
+              "nombre": "Fechas liberadas"
+            },
+            {
+              "id": "id-0b4d7ee06e05403ab9022d5232109730",
+              "nombre": "Fechas ocupadas"
+            },
+            {
+              "id": "id-4f03a460e265434e87e0081ee5018122",
+              "nombre": "Yate registrado"
+            }
+          ]
+        },
+        {
+          "id": "id-fdcc9b19f08a492f8ccd5dd4559926bc",
+          "nombre": "Contexto Gestión del arriendo",
+          "eventos": [
+            {
+              "id": "id-0f65cc3ebf6649e283d9b634febb03f5",
+              "nombre": "Arriendo cerrado"
+            },
+            {
+              "id": "id-6d63b57590714cd5a0c45b5f6e7b9580",
+              "nombre": "Arriendo iniciado"
+            },
+            {
+              "id": "id-bb4b23b9412742f89ac3ae34504a8391",
+              "nombre": "Arriendo no realizado por riesgo alto"
+            },
+            {
+              "id": "id-b65aec8c4e0641b0ac0ef6c69373610f",
+              "nombre": "Aviso de reserva enviado"
+            },
+            {
+              "id": "id-28e06fd82a7641228d89ded443509b64",
+              "nombre": "Reserva cancelada"
+            },
+            {
+              "id": "id-f7f775aec49c4eb782699183059c6bc2",
+              "nombre": "Reserva confirmada"
+            },
+            {
+              "id": "id-ba01aa1a0874474086ba64badf2991e3",
+              "nombre": "Reserva solicitada"
+            },
+            {
+              "id": "id-898e6b49f085471cb23b1ef1dbaa953e",
+              "nombre": "Riesgo aceptable obtenido"
+            },
+            {
+              "id": "id-8efeaef2f23441879f0f9fe08fb63a2e",
+              "nombre": "Yate devuelto"
+            }
+          ]
+        },
+        {
+          "id": "id-909c52d6cdf845e6927af4c62d2847fb",
+          "nombre": "Contexto Operación del arriendo",
+          "eventos": [
+            {
+              "id": "id-497addd0bf144aed8bf9f4ba01d7eac3",
+              "nombre": "Diferencias determinadas"
+            },
+            {
+              "id": "id-d83f5b5cfb764e7aaac782ffab1b12c4",
+              "nombre": "Inspección de devolución registrada"
+            },
+            {
+              "id": "id-81e0ea1bc1004b88b387861811e7e806",
+              "nombre": "Lectura registrada"
+            },
+            {
+              "id": "id-f8aec7f1160d42d4994bba6dc64d04ab",
+              "nombre": "Pérdida de señal del yate"
+            },
+            {
+              "id": "id-275970c646a74ac3ac7c206246d780ab",
+              "nombre": "Yate entregado al cliente"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "id-859686865fd4465397859188d62c971c",
+      "nombre": "Contexto Cobros y depósito",
+      "agregados": [
+        {
+          "id": "id-061a58e9c8b548bc9990fbd624423929",
+          "nombre": "Agregado Cuenta del arriendo",
+          "raiz": {
+            "id": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+            "nombre": "Cuenta del arriendo",
+            "campos": [
+              {
+                "nombre": "comisión",
+                "tipo": "decimal?",
+                "base": "decimal",
+                "lista": false,
+                "opcional": true,
+                "enum": null
+              },
+              {
+                "nombre": "valor del propietario",
+                "tipo": "decimal?",
+                "base": "decimal",
+                "lista": false,
+                "opcional": true,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [
+            {
+              "id": "id-73b07f4ddacf4826ad340226a0e59119",
+              "nombre": "Cobro",
+              "compuesto_por": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+              "cardinalidad": "Muchos",
+              "composicion_id": "id-1acf1b6581c64b4dbe084ec858fe4fa8",
+              "campos": [
+                {
+                  "nombre": "concepto",
+                  "tipo": "enum Concepto del cobro(alquiler, seguro, combustible consumido, tiempo adicional, reembolso)",
+                  "base": "enum",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": {
+                    "nombre": "Concepto del cobro",
+                    "valores": [
+                      "alquiler",
+                      "seguro",
+                      "combustible consumido",
+                      "tiempo adicional",
+                      "reembolso"
+                    ]
+                  }
+                },
+                {
+                  "nombre": "valor",
+                  "tipo": "decimal",
+                  "base": "decimal",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "comprobante",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "evidencia",
+                  "tipo": "List<string>",
+                  "base": "string",
+                  "lista": true,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            }
+          ],
+          "objetos_valor": [
+            {
+              "id": "id-2fa2f5aff47347caaf386d07e2d2ae88",
+              "nombre": "Póliza del arriendo",
+              "compuesto_por": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+              "cardinalidad": "Cero o uno",
+              "composicion_id": "id-5e8f9c1b956f4633bf927c03a598d9fa",
+              "campos": [
+                {
+                  "nombre": "número",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "valor",
+                  "tipo": "decimal",
+                  "base": "decimal",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "id-201299ead2af4e15b951240a3ff4586c",
+          "nombre": "Agregado Depósito para daños",
+          "raiz": {
+            "id": "id-6545ac90ecf249a4b622c562c49eeeca",
+            "nombre": "Depósito para daños",
+            "campos": [
+              {
+                "nombre": "valor del depósito",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "código de autorización de la pasarela",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "fecha de vencimiento del bloqueo",
+                "tipo": "DateOnly",
+                "base": "DateOnly",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "evidencia del descuento",
+                "tipo": "List<string>",
+                "base": "string",
+                "lista": true,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": []
+        },
+        {
+          "id": "id-cf6ab73466b745f2ab2bdad9fefcb87c",
+          "nombre": "Agregado Reclamo a la aseguradora",
+          "raiz": {
+            "id": "id-97138119487d4fa1aa1837e907129ad1",
+            "nombre": "Reclamo a la aseguradora",
+            "campos": [
+              {
+                "nombre": "identificador del arriendo",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "número de póliza",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "valor de los daños",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "valor descontado del depósito",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "evidencia",
+                "tipo": "List<string>",
+                "base": "string",
+                "lista": true,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": []
+        }
+      ],
+      "comandos": [
+        {
+          "id": "id-43d3a21049834a9ea5e2f3f8b3079d0a",
+          "nombre": "Bloquear el depósito",
+          "codigo": "SB-19",
+          "agregado_id": "id-201299ead2af4e15b951240a3ff4586c",
+          "raiz_id": "id-6545ac90ecf249a4b622c562c49eeeca",
+          "acceso": "escritura",
+          "acceso_id": "id-5fc969305b4043e88173686951a81094",
+          "lee_tambien": [],
+          "eventos": [
+            "id-41585106baae43ab90ca920de78dc737"
+          ],
+          "servicio_negocio": {
+            "id": "id-b3842577622441589b72e66a331ff25d",
+            "nombre": "Bloquear el depósito"
+          },
+          "contrato": {
+            "id": "id-be586e0ecad5498c8973ace01690688c",
+            "nombre": "Contrato de servicio: Bloquear el depósito",
+            "entrada": "Arriendo, valor del depósito y tarjeta de crédito del cliente.",
+            "salida": "Depósito bloqueado con su código de autorización y la fecha en que vence el bloqueo.",
+            "reglas": "Se rechaza si el bloqueo vencería antes del cierre: la autorización en tarjeta de crédito dura 28 días (V4-SUP-07, contraste de H-10). En la práctica, la fecha de fin del arriendo no puede pasar de unos 25 días después de reservar."
+          }
+        },
+        {
+          "id": "id-5ef920b9e381405495dbdfe1877eb75b",
+          "nombre": "Cerrar las cuentas del arriendo",
+          "codigo": "SB-17",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "raiz_id": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+          "acceso": "escritura",
+          "acceso_id": "id-6a41ad1129a74249aba3e1acfa318231",
+          "lee_tambien": [],
+          "eventos": [
+            "id-d853efb4ccfe4d5c9b75522348b303df"
+          ],
+          "servicio_negocio": {
+            "id": "id-a6ff0409f0a743e3b484891c75b53bb8",
+            "nombre": "Cerrar las cuentas del arriendo"
+          },
+          "contrato": {
+            "id": "id-4cf062b2782044669f3d49e65f16d93b",
+            "nombre": "Contrato de servicio: Cerrar las cuentas del arriendo",
+            "entrada": "Arriendo devuelto, sus cobros y la decisión sobre el depósito.",
+            "salida": "Cuentas cerradas con el valor del alquiler, la comisión y el valor del propietario, enviados a Finanzas.",
+            "reglas": "Se rechaza mientras falte un cargo del cierre o la decisión sobre el depósito, porque con los ajustes se cierra el arriendo (E2E-01)."
+          }
+        },
+        {
+          "id": "id-e5737d28667c4b8a9373ac6f62271f96",
+          "nombre": "Cobrar alquiler y seguro",
+          "codigo": "SB-13",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "raiz_id": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+          "acceso": "escritura",
+          "acceso_id": "id-4d4d46d365984c5d92fe117f4fb72642",
+          "lee_tambien": [],
+          "eventos": [
+            "id-a5729d322f444202bc1a34c7d68a46d8"
+          ],
+          "servicio_negocio": {
+            "id": "id-cab68165d54b41639d0bac55d1fd8804",
+            "nombre": "Cobrar alquiler y seguro"
+          },
+          "contrato": {
+            "id": "id-0630fc686f76430196499d225b64d38a",
+            "nombre": "Contrato de servicio: Cobrar alquiler y seguro",
+            "entrada": "Arriendo, días, precio por día, valor del seguro y medio de pago del cliente.",
+            "salida": "Comprobantes del alquiler y del seguro y número de la póliza.",
+            "reglas": ""
+          }
+        },
+        {
+          "id": "id-53533cc505c540bbafcb8473107780c3",
+          "nombre": "Descontar daños del depósito",
+          "codigo": "SB-21",
+          "agregado_id": "id-201299ead2af4e15b951240a3ff4586c",
+          "raiz_id": "id-6545ac90ecf249a4b622c562c49eeeca",
+          "acceso": "escritura",
+          "acceso_id": "id-7443e0ef8c06418fb178d9f7afe64f47",
+          "lee_tambien": [],
+          "eventos": [
+            "id-20ea85b6df0f4664a60ff0b1b19a222e"
+          ],
+          "servicio_negocio": {
+            "id": "id-1164ab8441854cb79fc5e1e191a3483f",
+            "nombre": "Descontar daños del depósito"
+          },
+          "contrato": {
+            "id": "id-31ee84a6c3c14f06908a6b41dce32745",
+            "nombre": "Contrato de servicio: Descontar daños del depósito",
+            "entrada": "Arriendo, valor de los daños y evidencia.",
+            "salida": "Valor descontado, saldo liberado y valor que excede el depósito, si lo hay.",
+            "reglas": "Se rechaza un descuento sin evidencia (principio \"Todo cobro va con evidencia\", V1). Se hace en máximo 3 días después de la devolución (resultado de la V1). El valor de los daños llega con la inspección (V4-SUP-03)."
+          }
+        },
+        {
+          "id": "id-e2968b9d61094a948605f2615f69fff0",
+          "nombre": "Liberar el depósito",
+          "codigo": "SB-20",
+          "agregado_id": "id-201299ead2af4e15b951240a3ff4586c",
+          "raiz_id": "id-6545ac90ecf249a4b622c562c49eeeca",
+          "acceso": "escritura",
+          "acceso_id": "id-9c7a14bfb12c41c38dacb5f3d0fe4539",
+          "lee_tambien": [],
+          "eventos": [
+            "id-6128af9686a2416bada40d02108bce05"
+          ],
+          "servicio_negocio": {
+            "id": "id-61408d4df3f74394b564fefe5bfb6339",
+            "nombre": "Liberar el depósito"
+          },
+          "contrato": {
+            "id": "id-d0043dfa6a2d42c9ad9162ffe81bff2b",
+            "nombre": "Contrato de servicio: Liberar el depósito",
+            "entrada": "Arriendo e inspección sin daños, o arriendo cancelado con el depósito bloqueado.",
+            "salida": "Depósito liberado y fecha de la liberación.",
+            "reglas": "Se rechaza si la inspección registró daños (REG-01). Se libera en máximo 3 días después de la devolución (resultado de la V1). Si la reserva se cancela, se libera al cancelar, sin inspección (V4-SUP-09)."
+          }
+        },
+        {
+          "id": "id-3101c7184ff44fbfb862a7645b4e6135",
+          "nombre": "Liquidar y cobrar los cargos del cierre",
+          "codigo": "SB-14",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "raiz_id": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+          "acceso": "escritura",
+          "acceso_id": "id-c4c46e4007a54b04b89a26783ffdf283",
+          "lee_tambien": [],
+          "eventos": [
+            "id-7a5f1d6d01b94f3ba9f0bc496545062f"
+          ],
+          "servicio_negocio": {
+            "id": "id-ba00d438a249424ab172d10850c7bf19",
+            "nombre": "Liquidar y cobrar los cargos del cierre"
+          },
+          "contrato": {
+            "id": "id-b7171db9da564944bab35b3666ab3c83",
+            "nombre": "Contrato de servicio: Liquidar y cobrar los cargos del cierre",
+            "entrada": "Arriendo, combustible consumido, horas adicionales y evidencia (actas y fotos de entrega e inspección).",
+            "salida": "Cargos cobrados con su comprobante y la evidencia que los respalda.",
+            "reglas": "Se rechaza un cargo sin evidencia (principio \"Todo cobro va con evidencia\", V1). El combustible consumido siempre lo paga el cliente (REG-01)."
+          }
+        },
+        {
+          "id": "id-afb038030e754dd490f69fcbf6a446e0",
+          "nombre": "Reclamar el excedente de daños a la aseguradora",
+          "codigo": "SB-16",
+          "agregado_id": "id-cf6ab73466b745f2ab2bdad9fefcb87c",
+          "raiz_id": "id-97138119487d4fa1aa1837e907129ad1",
+          "acceso": "escritura",
+          "acceso_id": "id-d7053c02c4b44be0aa367bbe1323af82",
+          "lee_tambien": [],
+          "eventos": [
+            "id-b13f9d27ed8d4bdd8d84224b82a64673"
+          ],
+          "servicio_negocio": {
+            "id": "id-575ab794c65743f590489b86ba736dcb",
+            "nombre": "Reclamar el excedente de daños a la aseguradora"
+          },
+          "contrato": {
+            "id": "id-68d91d580faf4234a20279768c8520e6",
+            "nombre": "Contrato de servicio: Reclamar el excedente de daños a la aseguradora",
+            "entrada": "Arriendo, número de póliza, valor de los daños, valor descontado del depósito y evidencia.",
+            "salida": "Reclamo enviado con su número y, cuando llegue, la respuesta de la aseguradora.",
+            "reglas": "Se rechaza si el daño no supera el depósito (REG-01) o si falta la evidencia de la entrega y de la inspección (EXC-02)."
+          }
+        },
+        {
+          "id": "id-599456d5ca8f45b0b82efa9a05b254d2",
+          "nombre": "Reembolsar una cancelación",
+          "codigo": "SB-15",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "raiz_id": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+          "acceso": "escritura",
+          "acceso_id": "id-ab65851ca30a477093fe098522fa3912",
+          "lee_tambien": [],
+          "eventos": [
+            "id-09c2a90d529d4de08b38adea6ab20ce0",
+            "id-498bf53911414b55828987e21aa1aa74"
+          ],
+          "servicio_negocio": {
+            "id": "id-80cb6926115e4a27b31732ba32d21612",
+            "nombre": "Reembolsar una cancelación"
+          },
+          "contrato": {
+            "id": "id-3e6363728e104f31a5d3a2104e66869c",
+            "nombre": "Contrato de servicio: Reembolsar una cancelación",
+            "entrada": "Arriendo cancelado, días de anticipación y condiciones de cancelación del contrato con el cliente.",
+            "salida": "Valor devuelto con su comprobante, o la razón por la que no hay devolución.",
+            "reglas": "No se reembolsa la cancelación hecha muy cerca de la fecha; el plazo lo fija el contrato con el cliente (EXC-02, D-03)."
+          }
+        }
+      ],
+      "eventos": [
+        {
+          "id": "id-a5729d322f444202bc1a34c7d68a46d8",
+          "nombre": "Alquiler y seguro cobrados",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "disparado_por": [
+            "id-e5737d28667c4b8a9373ac6f62271f96"
+          ]
+        },
+        {
+          "id": "id-498bf53911414b55828987e21aa1aa74",
+          "nombre": "Cancelación no reembolsada",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "disparado_por": [
+            "id-599456d5ca8f45b0b82efa9a05b254d2"
+          ]
+        },
+        {
+          "id": "id-09c2a90d529d4de08b38adea6ab20ce0",
+          "nombre": "Cancelación reembolsada",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "disparado_por": [
+            "id-599456d5ca8f45b0b82efa9a05b254d2"
+          ]
+        },
+        {
+          "id": "id-7a5f1d6d01b94f3ba9f0bc496545062f",
+          "nombre": "Cargos del cierre cobrados",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "disparado_por": [
+            "id-3101c7184ff44fbfb862a7645b4e6135"
+          ]
+        },
+        {
+          "id": "id-d853efb4ccfe4d5c9b75522348b303df",
+          "nombre": "Cuenta del arriendo cerrada",
+          "agregado_id": "id-061a58e9c8b548bc9990fbd624423929",
+          "disparado_por": [
+            "id-5ef920b9e381405495dbdfe1877eb75b"
+          ]
+        },
+        {
+          "id": "id-20ea85b6df0f4664a60ff0b1b19a222e",
+          "nombre": "Daños descontados del depósito",
+          "agregado_id": "id-201299ead2af4e15b951240a3ff4586c",
+          "disparado_por": [
+            "id-53533cc505c540bbafcb8473107780c3"
+          ]
+        },
+        {
+          "id": "id-41585106baae43ab90ca920de78dc737",
+          "nombre": "Depósito bloqueado",
+          "agregado_id": "id-201299ead2af4e15b951240a3ff4586c",
+          "disparado_por": [
+            "id-43d3a21049834a9ea5e2f3f8b3079d0a"
+          ]
+        },
+        {
+          "id": "id-6128af9686a2416bada40d02108bce05",
+          "nombre": "Depósito liberado",
+          "agregado_id": "id-201299ead2af4e15b951240a3ff4586c",
+          "disparado_por": [
+            "id-e2968b9d61094a948605f2615f69fff0"
+          ]
+        },
+        {
+          "id": "id-b13f9d27ed8d4bdd8d84224b82a64673",
+          "nombre": "Reclamo enviado a la aseguradora",
+          "agregado_id": "id-cf6ab73466b745f2ab2bdad9fefcb87c",
+          "disparado_por": [
+            "id-afb038030e754dd490f69fcbf6a446e0"
+          ]
+        }
+      ],
+      "politicas": [
+        {
+          "relacion_id": "id-67a09166f3204429b95b9d101765aff0",
+          "evento_id": "id-7a5f1d6d01b94f3ba9f0bc496545062f",
+          "comando_id": "id-5ef920b9e381405495dbdfe1877eb75b"
+        },
+        {
+          "relacion_id": "id-8cd447d97bbc4c52a4e6468f6ce1bcba",
+          "evento_id": "id-6128af9686a2416bada40d02108bce05",
+          "comando_id": "id-5ef920b9e381405495dbdfe1877eb75b"
+        },
+        {
+          "relacion_id": "id-d7326593785343188e965d066cc88e7c",
+          "evento_id": "id-20ea85b6df0f4664a60ff0b1b19a222e",
+          "comando_id": "id-afb038030e754dd490f69fcbf6a446e0"
+        },
+        {
+          "relacion_id": "id-f5e26d2cf86a4a72a9f3cdf4945855ff",
+          "evento_id": "id-20ea85b6df0f4664a60ff0b1b19a222e",
+          "comando_id": "id-5ef920b9e381405495dbdfe1877eb75b"
+        }
+      ],
+      "consultas": [
+        {
+          "id": "id-e093f7b040c243449523e515011813d0",
+          "nombre": "Consultar el estado de cuenta del arriendo",
+          "codigo": "SB-18",
+          "lee": [
+            {
+              "raiz_id": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+              "acceso_id": "id-01ed62112d6e4c1389b9db8d89b04fe9"
+            },
+            {
+              "raiz_id": "id-6545ac90ecf249a4b622c562c49eeeca",
+              "acceso_id": "id-9475e7fc0eba4b27b00241031f568739"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-6451adac6a3a47c58968469b72feb93c",
+            "nombre": "Consultar el estado de cuenta del arriendo"
+          },
+          "contrato": {
+            "id": "id-351bf3719c344a159d64e004c3eab7df",
+            "nombre": "Contrato de servicio: Consultar el estado de cuenta del arriendo",
+            "entrada": "Número de arriendo.",
+            "salida": "Lista de movimientos con fecha, concepto, valor y evidencia.",
+            "reglas": "Se rechaza si quien consulta no es el cliente del arriendo ni un empleado de YateGear, porque son datos de pago (Ley 1581, H-19)."
+          }
+        }
+      ],
+      "servicios_sa": [
+        {
+          "id": "id-1cdb2efd83d648a9bc004fe001343244",
+          "nombre": "Cobros por la pasarela de pagos",
+          "codigo": "SA-06",
+          "interfaz": {
+            "id": "id-219ca443aa4b4a7c8d2fc396e5bf3c9d",
+            "nombre": "Interfaz con la pasarela de pagos"
+          },
+          "contraparte": {
+            "id": "id-2f0cc96688e1475489c549d46f5860aa",
+            "nombre": "Sistema de la pasarela de pagos",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-6681fd87a19e4b29a898c8f4a95d4294",
+              "nombre": "Aprobación o rechazo",
+              "direccion": "entra",
+              "momento": "Reserva, cancelación y cierre"
+            },
+            {
+              "id": "id-be5aa77b17854574a10415344197af5e",
+              "nombre": "Órdenes de cobro y del depósito",
+              "direccion": "sale",
+              "momento": "Reserva, cancelación y cierre"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-d8cd158de4664c6c931d276887de2c58",
+            "nombre": "Cobros por la pasarela de pagos"
+          },
+          "contrato": {
+            "id": "id-1a2ba27625934f1c938f22171dc72916",
+            "nombre": "Contrato de servicio: Cobros por la pasarela de pagos",
+            "entrada": "Tipo de orden, arriendo, valor y medio de pago.",
+            "salida": "Orden aprobada o rechazada, con su comprobante o código de autorización.",
+            "reglas": "Una orden sin confirmación de la pasarela no cuenta como pago hecho (INT-PAG)."
+          }
+        },
+        {
+          "id": "id-18b80ed18f3d4d43a5290e01b90ca4eb",
+          "nombre": "Contratos con propietarios y clientes",
+          "codigo": "SA-02",
+          "interfaz": {
+            "id": "id-a7b78492e6714137865f37c41eb78b19",
+            "nombre": "Pantalla de registro de contratos"
+          },
+          "contraparte": {
+            "id": "id-03be3f82b87240b1bbabf2bfd90332eb",
+            "nombre": "Gestión de contratos",
+            "tipo": "BusinessFunction",
+            "externo": false,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-92ca9accc62149968734d75dbc72b362",
+              "nombre": "Contrato firmado",
+              "direccion": "entra",
+              "momento": "Reserva, después de la evaluación de riesgo; registro del yate"
+            },
+            {
+              "id": "id-bcd7145d93fb45e2b611264f8d602286",
+              "nombre": "Datos para el contrato",
+              "direccion": "sale",
+              "momento": "Reserva, después de la evaluación de riesgo; registro del yate"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-b170a04e21cc4665abdb81d9ba6eaea1",
+            "nombre": "Contratos con propietarios y clientes"
+          },
+          "contrato": {
+            "id": "id-3f0f0a61815d4247bbb2d2cf80f1ad6e",
+            "nombre": "Contrato de servicio: Contratos con propietarios y clientes",
+            "entrada": "Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.",
+            "salida": "Estado del contrato (enviado o firmado), fecha de firma, condiciones de cancelación y, si está firmado, la referencia del contrato firmado.",
+            "reglas": "El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON)."
+          }
+        },
+        {
+          "id": "id-415716c21d684fd5b6f0a59dab8bbc17",
+          "nombre": "Envío de arriendos cerrados a Finanzas",
+          "codigo": "SA-08",
+          "interfaz": {
+            "id": "id-3cfd84c427b943df83d5b8cfe5dee869",
+            "nombre": "Registro de arriendos cerrados para Finanzas"
+          },
+          "contraparte": {
+            "id": "id-2436b7f69f814e539e5d62b6168b8f70",
+            "nombre": "Pagar mensualmente al propietario",
+            "tipo": "BusinessProcess",
+            "externo": false,
+            "sentido_servicio": "sa_a_contraparte"
+          },
+          "flujos": [
+            {
+              "id": "id-dee064888f3f49b583a4383207f5b8a8",
+              "nombre": "Valores del arriendo cerrado",
+              "direccion": "sale",
+              "momento": "Cierre del arriendo"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-5b8727eaac2c436db9285b07a20649e6",
+            "nombre": "Envío de arriendos cerrados a Finanzas"
+          },
+          "contrato": {
+            "id": "id-4a7264e1a5af452bbc6909749a97c85d",
+            "nombre": "Contrato de servicio: Envío de arriendos cerrados a Finanzas",
+            "entrada": "Cuentas cerradas del arriendo.",
+            "salida": "Registro recibido por el proceso de pago mensual al propietario.",
+            "reglas": ""
+          }
+        },
+        {
+          "id": "id-45d9e0e4f7624937a6dfef70e2c3240a",
+          "nombre": "Pólizas y reclamos de la aseguradora",
+          "codigo": "SA-03",
+          "interfaz": {
+            "id": "id-962979e809b243f3af41beef0f35a1b5",
+            "nombre": "Interfaz con la aseguradora"
+          },
+          "contraparte": {
+            "id": "id-d2840298523842f48f2d31491dbd7834",
+            "nombre": "Sistema de la aseguradora",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-877b1716069f4809a6f4f3bd499fe3e3",
+              "nombre": "Datos del arriendo; reclamo con evidencia",
+              "direccion": "sale",
+              "momento": "Reserva y cierre"
+            },
+            {
+              "id": "id-6e6bcaca93734a8f8b4b0d62c5e3a172",
+              "nombre": "Póliza; respuesta al reclamo",
+              "direccion": "entra",
+              "momento": "Reserva y cierre"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-f1b972c2ebb54b5dbc49d796af031b80",
+            "nombre": "Pólizas y reclamos de la aseguradora"
+          },
+          "contrato": {
+            "id": "id-351bb447422d45dc8f8144e4694621d0",
+            "nombre": "Contrato de servicio: Pólizas y reclamos de la aseguradora",
+            "entrada": "Datos del arriendo, o datos del reclamo con su evidencia.",
+            "salida": "Número y valor de la póliza, o número y estado del reclamo.",
+            "reglas": "No se envía un reclamo si el daño no supera el depósito (INT-ASE)."
+          }
+        }
+      ],
+      "enums": [
+        {
+          "nombre": "Concepto del cobro",
+          "valores": [
+            "alquiler",
+            "seguro",
+            "combustible consumido",
+            "tiempo adicional",
+            "reembolso"
+          ],
+          "usado_en": [
+            {
+              "objeto_id": "id-73b07f4ddacf4826ad340226a0e59119",
+              "campo": "concepto"
+            }
+          ]
+        }
+      ],
+      "otros_contextos": [
+        {
+          "id": "id-6f29abc193cb4f2fa1234cec80bf0675",
+          "nombre": "Contexto Calificaciones",
+          "eventos": [
+            {
+              "id": "id-19f69c478e1c47e481a41c991690baaa",
+              "nombre": "Cliente calificado"
+            },
+            {
+              "id": "id-7680477f87b2487f8c2af8de885a11de",
+              "nombre": "Propietario calificado"
+            }
+          ]
+        },
+        {
+          "id": "id-0d93d731f6fd4b21acbf20d3cb28cf6f",
+          "nombre": "Contexto Disponibilidad de yates",
+          "eventos": [
+            {
+              "id": "id-314372c86c5e4e1981862bfbc8243d35",
+              "nombre": "Fechas apartadas"
+            },
+            {
+              "id": "id-78a96e2310bc4b3e9d6b68b5a56ec4b3",
+              "nombre": "Fechas bloqueadas"
+            },
+            {
+              "id": "id-d6d1cd177abd4faf9f86763960b16584",
+              "nombre": "Fechas desbloqueadas"
+            },
+            {
+              "id": "id-d9533d434fc748f18cada63f170e4319",
+              "nombre": "Fechas liberadas"
+            },
+            {
+              "id": "id-0b4d7ee06e05403ab9022d5232109730",
+              "nombre": "Fechas ocupadas"
+            },
+            {
+              "id": "id-4f03a460e265434e87e0081ee5018122",
+              "nombre": "Yate registrado"
+            }
+          ]
+        },
+        {
+          "id": "id-fdcc9b19f08a492f8ccd5dd4559926bc",
+          "nombre": "Contexto Gestión del arriendo",
+          "eventos": [
+            {
+              "id": "id-0f65cc3ebf6649e283d9b634febb03f5",
+              "nombre": "Arriendo cerrado"
+            },
+            {
+              "id": "id-6d63b57590714cd5a0c45b5f6e7b9580",
+              "nombre": "Arriendo iniciado"
+            },
+            {
+              "id": "id-bb4b23b9412742f89ac3ae34504a8391",
+              "nombre": "Arriendo no realizado por riesgo alto"
+            },
+            {
+              "id": "id-b65aec8c4e0641b0ac0ef6c69373610f",
+              "nombre": "Aviso de reserva enviado"
+            },
+            {
+              "id": "id-28e06fd82a7641228d89ded443509b64",
+              "nombre": "Reserva cancelada"
+            },
+            {
+              "id": "id-f7f775aec49c4eb782699183059c6bc2",
+              "nombre": "Reserva confirmada"
+            },
+            {
+              "id": "id-ba01aa1a0874474086ba64badf2991e3",
+              "nombre": "Reserva solicitada"
+            },
+            {
+              "id": "id-898e6b49f085471cb23b1ef1dbaa953e",
+              "nombre": "Riesgo aceptable obtenido"
+            },
+            {
+              "id": "id-8efeaef2f23441879f0f9fe08fb63a2e",
+              "nombre": "Yate devuelto"
+            }
+          ]
+        },
+        {
+          "id": "id-909c52d6cdf845e6927af4c62d2847fb",
+          "nombre": "Contexto Operación del arriendo",
+          "eventos": [
+            {
+              "id": "id-497addd0bf144aed8bf9f4ba01d7eac3",
+              "nombre": "Diferencias determinadas"
+            },
+            {
+              "id": "id-d83f5b5cfb764e7aaac782ffab1b12c4",
+              "nombre": "Inspección de devolución registrada"
+            },
+            {
+              "id": "id-81e0ea1bc1004b88b387861811e7e806",
+              "nombre": "Lectura registrada"
+            },
+            {
+              "id": "id-f8aec7f1160d42d4994bba6dc64d04ab",
+              "nombre": "Pérdida de señal del yate"
+            },
+            {
+              "id": "id-275970c646a74ac3ac7c206246d780ab",
+              "nombre": "Yate entregado al cliente"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "id-0d93d731f6fd4b21acbf20d3cb28cf6f",
+      "nombre": "Contexto Disponibilidad de yates",
+      "agregados": [
+        {
+          "id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "nombre": "Agregado Calendario del yate",
+          "raiz": {
+            "id": "id-b3dcca7f045e43f49523fe907a138a79",
+            "nombre": "Calendario del yate",
+            "campos": []
+          },
+          "entidades": [],
+          "objetos_valor": [
+            {
+              "id": "id-ada4b300178d4ff6a7a01bc9405f74fb",
+              "nombre": "Rango de fechas",
+              "compuesto_por": "id-b3dcca7f045e43f49523fe907a138a79",
+              "cardinalidad": "Muchos",
+              "composicion_id": "id-31b5283dd5954622aeedaddc51af4662",
+              "campos": [
+                {
+                  "nombre": "inicio",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "fin",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "estado",
+                  "tipo": "enum Estado de la fecha(bloqueada, apartada, ocupada)",
+                  "base": "enum",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": {
+                    "nombre": "Estado de la fecha",
+                    "valores": [
+                      "bloqueada",
+                      "apartada",
+                      "ocupada"
+                    ]
+                  }
+                },
+                {
+                  "nombre": "arriendo",
+                  "tipo": "string?",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": true,
+                  "enum": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "id-50ce3b21f9bf46de85846efc0fadda0a",
+          "nombre": "Agregado Yate",
+          "raiz": {
+            "id": "id-d50ced5f46a849f7b744fc977ab040e9",
+            "nombre": "Yate",
+            "campos": [
+              {
+                "nombre": "precio por día",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "documentos al día ante la DIMAR",
+                "tipo": "bool",
+                "base": "bool",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "referencia del contrato del propietario",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "identificador de la marina",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": [
+            {
+              "id": "id-0d2603fc1ad64e65a7eca9f214792093",
+              "nombre": "Datos del yate",
+              "compuesto_por": "id-d50ced5f46a849f7b744fc977ab040e9",
+              "cardinalidad": "Uno",
+              "composicion_id": "id-6094d0d152164f9299f3ebd575b7c810",
+              "campos": [
+                {
+                  "nombre": "nombre",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "matrícula",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "capacidad",
+                  "tipo": "int",
+                  "base": "int",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "comandos": [
+        {
+          "id": "id-f4ce9e396faf4c5395d097ec91278ec2",
+          "nombre": "Definir las fechas bloqueadas del yate",
+          "codigo": "SB-03",
+          "agregado_id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "raiz_id": "id-b3dcca7f045e43f49523fe907a138a79",
+          "acceso": "escritura",
+          "acceso_id": "id-6968c01393184d71b1d98f2a4c15402e",
+          "lee_tambien": [],
+          "eventos": [
+            "id-78a96e2310bc4b3e9d6b68b5a56ec4b3",
+            "id-d6d1cd177abd4faf9f86763960b16584"
+          ],
+          "servicio_negocio": {
+            "id": "id-ca9597cf3052403c99ebbb59510f497b",
+            "nombre": "Definir las fechas bloqueadas del yate"
+          },
+          "contrato": {
+            "id": "id-33c845069c4641b9ad2e9d7585624b70",
+            "nombre": "Contrato de servicio: Definir las fechas bloqueadas del yate",
+            "entrada": "Yate, fecha de inicio, fecha de fin y acción (bloquear o desbloquear).",
+            "salida": "Calendario del yate actualizado.",
+            "reglas": "Se rechaza si quien hace el cambio no es el propietario del yate (E2E-02). Se rechaza el bloqueo de fechas que ya tienen una reserva confirmada (REG-02)."
+          }
+        },
+        {
+          "id": "id-91e23dd9dfb741b79a6f487952bd22c0",
+          "nombre": "Gestionar la ocupación del calendario",
+          "codigo": "SB-05",
+          "agregado_id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "raiz_id": "id-b3dcca7f045e43f49523fe907a138a79",
+          "acceso": "escritura",
+          "acceso_id": "id-bb89f82f51614aa3a49526313fb6c779",
+          "lee_tambien": [],
+          "eventos": [
+            "id-0b4d7ee06e05403ab9022d5232109730",
+            "id-314372c86c5e4e1981862bfbc8243d35",
+            "id-d9533d434fc748f18cada63f170e4319"
+          ],
+          "servicio_negocio": {
+            "id": "id-ad7eab80d09b41b2ba6afb14347e86f8",
+            "nombre": "Gestionar la ocupación del calendario"
+          },
+          "contrato": {
+            "id": "id-683b3fd66779488b96a331df7112516d",
+            "nombre": "Contrato de servicio: Gestionar la ocupación del calendario",
+            "entrada": "Yate, fechas, arriendo y acción: apartar, ocupar o soltar.",
+            "salida": "Calendario con las fechas apartadas, ocupadas o libres.",
+            "reglas": "Se rechaza apartar u ocupar fechas que ya tiene otro arriendo o que bloqueó el propietario: un yate no puede tener dos arriendos en las mismas fechas (REG-01). Las fechas se apartan al pedir la reserva y se ocupan al confirmarla (V4-SUP-01)."
+          }
+        },
+        {
+          "id": "id-8e392207203f40b2b0a50bcbe62efc90",
+          "nombre": "Registrar yate en el inventario",
+          "codigo": "SB-01",
+          "agregado_id": "id-50ce3b21f9bf46de85846efc0fadda0a",
+          "raiz_id": "id-d50ced5f46a849f7b744fc977ab040e9",
+          "acceso": "escritura",
+          "acceso_id": "id-28f51595993749658da137e36c47fb08",
+          "lee_tambien": [],
+          "eventos": [
+            "id-4f03a460e265434e87e0081ee5018122"
+          ],
+          "servicio_negocio": {
+            "id": "id-60d66be6c035440b8fc779d9918f6ae0",
+            "nombre": "Registrar yate en el inventario"
+          },
+          "contrato": {
+            "id": "id-431ca877f2e34dd2b6243038d1bb256f",
+            "nombre": "Contrato de servicio: Registrar yate en el inventario",
+            "entrada": "Propietario, marina, datos del yate (nombre, matrícula y capacidad), precio por día, documentos ante la DIMAR al día y contrato firmado con el propietario.",
+            "salida": "Yate registrado con su identificador.",
+            "reglas": "Se rechaza si el propietario no tiene contrato firmado (INT-CON) o si los documentos del yate ante la DIMAR no están al día (NOR-01)."
+          }
+        }
+      ],
+      "eventos": [
+        {
+          "id": "id-314372c86c5e4e1981862bfbc8243d35",
+          "nombre": "Fechas apartadas",
+          "agregado_id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "disparado_por": [
+            "id-91e23dd9dfb741b79a6f487952bd22c0"
+          ]
+        },
+        {
+          "id": "id-78a96e2310bc4b3e9d6b68b5a56ec4b3",
+          "nombre": "Fechas bloqueadas",
+          "agregado_id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "disparado_por": [
+            "id-f4ce9e396faf4c5395d097ec91278ec2"
+          ]
+        },
+        {
+          "id": "id-d6d1cd177abd4faf9f86763960b16584",
+          "nombre": "Fechas desbloqueadas",
+          "agregado_id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "disparado_por": [
+            "id-f4ce9e396faf4c5395d097ec91278ec2"
+          ]
+        },
+        {
+          "id": "id-d9533d434fc748f18cada63f170e4319",
+          "nombre": "Fechas liberadas",
+          "agregado_id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "disparado_por": [
+            "id-91e23dd9dfb741b79a6f487952bd22c0"
+          ]
+        },
+        {
+          "id": "id-0b4d7ee06e05403ab9022d5232109730",
+          "nombre": "Fechas ocupadas",
+          "agregado_id": "id-85399b46487d42d0b1f00ed00e7a0890",
+          "disparado_por": [
+            "id-91e23dd9dfb741b79a6f487952bd22c0"
+          ]
+        },
+        {
+          "id": "id-4f03a460e265434e87e0081ee5018122",
+          "nombre": "Yate registrado",
+          "agregado_id": "id-50ce3b21f9bf46de85846efc0fadda0a",
+          "disparado_por": [
+            "id-8e392207203f40b2b0a50bcbe62efc90"
+          ]
+        }
+      ],
+      "politicas": [],
+      "consultas": [
+        {
+          "id": "id-3c71d6c07530402bb5d436631366725d",
+          "nombre": "Consultar yates disponibles",
+          "codigo": "SB-04",
+          "lee": [
+            {
+              "raiz_id": "id-b3dcca7f045e43f49523fe907a138a79",
+              "acceso_id": "id-79c33122bdd14cdf9f638a207a271caf"
+            },
+            {
+              "raiz_id": "id-d50ced5f46a849f7b744fc977ab040e9",
+              "acceso_id": "id-e256b52849574b9fa4f9cb59f2a5de3d"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-01c956e2d271423d83b7b5db36d7511d",
+            "nombre": "Consultar yates disponibles"
+          },
+          "contrato": {
+            "id": "id-bc45d7fbd4334ba79ca86892865b4f99",
+            "nombre": "Contrato de servicio: Consultar yates disponibles",
+            "entrada": "Ubicación del cliente o marina elegida, fecha de inicio y fecha de fin.",
+            "salida": "Lista de yates disponibles con su marina y su precio por día. Puede venir vacía.",
+            "reglas": "No se muestra un yate con esas fechas bloqueadas por el propietario o con otra reserva: disponible es sin bloqueo y sin otra reserva en esas fechas (H-08)."
+          }
+        }
+      ],
+      "servicios_sa": [
+        {
+          "id": "id-18b80ed18f3d4d43a5290e01b90ca4eb",
+          "nombre": "Contratos con propietarios y clientes",
+          "codigo": "SA-02",
+          "interfaz": {
+            "id": "id-a7b78492e6714137865f37c41eb78b19",
+            "nombre": "Pantalla de registro de contratos"
+          },
+          "contraparte": {
+            "id": "id-03be3f82b87240b1bbabf2bfd90332eb",
+            "nombre": "Gestión de contratos",
+            "tipo": "BusinessFunction",
+            "externo": false,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-92ca9accc62149968734d75dbc72b362",
+              "nombre": "Contrato firmado",
+              "direccion": "entra",
+              "momento": "Reserva, después de la evaluación de riesgo; registro del yate"
+            },
+            {
+              "id": "id-bcd7145d93fb45e2b611264f8d602286",
+              "nombre": "Datos para el contrato",
+              "direccion": "sale",
+              "momento": "Reserva, después de la evaluación de riesgo; registro del yate"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-b170a04e21cc4665abdb81d9ba6eaea1",
+            "nombre": "Contratos con propietarios y clientes"
+          },
+          "contrato": {
+            "id": "id-3f0f0a61815d4247bbb2d2cf80f1ad6e",
+            "nombre": "Contrato de servicio: Contratos con propietarios y clientes",
+            "entrada": "Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.",
+            "salida": "Estado del contrato (enviado o firmado), fecha de firma, condiciones de cancelación y, si está firmado, la referencia del contrato firmado.",
+            "reglas": "El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON)."
+          }
+        }
+      ],
+      "enums": [
+        {
+          "nombre": "Estado de la fecha",
+          "valores": [
+            "bloqueada",
+            "apartada",
+            "ocupada"
+          ],
+          "usado_en": [
+            {
+              "objeto_id": "id-ada4b300178d4ff6a7a01bc9405f74fb",
+              "campo": "estado"
+            }
+          ]
+        }
+      ],
+      "otros_contextos": [
+        {
+          "id": "id-6f29abc193cb4f2fa1234cec80bf0675",
+          "nombre": "Contexto Calificaciones",
+          "eventos": [
+            {
+              "id": "id-19f69c478e1c47e481a41c991690baaa",
+              "nombre": "Cliente calificado"
+            },
+            {
+              "id": "id-7680477f87b2487f8c2af8de885a11de",
+              "nombre": "Propietario calificado"
+            }
+          ]
+        },
+        {
+          "id": "id-859686865fd4465397859188d62c971c",
+          "nombre": "Contexto Cobros y depósito",
+          "eventos": [
+            {
+              "id": "id-a5729d322f444202bc1a34c7d68a46d8",
+              "nombre": "Alquiler y seguro cobrados"
+            },
+            {
+              "id": "id-498bf53911414b55828987e21aa1aa74",
+              "nombre": "Cancelación no reembolsada"
+            },
+            {
+              "id": "id-09c2a90d529d4de08b38adea6ab20ce0",
+              "nombre": "Cancelación reembolsada"
+            },
+            {
+              "id": "id-7a5f1d6d01b94f3ba9f0bc496545062f",
+              "nombre": "Cargos del cierre cobrados"
+            },
+            {
+              "id": "id-d853efb4ccfe4d5c9b75522348b303df",
+              "nombre": "Cuenta del arriendo cerrada"
+            },
+            {
+              "id": "id-20ea85b6df0f4664a60ff0b1b19a222e",
+              "nombre": "Daños descontados del depósito"
+            },
+            {
+              "id": "id-41585106baae43ab90ca920de78dc737",
+              "nombre": "Depósito bloqueado"
+            },
+            {
+              "id": "id-6128af9686a2416bada40d02108bce05",
+              "nombre": "Depósito liberado"
+            },
+            {
+              "id": "id-b13f9d27ed8d4bdd8d84224b82a64673",
+              "nombre": "Reclamo enviado a la aseguradora"
+            }
+          ]
+        },
+        {
+          "id": "id-fdcc9b19f08a492f8ccd5dd4559926bc",
+          "nombre": "Contexto Gestión del arriendo",
+          "eventos": [
+            {
+              "id": "id-0f65cc3ebf6649e283d9b634febb03f5",
+              "nombre": "Arriendo cerrado"
+            },
+            {
+              "id": "id-6d63b57590714cd5a0c45b5f6e7b9580",
+              "nombre": "Arriendo iniciado"
+            },
+            {
+              "id": "id-bb4b23b9412742f89ac3ae34504a8391",
+              "nombre": "Arriendo no realizado por riesgo alto"
+            },
+            {
+              "id": "id-b65aec8c4e0641b0ac0ef6c69373610f",
+              "nombre": "Aviso de reserva enviado"
+            },
+            {
+              "id": "id-28e06fd82a7641228d89ded443509b64",
+              "nombre": "Reserva cancelada"
+            },
+            {
+              "id": "id-f7f775aec49c4eb782699183059c6bc2",
+              "nombre": "Reserva confirmada"
+            },
+            {
+              "id": "id-ba01aa1a0874474086ba64badf2991e3",
+              "nombre": "Reserva solicitada"
+            },
+            {
+              "id": "id-898e6b49f085471cb23b1ef1dbaa953e",
+              "nombre": "Riesgo aceptable obtenido"
+            },
+            {
+              "id": "id-8efeaef2f23441879f0f9fe08fb63a2e",
+              "nombre": "Yate devuelto"
+            }
+          ]
+        },
+        {
+          "id": "id-909c52d6cdf845e6927af4c62d2847fb",
+          "nombre": "Contexto Operación del arriendo",
+          "eventos": [
+            {
+              "id": "id-497addd0bf144aed8bf9f4ba01d7eac3",
+              "nombre": "Diferencias determinadas"
+            },
+            {
+              "id": "id-d83f5b5cfb764e7aaac782ffab1b12c4",
+              "nombre": "Inspección de devolución registrada"
+            },
+            {
+              "id": "id-81e0ea1bc1004b88b387861811e7e806",
+              "nombre": "Lectura registrada"
+            },
+            {
+              "id": "id-f8aec7f1160d42d4994bba6dc64d04ab",
+              "nombre": "Pérdida de señal del yate"
+            },
+            {
+              "id": "id-275970c646a74ac3ac7c206246d780ab",
+              "nombre": "Yate entregado al cliente"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "id-fdcc9b19f08a492f8ccd5dd4559926bc",
       "nombre": "Contexto Gestión del arriendo",
       "agregados": [
@@ -779,6 +2381,579 @@
             {
               "id": "id-275970c646a74ac3ac7c206246d780ab",
               "nombre": "Yate entregado al cliente"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "id-909c52d6cdf845e6927af4c62d2847fb",
+      "nombre": "Contexto Operación del arriendo",
+      "agregados": [
+        {
+          "id": "id-cba36345d0664e588345d53208c936f0",
+          "nombre": "Agregado Acta de entrega",
+          "raiz": {
+            "id": "id-f4fb995872c5435f8ccb7e85e17cbee9",
+            "nombre": "Acta de entrega",
+            "campos": [
+              {
+                "nombre": "fotos",
+                "tipo": "List<string>",
+                "base": "string",
+                "lista": true,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "nivel de combustible",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "hora de entrega",
+                "tipo": "DateTime",
+                "base": "DateTime",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "observaciones",
+                "tipo": "string?",
+                "base": "string",
+                "lista": false,
+                "opcional": true,
+                "enum": null
+              },
+              {
+                "nombre": "identificador del yate",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": []
+        },
+        {
+          "id": "id-0af905a47ab94912aef5350558410200",
+          "nombre": "Agregado Acta de inspección",
+          "raiz": {
+            "id": "id-2856d4f6a4b0480a86d14826dd18dedf",
+            "nombre": "Acta de inspección",
+            "campos": [
+              {
+                "nombre": "fotos",
+                "tipo": "List<string>",
+                "base": "string",
+                "lista": true,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "nivel de combustible",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "hora de regreso",
+                "tipo": "DateTime",
+                "base": "DateTime",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": [
+            {
+              "id": "id-77723acb9d8548ae97e705f95c114cc6",
+              "nombre": "Daño encontrado",
+              "compuesto_por": "id-2856d4f6a4b0480a86d14826dd18dedf",
+              "cardinalidad": "Muchos",
+              "composicion_id": "id-298e37616e7e4c139b0195ef36ab8ff5",
+              "campos": [
+                {
+                  "nombre": "descripción",
+                  "tipo": "string",
+                  "base": "string",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "valor",
+                  "tipo": "decimal",
+                  "base": "decimal",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "id-a60ede1cd8e943f980f2e677828f3d17",
+          "nombre": "Agregado Lectura de ubicación y combustible",
+          "raiz": {
+            "id": "id-6858d99a4eb2404d8c0fce1abfc1d10e",
+            "nombre": "Lectura de ubicación y combustible",
+            "campos": [
+              {
+                "nombre": "latitud",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "longitud",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "nivel de combustible",
+                "tipo": "decimal",
+                "base": "decimal",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "hora de la lectura",
+                "tipo": "DateTime",
+                "base": "DateTime",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": []
+        }
+      ],
+      "comandos": [
+        {
+          "id": "id-c742e57f7d34406c8162646ca3080c19",
+          "nombre": "Detectar la pérdida de señal",
+          "codigo": "SB-27",
+          "agregado_id": "id-a60ede1cd8e943f980f2e677828f3d17",
+          "raiz_id": "id-6858d99a4eb2404d8c0fce1abfc1d10e",
+          "acceso": "lectura",
+          "acceso_id": "id-ed60ff42252e43a1b577b0fcdb9acaca",
+          "lee_tambien": [],
+          "eventos": [
+            "id-f8aec7f1160d42d4994bba6dc64d04ab"
+          ],
+          "servicio_negocio": {
+            "id": "id-3d8ae4cce1f145d0b041c733fe4bb970",
+            "nombre": "Detectar la pérdida de señal"
+          },
+          "contrato": {
+            "id": "id-28e93eb31c154c3dacd73eaf420c10ce",
+            "nombre": "Contrato de servicio: Detectar la pérdida de señal",
+            "entrada": "Arriendo en curso y tiempo máximo sin lecturas.",
+            "salida": "Alerta de pérdida de señal con la última lectura conocida.",
+            "reglas": "El tiempo sin lecturas que dispara la alerta lo fija Operaciones (V4-SUP-04). Contactar al cliente lo hace la marina; el software solo detecta y avisa (EXC-01)."
+          }
+        },
+        {
+          "id": "id-8222df5442934cf5a117ced88ec7329e",
+          "nombre": "Determinar las diferencias entre entrega y devolución",
+          "codigo": "SB-24",
+          "agregado_id": "id-0af905a47ab94912aef5350558410200",
+          "raiz_id": "id-2856d4f6a4b0480a86d14826dd18dedf",
+          "acceso": "lectura",
+          "acceso_id": "id-5c47e9fe9f584e189c86bb66c2417660",
+          "lee_tambien": [
+            {
+              "raiz_id": "id-f4fb995872c5435f8ccb7e85e17cbee9",
+              "acceso_id": "id-24f3ce3a9db84a25881f367fb6aa4390"
+            }
+          ],
+          "eventos": [
+            "id-497addd0bf144aed8bf9f4ba01d7eac3"
+          ],
+          "servicio_negocio": {
+            "id": "id-c449f2eaf8144f35a8199dba2f395c65",
+            "nombre": "Determinar las diferencias entre entrega y devolución"
+          },
+          "contrato": {
+            "id": "id-970ca0e1b9194b2d8fc058310bb1fca9",
+            "nombre": "Contrato de servicio: Determinar las diferencias entre entrega y devolución",
+            "entrada": "Arriendo y fecha y hora de fin acordadas.",
+            "salida": "Combustible consumido, horas adicionales y daños, con la evidencia de cada uno.",
+            "reglas": "Se rechaza si falta el acta de entrega o la de inspección, porque la comparación de las dos es la evidencia (H-13)."
+          }
+        },
+        {
+          "id": "id-8addfcc26ad744b8a15ea09a54227d4d",
+          "nombre": "Registrar el acta de entrega",
+          "codigo": "SB-22",
+          "agregado_id": "id-cba36345d0664e588345d53208c936f0",
+          "raiz_id": "id-f4fb995872c5435f8ccb7e85e17cbee9",
+          "acceso": "escritura",
+          "acceso_id": "id-61e12e90e3834b04adce49652f06687a",
+          "lee_tambien": [],
+          "eventos": [
+            "id-275970c646a74ac3ac7c206246d780ab"
+          ],
+          "servicio_negocio": {
+            "id": "id-736ac0345b2e45d1b2d5129325af2b9b",
+            "nombre": "Registrar el acta de entrega"
+          },
+          "contrato": {
+            "id": "id-cebe80de47aa4662af8631258f3353b5",
+            "nombre": "Contrato de servicio: Registrar el acta de entrega",
+            "entrada": "Arriendo, identificador del yate, fotos, nivel de combustible, hora de entrega y observaciones.",
+            "salida": "Acta de entrega registrada.",
+            "reglas": "Se rechaza si el arriendo no tiene la reserva confirmada (CIE-01) o si el acta no trae fotos (H-13)."
+          }
+        },
+        {
+          "id": "id-c6f7cd3f402f41feb9d986570982815a",
+          "nombre": "Registrar la inspección de devolución",
+          "codigo": "SB-23",
+          "agregado_id": "id-0af905a47ab94912aef5350558410200",
+          "raiz_id": "id-2856d4f6a4b0480a86d14826dd18dedf",
+          "acceso": "escritura",
+          "acceso_id": "id-7cedcacc655044db88fbd6eab1a92a94",
+          "lee_tambien": [],
+          "eventos": [
+            "id-d83f5b5cfb764e7aaac782ffab1b12c4"
+          ],
+          "servicio_negocio": {
+            "id": "id-b40f995062f94787bb4b0e458236b79c",
+            "nombre": "Registrar la inspección de devolución"
+          },
+          "contrato": {
+            "id": "id-6c8c966e7a6248108baa667653bba6bb",
+            "nombre": "Contrato de servicio: Registrar la inspección de devolución",
+            "entrada": "Arriendo, fotos, nivel de combustible, hora de regreso y daños encontrados con su valor.",
+            "salida": "Acta de inspección registrada.",
+            "reglas": "Se rechaza una inspección sin fotos (H-13). El valor de los daños llega con la inspección (V4-SUP-03)."
+          }
+        },
+        {
+          "id": "id-9fe7bd3168374a12ac9efc3a073f62c9",
+          "nombre": "Registrar lecturas de ubicación y combustible",
+          "codigo": "SB-25",
+          "agregado_id": "id-a60ede1cd8e943f980f2e677828f3d17",
+          "raiz_id": "id-6858d99a4eb2404d8c0fce1abfc1d10e",
+          "acceso": "escritura",
+          "acceso_id": "id-89bb1f54a1d04729a5a496c08b8f2cfb",
+          "lee_tambien": [],
+          "eventos": [
+            "id-81e0ea1bc1004b88b387861811e7e806"
+          ],
+          "servicio_negocio": {
+            "id": "id-7de936d1233146b7bd0f868b6b19001f",
+            "nombre": "Registrar lecturas de ubicación y combustible"
+          },
+          "contrato": {
+            "id": "id-d1c1c856cfdd44eca9b14a72b19166b1",
+            "nombre": "Contrato de servicio: Registrar lecturas de ubicación y combustible",
+            "entrada": "Yate, posición, nivel de combustible y hora de la lectura.",
+            "salida": "Lectura guardada.",
+            "reglas": ""
+          }
+        }
+      ],
+      "eventos": [
+        {
+          "id": "id-497addd0bf144aed8bf9f4ba01d7eac3",
+          "nombre": "Diferencias determinadas",
+          "agregado_id": "id-0af905a47ab94912aef5350558410200",
+          "disparado_por": [
+            "id-8222df5442934cf5a117ced88ec7329e"
+          ]
+        },
+        {
+          "id": "id-d83f5b5cfb764e7aaac782ffab1b12c4",
+          "nombre": "Inspección de devolución registrada",
+          "agregado_id": "id-0af905a47ab94912aef5350558410200",
+          "disparado_por": [
+            "id-c6f7cd3f402f41feb9d986570982815a"
+          ]
+        },
+        {
+          "id": "id-81e0ea1bc1004b88b387861811e7e806",
+          "nombre": "Lectura registrada",
+          "agregado_id": "id-a60ede1cd8e943f980f2e677828f3d17",
+          "disparado_por": [
+            "id-9fe7bd3168374a12ac9efc3a073f62c9"
+          ]
+        },
+        {
+          "id": "id-f8aec7f1160d42d4994bba6dc64d04ab",
+          "nombre": "Pérdida de señal del yate",
+          "agregado_id": "id-a60ede1cd8e943f980f2e677828f3d17",
+          "disparado_por": [
+            "id-c742e57f7d34406c8162646ca3080c19"
+          ]
+        },
+        {
+          "id": "id-275970c646a74ac3ac7c206246d780ab",
+          "nombre": "Yate entregado al cliente",
+          "agregado_id": "id-cba36345d0664e588345d53208c936f0",
+          "disparado_por": [
+            "id-8addfcc26ad744b8a15ea09a54227d4d"
+          ]
+        }
+      ],
+      "politicas": [
+        {
+          "relacion_id": "id-653c0c10e4184badb60b3efcc37e9720",
+          "evento_id": "id-d83f5b5cfb764e7aaac782ffab1b12c4",
+          "comando_id": "id-8222df5442934cf5a117ced88ec7329e"
+        }
+      ],
+      "consultas": [
+        {
+          "id": "id-29d996ed0b0e4d8b8ba622da657f9388",
+          "nombre": "Consultar ubicación y combustible del yate",
+          "codigo": "SB-26",
+          "lee": [
+            {
+              "raiz_id": "id-6858d99a4eb2404d8c0fce1abfc1d10e",
+              "acceso_id": "id-cf3728795b3946378fe1a8151411a2f1"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-b5801260aedb4028ba4325e1eed2900b",
+            "nombre": "Consultar ubicación y combustible del yate"
+          },
+          "contrato": {
+            "id": "id-c50f550246714ecaaff34411978a9538",
+            "nombre": "Contrato de servicio: Consultar ubicación y combustible del yate",
+            "entrada": "Arriendo en curso y quién consulta.",
+            "salida": "Última posición, nivel de combustible, hora y recorrido.",
+            "reglas": "Se rechaza si quien consulta no es el cliente del arriendo ni la marina que guarda el yate (V4-SUP-05)."
+          }
+        }
+      ],
+      "servicios_sa": [
+        {
+          "id": "id-2754472851d144d5b79323ab235a3f20",
+          "nombre": "Avisos y actas de las marinas",
+          "codigo": "SA-05",
+          "interfaz": {
+            "id": "id-8e8765a8065440cf8596cf26a6d141b2",
+            "nombre": "Interfaz con las marinas"
+          },
+          "contraparte": {
+            "id": "id-584b815ed5b5478a8116c2a813a5752b",
+            "nombre": "Sistemas de las marinas",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-9d498f09a5d849f19ca3878860b49690",
+              "nombre": "Actas de entrega e inspección",
+              "direccion": "entra",
+              "momento": "Todo el arriendo"
+            },
+            {
+              "id": "id-9c54e3f6559e4b3c88d7b8a48da40bc3",
+              "nombre": "Aviso de reserva; alerta de señal",
+              "direccion": "sale",
+              "momento": "Todo el arriendo"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-35bf6c8298f34e57bd9ffa99877bc6e6",
+            "nombre": "Avisos y actas de las marinas"
+          },
+          "contrato": {
+            "id": "id-b4831a192c314d018432634e6180c468",
+            "nombre": "Contrato de servicio: Avisos y actas de las marinas",
+            "entrada": "Aviso o alerta para la marina; o acta recibida de la marina.",
+            "salida": "Constancia de que el aviso llegó; o acta traducida al formato del arriendo.",
+            "reglas": "Las actas se reciben en el formato que ya usa cada marina, porque las marinas no cambian sus sistemas (MOT-04, INT-MAR)."
+          }
+        },
+        {
+          "id": "id-ec3bc54925a940ccbbcb5ac42ee8479c",
+          "nombre": "Ubicación y combustible del proveedor",
+          "codigo": "SA-07",
+          "interfaz": {
+            "id": "id-02a9010b307c4368b958c8cdb9884ca1",
+            "nombre": "Interfaz con el proveedor de ubicación y combustible"
+          },
+          "contraparte": {
+            "id": "id-5e61a4bda930406f9410a28f656d5038",
+            "nombre": "Plataforma del proveedor de ubicación y combustible",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-2d5c625400584a80bd0bae75bfa48d01",
+              "nombre": "Ubicación y combustible",
+              "direccion": "entra",
+              "momento": "Desde la entrega hasta la devolución"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-b89074202bab43d1808b22fb2d5ebdb1",
+            "nombre": "Ubicación y combustible del proveedor"
+          },
+          "contrato": {
+            "id": "id-a380456bbb084bc7b84ac707207538a9",
+            "nombre": "Contrato de servicio: Ubicación y combustible del proveedor",
+            "entrada": "Lectura del proveedor.",
+            "salida": "Lectura asociada a un yate del inventario.",
+            "reglas": "Solo se reciben datos; no se envía nada al proveedor (INT-GPS)."
+          }
+        }
+      ],
+      "enums": [],
+      "otros_contextos": [
+        {
+          "id": "id-6f29abc193cb4f2fa1234cec80bf0675",
+          "nombre": "Contexto Calificaciones",
+          "eventos": [
+            {
+              "id": "id-19f69c478e1c47e481a41c991690baaa",
+              "nombre": "Cliente calificado"
+            },
+            {
+              "id": "id-7680477f87b2487f8c2af8de885a11de",
+              "nombre": "Propietario calificado"
+            }
+          ]
+        },
+        {
+          "id": "id-859686865fd4465397859188d62c971c",
+          "nombre": "Contexto Cobros y depósito",
+          "eventos": [
+            {
+              "id": "id-a5729d322f444202bc1a34c7d68a46d8",
+              "nombre": "Alquiler y seguro cobrados"
+            },
+            {
+              "id": "id-498bf53911414b55828987e21aa1aa74",
+              "nombre": "Cancelación no reembolsada"
+            },
+            {
+              "id": "id-09c2a90d529d4de08b38adea6ab20ce0",
+              "nombre": "Cancelación reembolsada"
+            },
+            {
+              "id": "id-7a5f1d6d01b94f3ba9f0bc496545062f",
+              "nombre": "Cargos del cierre cobrados"
+            },
+            {
+              "id": "id-d853efb4ccfe4d5c9b75522348b303df",
+              "nombre": "Cuenta del arriendo cerrada"
+            },
+            {
+              "id": "id-20ea85b6df0f4664a60ff0b1b19a222e",
+              "nombre": "Daños descontados del depósito"
+            },
+            {
+              "id": "id-41585106baae43ab90ca920de78dc737",
+              "nombre": "Depósito bloqueado"
+            },
+            {
+              "id": "id-6128af9686a2416bada40d02108bce05",
+              "nombre": "Depósito liberado"
+            },
+            {
+              "id": "id-b13f9d27ed8d4bdd8d84224b82a64673",
+              "nombre": "Reclamo enviado a la aseguradora"
+            }
+          ]
+        },
+        {
+          "id": "id-0d93d731f6fd4b21acbf20d3cb28cf6f",
+          "nombre": "Contexto Disponibilidad de yates",
+          "eventos": [
+            {
+              "id": "id-314372c86c5e4e1981862bfbc8243d35",
+              "nombre": "Fechas apartadas"
+            },
+            {
+              "id": "id-78a96e2310bc4b3e9d6b68b5a56ec4b3",
+              "nombre": "Fechas bloqueadas"
+            },
+            {
+              "id": "id-d6d1cd177abd4faf9f86763960b16584",
+              "nombre": "Fechas desbloqueadas"
+            },
+            {
+              "id": "id-d9533d434fc748f18cada63f170e4319",
+              "nombre": "Fechas liberadas"
+            },
+            {
+              "id": "id-0b4d7ee06e05403ab9022d5232109730",
+              "nombre": "Fechas ocupadas"
+            },
+            {
+              "id": "id-4f03a460e265434e87e0081ee5018122",
+              "nombre": "Yate registrado"
+            }
+          ]
+        },
+        {
+          "id": "id-fdcc9b19f08a492f8ccd5dd4559926bc",
+          "nombre": "Contexto Gestión del arriendo",
+          "eventos": [
+            {
+              "id": "id-0f65cc3ebf6649e283d9b634febb03f5",
+              "nombre": "Arriendo cerrado"
+            },
+            {
+              "id": "id-6d63b57590714cd5a0c45b5f6e7b9580",
+              "nombre": "Arriendo iniciado"
+            },
+            {
+              "id": "id-bb4b23b9412742f89ac3ae34504a8391",
+              "nombre": "Arriendo no realizado por riesgo alto"
+            },
+            {
+              "id": "id-b65aec8c4e0641b0ac0ef6c69373610f",
+              "nombre": "Aviso de reserva enviado"
+            },
+            {
+              "id": "id-28e06fd82a7641228d89ded443509b64",
+              "nombre": "Reserva cancelada"
+            },
+            {
+              "id": "id-f7f775aec49c4eb782699183059c6bc2",
+              "nombre": "Reserva confirmada"
+            },
+            {
+              "id": "id-ba01aa1a0874474086ba64badf2991e3",
+              "nombre": "Reserva solicitada"
+            },
+            {
+              "id": "id-898e6b49f085471cb23b1ef1dbaa953e",
+              "nombre": "Riesgo aceptable obtenido"
+            },
+            {
+              "id": "id-8efeaef2f23441879f0f9fe08fb63a2e",
+              "nombre": "Yate devuelto"
             }
           ]
         }

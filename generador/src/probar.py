@@ -3,10 +3,10 @@
 Cómo se juzga cada paso (lo esperado sale de "espera" en el YAML):
   - sin espera: la respuesta es 2xx;
   - un código: la respuesta tiene ese código;
-  - un evento: la respuesta es 2xx y la bitácora registró ese evento para el arriendo del escenario
+  - un evento: la respuesta es 2xx y la bitácora registró ese evento para la raíz del escenario
     durante ese paso (así se ven también los eventos que publica una política);
   - {estado: ...}: la respuesta es 2xx y la consulta devuelve ese estado.
-En el primer paso de cada escenario se revisa además que el arriendo reciba la identidad esperada.
+En el primer paso de cada escenario se revisa además que la raíz reciba la identidad esperada.
 
 Termina con código 1 si algún paso falla. Lo usa probar.ps1, que levanta y detiene la aplicación.
 

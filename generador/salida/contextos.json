@@ -1,0 +1,14 @@
+{
+  "generado_desde": "Generado desde ArchiMate: Model \"YateGear\" (id-98e02fd4df1c4f21a8610d291649a7af).",
+  "host": "YateGear",
+  "puerto": 5080,
+  "contextos": [
+    {
+      "nombre": "Contexto Gestión del arriendo",
+      "proyecto": "GestionDelArriendo",
+      "ruta_base": "/gestion-del-arriendo",
+      "escenarios": "pruebas/GestionDelArriendo/escenarios.json",
+      "trazabilidad": "trazabilidad/GestionDelArriendo.csv"
+    }
+  ]
+}

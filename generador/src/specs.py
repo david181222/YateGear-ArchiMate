@@ -593,9 +593,9 @@ class Revisor:
                     self.error(dp, f'"{nombre}" no es un comando, una consulta ni un evento de otro contexto del YAML')
                     continue
                 if i == 1 and nombre != crea:
-                    self.error(dp, f'el primer paso debe ser "{crea}", para que el escenario tenga su propio arriendo')
+                    self.error(dp, f'el primer paso debe ser "{crea}", para que el escenario tenga su propia raíz')
                 if i > 1 and nombre == crea:
-                    self.error(dp, f'"{crea}" solo va como primer paso: cada escenario tiene un solo arriendo')
+                    self.error(dp, f'"{crea}" solo va como primer paso: cada escenario tiene una sola raíz')
                 for k, v in self.mapa(op.get("con"), f"{dp} > con").items():
                     if k not in campos:
                         self.error(f"{dp} > con", f'"{k}" no está en la entrada (o en los datos) de "{nombre}"')
@@ -610,7 +610,7 @@ class Revisor:
                     if esp not in codigos[tipo]:
                         self.error(f"{dp} > espera", f"el código {esp} no se permite en un {tipo}; se permiten {sorted(codigos[tipo])}")
                     if i == 1:
-                        self.error(f"{dp} > espera", "el primer paso crea el arriendo del escenario y debe responder con éxito")
+                        self.error(f"{dp} > espera", "el primer paso crea la raíz del escenario y debe responder con éxito")
                 elif isinstance(esp, str):
                     if tipo == "consulta":
                         self.error(f"{dp} > espera", "una consulta no publica eventos; usa espera: {estado: ...} o un código")

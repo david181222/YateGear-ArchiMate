@@ -3,6 +3,8 @@
 // bitácora y errores. No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Globalization;
+using System.Text.Json;
+using YateGear.Integracion;
 
 namespace YateGear.GestionDelArriendo;
 
@@ -85,9 +87,10 @@ public sealed class Bitacora
 /// <summary>Un registro de la bitácora.</summary>
 public sealed record RegistroDeBitacora(int Orden, string Tipo, string Nombre, object? Datos);
 
-/// <summary>Bus de eventos en memoria y síncrono. Si un suscriptor falla, el error queda en la bitácora
-/// y no deshace el comando que publicó el evento, porque el evento ya ocurrió.</summary>
-public sealed class BusDeEventos(Bitacora bitacora)
+/// <summary>Bus de eventos del contexto, en memoria y síncrono. Cada evento se publica también en el bus entre
+/// contextos, por nombre y en JSON (D1). Si un suscriptor falla, el error queda en la bitácora y no deshace el
+/// comando que publicó el evento, porque el evento ya ocurrió.</summary>
+public sealed class BusDeEventos(Bitacora bitacora, BusEntreContextos entreContextos, string contexto)
 {
     private readonly Dictionary<Type, List<Action<IEvento>>> suscriptores = new();
 
@@ -106,6 +109,7 @@ public sealed class BusDeEventos(Bitacora bitacora)
     public void Publicar(IEvento evento)
     {
         bitacora.Anotar("evento", evento.NombreEnElModelo, evento);
+        entreContextos.Publicar(contexto, evento.NombreEnElModelo, evento.Identidad, evento);
         if (!suscriptores.TryGetValue(evento.GetType(), out var lista))
         {
             return;
@@ -199,6 +203,31 @@ public sealed class EsperaDeEventos
             llegados.Remove(clave);
             return ya;
         }
+    }
+}
+
+/// <summary>Lee un evento de otro contexto desde JSON. Si falta un dato obligatorio (o llega en null), lanza
+/// DatoFaltante con su nombre en el modelo, en vez de dejarlo vacío (D1: así se nota si el contexto que publica
+/// lo llama distinto, D2).</summary>
+public static class LectorDeEventos
+{
+    /// <summary>Revisa los datos obligatorios (nombre en JSON y nombre en el modelo) y lee el evento.</summary>
+    public static T Leer<T>(JsonElement json, params (string Propiedad, string Dato)[] obligatorios)
+    {
+        if (json.ValueKind != JsonValueKind.Object)
+        {
+            throw new DatoFaltante("evento");
+        }
+        foreach (var (propiedad, dato) in obligatorios)
+        {
+            var viene = json.EnumerateObject().Any(p =>
+                string.Equals(p.Name, propiedad, StringComparison.OrdinalIgnoreCase) && p.Value.ValueKind != JsonValueKind.Null);
+            if (!viene)
+            {
+                throw new DatoFaltante(dato);
+            }
+        }
+        return json.Deserialize<T>(Json.Opciones) ?? throw new DatoFaltante("evento");
     }
 }
 

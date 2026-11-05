@@ -1,0 +1,31 @@
+// {{ cabecera }}
+// Programa (host): levanta los contextos generados en un solo proceso, con el bus entre contextos (D1).
+// No editar: el generador reescribe este archivo. El puerto ({{ puerto }}) sale de PUERTO en src/generar.py;
+// para una sola vez: ejecutar.ps1 -Puerto.
+#nullable enable
+using {{ ns_integracion }};
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.ConfigureHttpJsonOptions(o => Json.Configurar(o.SerializerOptions));
+builder.Services.AddSingleton<BusEntreContextos>();
+
+// Contextos.
+{% for c in contextos %}
+{{ c.ns }}.Registro.AgregarServicios(builder.Services);         // {{ c.nombre }}
+{% endfor %}
+
+var app = builder.Build();
+{% for c in contextos %}
+{{ c.ns }}.Registro.MapearEndpoints(app);
+{% endfor %}
+
+// Infraestructura (no sale del modelo): los contextos generados y los eventos que pasaron por el bus entre contextos.
+app.MapGet("/contextos", () => new[]
+{
+{% for c in contextos %}
+    new { nombre = {{ c.nombre | cadena }}, ruta = {{ c.ruta_base | cadena }} },
+{% endfor %}
+});
+app.MapGet("/eventos-entre-contextos", (BusEntreContextos bus) => bus.Historial());
+
+app.Run();
