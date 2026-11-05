@@ -1,6 +1,6 @@
 # Pendientes del generador
 
-Estado al 5 de noviembre de 2026. Edwin terminó el piloto (Contexto Gestión del arriendo) y José lleva J1 a J7 (ver "Estado actual"). **Ahora sigue José con J8 (entrega) y después Santiago.** Aquí está lo que falta, lo que hay que decidir y quién hace cada cosa. Cada quien actualiza este archivo al terminar su parte: marca lo que cerró y escribe las decisiones tomadas.
+Estado al 5 de noviembre de 2026. Edwin terminó el piloto (Contexto Gestión del arriendo) y José terminó J1 a J8 (ver "Estado actual"). **Ahora sigue Santiago** (sección 4). Aquí está lo que falta, lo que hay que decidir y quién hace cada cosa. Cada quien actualiza este archivo al terminar su parte: marca lo que cerró y escribe las decisiones tomadas.
 
 Cómo funciona el generador y cómo se ejecuta: [README.md](README.md).
 
@@ -63,7 +63,7 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 
 ## 4. Reparto del trabajo
 
-### José (sigue ahora)
+### José (terminado)
 
 | Paso | Qué hacer | Listo cuando |
 |---|---|---|
@@ -74,9 +74,9 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 | J5 | Contexto Calificaciones: YAML con escenarios. Necesita G3 (identidad compuesta), G5 (promedio) y D5. | **Hecho (4 nov 2026):** 10 de 10 (con dos 409 a propósito), el piloto sigue en 19 de 19 en el mismo programa, 0 advertencias, trazabilidad completa y huella estable. Supuestos GEN-SUP-35 a 40. |
 | J6 | Contexto Disponibilidad de yates. Necesita G2, G4 (Rango de fechas), G5 (yates disponibles) y D4. Los eventos de Gestión del arriendo (Reserva solicitada, confirmada, cancelada y no realizado por riesgo alto) disparan SB-05, y `con` fija la acción: apartar, ocupar o soltar. | **Hecho (4 nov 2026):** 18 de 18 (cinco rechazos a propósito: 422 por REG-01, REG-02, INT-CON y NOR-01, y 404), con los otros dos contextos en verde en el mismo programa, 0 advertencias, trazabilidad completa y huella estable. Reglas escritas a mano en los archivos manuales. Discrepancias 6 a 8 corregidas en el modelo; supuestos GEN-SUP-41 a 48. |
 | J7 | Contexto Operación del arriendo. Necesita G2, G3, G4 (Daño encontrado), G5 (recorrido), G6, G7, G8 y D6. | **Hecho (5 nov 2026):** 16 de 16 (seis rechazos a propósito con su motivo), con los otros tres contextos en verde en el mismo programa, 0 advertencias, trazabilidad completa y huella estable. Reglas y cálculos escritos a mano; discrepancia 9 corregida en el modelo; supuestos GEN-SUP-49 a 59. |
-| J8 | Entregar a Santiago. | Los 4 contextos en verde, el README y este archivo actualizados, y commit hecho. |
+| J8 | Entregar a Santiago. | Los 4 contextos en verde, el README y este archivo actualizados, y commit hecho. **Hecho (5 nov 2026):** 63 de 63 pasos; rama `j7-operacion` lista para el pull request hacia `main`. **Antes de unirla, falta correr `generar.ps1` y `probar.ps1` en Windows** (los scripts cambiaron desde J3). |
 
-### Santiago (cuando José termine)
+### Santiago (sigue ahora)
 
 | Paso | Qué hacer | Listo cuando |
 |---|---|---|
