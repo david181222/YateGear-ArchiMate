@@ -36,7 +36,10 @@ def llamar(metodo: str, url: str, cuerpo) -> tuple[int, object]:
 
 
 def igual(a, b) -> bool:
-    """Compara un valor de la respuesta con el esperado; los números, por su valor (5 == 5.0)."""
+    """Compara un valor de la respuesta con el esperado; los números, por su valor (5 == 5.0); una lista con un
+    número, por cuántos elementos tiene."""
+    if isinstance(a, list) and isinstance(b, int) and not isinstance(b, bool):
+        return len(a) == b
     if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not isinstance(a, bool) and not isinstance(b, bool):
         return abs(a - b) < 1e-9
     return a == b

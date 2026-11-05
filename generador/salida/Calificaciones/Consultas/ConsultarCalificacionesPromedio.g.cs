@@ -14,7 +14,8 @@ public sealed record ConsultarCalificacionesPromedioSalida(
     int NumeroDeCalificaciones
 );
 
-/// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y las raíces que cumplen el filtro.</summary>
+/// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y las raíces
+/// que cumplen el filtro.</summary>
 public sealed record ConsultarCalificacionesPromedioDatos(ConsultarCalificacionesPromedio Consulta, IReadOnlyList<Calificacion> Raices);
 
 /// <summary>Manejador de la consulta "Consultar calificaciones promedio" (SB-30). No cambia la raíz.</summary>

@@ -10,7 +10,7 @@ public sealed partial class {{ c.manejador }}
 {% endfor %}
     //
     // Se llama antes de la transición de estado. Para rechazar la operación:
-    //   throw new ReglaIncumplida("REG-01", "motivo");
+    //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas({{ c.datos }} datos)
     {
     }

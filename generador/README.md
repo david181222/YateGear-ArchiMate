@@ -117,21 +117,21 @@ Cada contexto que se quiere generar tiene un `specs/<contexto>.yaml`. El modelo 
 | Sección y clave | Qué declara | Ejemplo |
 |---|---|---|
 | `contexto` | Nombre exacto del componente de aplicación del contexto. | `Contexto Calificaciones` |
-| `raices > <raíz> > identidad` | `nombre` y `tipo` (string) de la identidad, y cómo se forma: un consecutivo con `prefijo` y `digitos`, o con datos, en orden, con `de`. En `de`, un campo de la raíz va sin tipo; un dato que no es campo lleva su tipo, y la raíz lo guarda como parte de su identidad. Las partes se unen con `/`. | `prefijo: ARR-` y `digitos: 4`; o `de: {número del arriendo: string, quién califica: }` |
+| `raices > <raíz> > identidad` | Una raíz por agregado del contexto. `nombre` y `tipo` (string) de la identidad, y cómo se forma: un consecutivo con `prefijo` y `digitos`, o con datos, en orden, con `de`. En `de`, un campo de la raíz va sin tipo; un dato que no es campo lleva su tipo, y la raíz lo guarda como parte de su identidad. Las partes se unen con `/`. Con un solo dato que se llama como la identidad, la identidad es **recibida**: la trae el comando o el evento. | `prefijo: ARR-` y `digitos: 4`; `de: {número del arriendo: string, quién califica: }`; o `de: {identificador del yate: string}` |
 | `raices > <raíz> > estado` | Los estados de la raíz, como `enum`. | `enum Estado del arriendo(reserva solicitada, ...)` |
 | `comandos > <comando> > entrada` | Datos que recibe. La identidad de la raíz se agrega sola, salvo en el que la crea. | `cliente: string` |
-| `... > crea` | `true` si el comando crea la raíz. Lleva `a` (estado inicial) y no lleva `desde` ni `resultados`. | `crea: true` |
+| `... > crea` | `true` si el comando crea la raíz: lleva `a` (estado inicial) y no lleva `desde` ni `resultados`; si la identidad es recibida, la trae en su entrada. `si_no_existe` si carga la raíz y, cuando no existe, la crea vacía con la identidad del comando y el primer estado de su lista (solo con identidad recibida, y si la raíz no tiene campos obligatorios). | `crea: true`; `crea: si_no_existe` |
 | `... > valores` | Datos fijos del comando, para campos de la raíz o de sus objetos de valor. | `quién califica: cliente` |
 | `... > requiere` | Eventos de otros contextos que deben haber llegado para la identidad del comando (se buscan con el dato que es su identidad). Si no, 409. Sus datos quedan disponibles para el comando. | `[Arriendo cerrado]` |
 | `... > usa` | Servicios SA que llama, en orden. Sus salidas quedan disponibles. | `[Clientes del CRM]` |
-| `... > guarda` | Lo que escribe en la raíz: objetos de valor y campos por su nombre, o `{campo: dato}` para guardar un dato con otro nombre. | `[Fechas del arriendo, calificado: propietario]` |
+| `... > guarda` | Lo que escribe en la raíz: objetos de valor y campos por su nombre, o `{campo: dato}` para guardar un dato con otro nombre. En un objeto de valor con Cardinalidad Muchos (una lista): `{lista: agregar}`, `{lista: {reemplazar: [claves]}}` (404 si ningún elemento tiene esa clave) o `{lista: {quitar: [claves]}}` (no falla si no había ninguno). | `[Fechas del arriendo, calificado: propietario]`; `[Rango de fechas: {quitar: [número del arriendo]}]` |
 | `... > desde`, `a` | Estados desde los que se permite, y estado al que pasa. | `desde: [reserva solicitada]` |
 | `... > eventos` | Los eventos que publica: exactamente los del modelo. | `[Reserva confirmada]` |
-| `... > resultados` | En lugar de `eventos`: un evento por resultado, elegido con `si` (un dato y sus valores), con su propio `desde` y `a`. | `Arriendo iniciado: {si: {nuevo estado: [en curso]}, a: en curso}` |
+| `... > resultados` | En lugar de `eventos`: un evento por resultado, elegido con `si` (un dato y sus valores), con su propio `desde`, `a`, `valores` y `guarda`. | `Arriendo iniciado: {si: {nuevo estado: [en curso]}, a: en curso}` |
 | `eventos > <evento> > datos`, `calculados` | Datos que lleva cada evento. Los `calculados` salen de una regla del contrato y los escribe el código a mano. | `inicio: DateOnly` |
-| `consultas > <consulta> > entrada`, `salida`, `calculados` | Datos que recibe y devuelve. Por defecto lee una raíz por su identidad. | `estado: enum ...` |
-| `... > sobre: todas`, `filtro`, `agrega` | Consulta sobre todas las raíces: `filtro` las compara por igualdad con datos de la entrada del mismo nombre, y cada dato de la salida es una agregación de `agrega`: `conteo`, o `promedio`, `suma`, `mínimo` o `máximo` `de <dato de la raíz>`. Sin raíces no hay promedio, mínimo ni máximo: esos van con `?`. | `calificación promedio: promedio de calificación dada` |
-| `eventos_de_otros_contextos > <evento>` | `de` (contexto que lo publica), `datos`, e `identidad` si llega con un dato distinto de la identidad de la raíz. Con `dispara`, ejecuta ese comando; `con` fija valores de su entrada y `junto_con` espera a otros eventos. Sin `dispara`, solo se recuerda para los comandos que lo `requiere`n. | `Arriendo cerrado: {de: ..., identidad: número del arriendo}` |
+| `consultas > <consulta> > entrada`, `salida`, `calculados` | Datos que recibe y devuelve. Por defecto lee una raíz (la que lee en el modelo) por su identidad. | `estado: enum ...` |
+| `... > sobre: todas`, `de`, `filtro`, `filtro_manual`, `agrega`, `lista` | Consulta sobre todas las raíces (si lee varias, `de` dice cuál recorre; las demás le llegan en `datos`). `filtro` las compara por igualdad con datos de la entrada del mismo nombre, y `filtro_manual: true` agrega un filtro escrito a mano (`Incluir`, en el archivo manual). Con `agrega`, cada dato de la salida es una agregación: `conteo`, o `promedio`, `suma`, `mínimo` o `máximo` `de <dato de la raíz>` (sin raíces no hay promedio, mínimo ni máximo: esos van con `?`). Sin `agrega`, devuelve una lista llamada `lista`, con los datos de la salida de cada raíz. | `calificación promedio: promedio de calificación dada`; `lista: yates disponibles` |
+| `eventos_de_otros_contextos > <evento>` | `de` (contexto que lo publica), `datos`, e `identidad` si llega con un dato distinto de la identidad de la raíz (obligatoria si el contexto tiene varias raíces y el evento no dispara). Con `dispara`, ejecuta ese comando; si llega con otra identidad, la de la raíz debe venir en sus `datos`, por su nombre, y la del evento queda disponible para el comando. `con` fija valores de su entrada y `junto_con` espera a otros eventos. Sin `dispara`, solo se recuerda para los comandos que lo `requiere`n. | `Arriendo cerrado: {de: ..., identidad: número del arriendo}` |
 | `servicios_sa > <servicio>` | `entrada`, `salida`, `respuesta_por_defecto` y `casos` (con `si`) del sistema externo simulado. Todo fijo: sin azar ni fecha de hoy. | `respuesta_por_defecto: {nivel: medio}` |
 | `escenarios > <escenario>` | Lista de pasos (comando, consulta o evento de otro contexto), cada uno con `con` y `espera` (ver "Escenarios y pruebas"). | `- Cancelar la reserva: {espera: Reserva cancelada}` |
 
@@ -186,7 +186,7 @@ Un dato pasa de un lugar a otro por su **nombre** y su **tipo**, que son los del
 
 ### Pasos de un comando
 
-1. Cargar la raíz (404 si no existe). El comando que crea la raíz la arma en el paso 6.
+1. Revisar que llegue la identidad (422 si falta) y cargar la raíz (404 si no existe). Con `crea: si_no_existe`, si no existe se arma vacía, y se guarda recién en el paso 6. El comando que crea la raíz la arma en el paso 6.
 2. Revisar que el estado actual esté en su `desde` (409 si no). Se revisa antes de llamar a los SA, para que una raíz en un estado inválido no consulte a sistemas externos.
 3. Buscar los eventos de otros contextos de `requiere` por su identidad (409 si alguno no ha llegado), y llamar a los servicios SA de `usa`, en orden.
 4. Elegir el resultado con la condición `si`, y revisar el `desde` de ese resultado (409).
@@ -220,7 +220,7 @@ Si un manual queda sin su `.g.cs` (por ejemplo, porque se quitó un comando), el
 
 La sección `escenarios` del YAML define pruebas de punta a punta. Un paso es un comando, una consulta o un evento de otro contexto. `con` fija valores de su entrada, y `espera` dice el resultado: un evento, un código HTTP (409, 422, 404 o 202) o, en una consulta, `{dato de la salida: valor, ...}`. Sin `espera`, el paso debe responder 2xx.
 
-Cada paso tiene su identidad. Un comando que crea la raíz recibe la siguiente (el consecutivo, que una solicitud rechazada no gasta, o la que se forma con sus datos), y se revisa que la respuesta la traiga; los demás pasos usan la de la última raíz creada en el escenario. Un evento de otro contexto que llega con su propia identidad la toma de `con`. Los consecutivos siguen de un escenario al siguiente, en orden, porque todos corren contra la misma aplicación.
+Cada paso tiene su identidad. Un comando que crea la raíz recibe la siguiente (el consecutivo, que una solicitud rechazada no gasta, o la que se forma con sus datos), y se revisa que la respuesta la traiga; los demás pasos la toman de `con` o, si no, de la última identidad con el mismo nombre de dato en el escenario (regla de los datos: el calendario de un yate tiene la identidad del yate). Un evento de otro contexto que llega con su propia identidad la toma de `con`. Los consecutivos siguen de un escenario al siguiente, en orden, porque todos corren contra la misma aplicación.
 
 `specs.py` revisa que los escenarios estén bien escritos: que los nombres existan, que los valores de `con` sean válidos y que `espera` sea un evento que ese paso puede publicar, un código permitido o datos de la salida de la consulta con valores válidos. No simula los datos. De los escenarios salen `pruebas/<Proyecto>/pruebas.http` y `escenarios.json`, y `probar.ps1` los ejecuta.
 
@@ -243,6 +243,14 @@ Calificaciones:
 | Calificar dos veces | El cliente ya calificó ARR-0001: 409 a propósito (la identidad ya existe). |
 | Sin calificaciones | Un propietario sin calificaciones: 0, y sin promedio. |
 
+Disponibilidad de yates:
+
+| Escenario | Qué prueba |
+|---|---|
+| Registro y ocupación | Se registra YATE-0001; bloquear fechas crea su calendario (`si_no_existe`); "Reserva solicitada" (llega con el número del arriendo y trae el yate) aparta y "Reserva confirmada" ocupa; la consulta lo excluye en esas fechas y lo incluye en otras; bloquear fechas ocupadas da 422 (REG-02) y apartar fechas de otro arriendo, 422 (REG-01); "Reserva cancelada" suelta y el yate vuelve a estar disponible; desbloquear. |
+| Registro rechazado | Sin contrato firmado (INT-CON) y con los documentos vencidos (NOR-01): 422 a propósito, sin gastar consecutivo. |
+| Otra marina | YATE-0002 en otra marina; confirmar fechas que nunca se apartaron da 404 (`reemplazar`); "Arriendo no realizado por riesgo alto" suelta las fechas. |
+
 ## Reproducibilidad y trazabilidad
 
 - El mismo modelo y el mismo YAML dan los mismos archivos. Para comprobarlo: `.\.venv\Scripts\python.exe src\huella.py salida`, después de generar dos veces, o con dos carpetas para compararlas.
@@ -259,7 +267,7 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 | Dónde | Qué revisa |
 |---|---|
 | `extraer.py` (modelo) | La regla del agregado. Cada objeto de valor tiene exactamente una composición desde su raíz o entidad, con Cardinalidad. Cada `Campo:` tiene un tipo permitido. No hay nombres repetidos dentro del mismo tipo entre los elementos del contexto. Cada comando tiene exactamente un acceso a la raíz de su agregado; además puede leer otras raíces del contexto, y escribir otra raíz es error. Cada evento lo dispara al menos un comando del contexto. Cada comando, consulta y servicio SA tiene un solo contrato. |
-| `specs.py` (YAML) | Cada comando, evento, consulta y servicio SA del contexto está en el YAML, y el YAML no nombra nada que no exista. Hay claves conocidas y no repetidas, tipos permitidos y estados de la lista cerrada. Los eventos de cada comando son exactamente los del modelo. Se cumple la regla de los datos. Las políticas, `junto_con` y `con` están completos. La identidad es un consecutivo o se forma con datos que el comando que crea tiene; los `valores` son válidos; cada evento de `requiere` está declarado y el comando tiene su identidad; las correspondencias de `guarda` tienen el mismo tipo; un evento sin `dispara` lo requiere algún comando; las consultas sobre todas filtran por datos de su entrada y sus agregaciones tienen el tipo correcto. Los escenarios están bien escritos. |
+| `specs.py` (YAML) | Cada comando, evento, consulta y servicio SA del contexto está en el YAML, y el YAML no nombra nada que no exista. Hay claves conocidas y no repetidas, tipos permitidos y estados de la lista cerrada. Los eventos de cada comando son exactamente los del modelo. Se cumple la regla de los datos. Las políticas, `junto_con` y `con` están completos. La identidad es un consecutivo o se forma con datos que el comando que crea tiene; los `valores` son válidos; cada evento de `requiere` está declarado y el comando tiene su identidad; las correspondencias de `guarda` tienen el mismo tipo; un evento sin `dispara` lo requiere algún comando; las consultas sobre todas filtran por datos de su entrada y sus agregaciones tienen el tipo correcto; una lista tiene nombre y sus datos son de la raíz. Con varios agregados, cada comando, evento y consulta se revisa contra la raíz de su agregado; `crea: si_no_existe` necesita una identidad recibida; las operaciones sobre listas tienen claves que son campos de la lista; un evento que dispara con otra identidad trae la de la raíz en sus datos. Los escenarios están bien escritos. |
 
 ## Discrepancias encontradas
 
@@ -270,6 +278,9 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 | 3 | El mismo dato tiene nombres distintos entre contextos. Cobros dice "código de autorización de la pasarela" y Gestión del arriendo, "autorización del bloqueo del depósito". Operación dice "hora de entrega" y "hora de regreso", y Gestión del arriendo, "fecha y hora del cambio". Cobros guarda un "comprobante" por cobro. La Cuenta del arriendo no tiene la hora del cierre. | Campos de las raíces de la V6 y eventos entre dominios. | Abierta. Los eventos que llegan se declaran con los nombres de Gestión del arriendo (supuesto). Se alinean en G12 (D2). |
 | 4 | La raíz Calificación no decía a quién se califica, pero SB-30 calcula el promedio de un cliente o de un propietario. | Raíz Calificación (V6). | **Corregida en el modelo (4 nov 2026):** campo `calificado` (string), en Archi y en el README principal. |
 | 5 | Ningún campo unía un yate con su arriendo en Operación: la Lectura se identifica por el yate y el Acta de entrega por el arriendo. SB-27 revisa "las lecturas de un yate con arriendo en curso" y SB-26 devuelve el recorrido del yate arrendado. | Raíz Acta de entrega (V6), contrato SB-22 (V4). | **Corregida en el modelo (4 nov 2026):** campo `identificador del yate` (string) en el Acta de entrega, y la entrada del contrato SB-22 lo incluye. |
+| 6 | El Yate no guardaba a su propietario, aunque el contrato de SB-01 lo recibe y Gestión del arriendo lo copia del inventario (V8-DEC-04). | Raíz Yate (V6). | **Corregida en el modelo (4 nov 2026):** campo `propietario` (string). |
+| 7 | El campo "estado" del Rango de fechas se llamaba igual que el estado de la raíz, y la regla de los datos lo prohíbe. | Objeto de valor Rango de fechas (V6). | **Corregida en el modelo (4 nov 2026):** se llama `estado de la fecha`, como su enum "Estado de la fecha". |
+| 8 | El campo "arriendo" del Rango de fechas tenía otro nombre que en Gestión del arriendo ("número del arriendo"), y SB-05 recibe los eventos de Gestión del arriendo (D2). | Objeto de valor Rango de fechas (V6). | **Corregida en el modelo (4 nov 2026):** se llama `número del arriendo`. |
 
 Si la ACLI de Archi escribe `IllegalArgumentException` al exportar, alguna caja tiene una fuente sin nombre (como `|9|1`). La exportación termina y valida igual, y solo se pierde esa fuente, que el generador no usa; se arregla en Archi dándole una fuente explícita. Así se arreglaron las 6 agrupaciones de área de la V2 (D8).
 
@@ -326,6 +337,7 @@ Del generador, desde Calificaciones:
 |---|---|---|
 | GEN-SUP-35 | Los eventos de otros contextos que un comando requiere (`requiere`, D5) se guardan en memoria, por su nombre y su identidad, y se pierden al reiniciar; si llega otro igual, reemplaza al anterior. | Cada contexto guarda su propia copia de lo que recibe (V8-DEC-04), y el piloto no prueba la persistencia (GEN-SUP-02). |
 | GEN-SUP-36 | Una identidad formada con datos une sus partes con `/`, en el orden del YAML; un enum va con su nombre de C# (por ejemplo `ARR-0001/Cliente`). | Es legible, es estable y no choca con los prefijos de los consecutivos. |
+| GEN-SUP-48 | `crea: si_no_existe` crea la raíz con el primer estado de su lista, y solo la guarda si el comando termina bien. | Una solicitud rechazada no debe dejar rastro (como el consecutivo que no gasta número). |
 
 Del YAML de Calificaciones. Cada uno está marcado como supuesto en `specs/calificaciones.yaml`:
 
@@ -336,11 +348,23 @@ Del YAML de Calificaciones. Cada uno está marcado como supuesto en `specs/calif
 | GEN-SUP-39 | Consultar calificaciones promedio > salida | Sin calificaciones no hay promedio: la "calificación promedio" es opcional (null). |
 | GEN-SUP-40 | eventos_de_otros_contextos > Arriendo cerrado | Los datos llegan con los nombres que publica Gestión del arriendo (Partnership, V8-SUP-02; D2). |
 
+Del YAML de Disponibilidad de yates. Cada uno está marcado como supuesto en `specs/disponibilidad-de-yates.yaml`, salvo GEN-SUP-46, que está en el archivo manual de SB-03:
+
+| ID | Dónde | Supuesto |
+|---|---|---|
+| GEN-SUP-41 | raices > Yate > identidad | El consecutivo tiene 4 dígitos (YATE-0001). |
+| GEN-SUP-42 | raices > Yate y Calendario del yate > estado | Cada uno tiene un solo estado ("registrado" y "activo"): el modelo no les da ciclo de vida. |
+| GEN-SUP-43 | Definir las fechas bloqueadas del yate y Gestionar la ocupación del calendario > entrada | Los enums se llaman "Acción sobre el bloqueo" y "Acción sobre la ocupación". |
+| GEN-SUP-44 | Definir las fechas bloqueadas del yate > Fechas desbloqueadas | Se desbloquea el mismo rango que se bloqueó (mismas fechas). |
+| GEN-SUP-45 | Consultar yates disponibles > entrada | Se consulta por la marina elegida; la ubicación del cliente no se usa. |
+| GEN-SUP-46 | `DefinirLasFechasBloqueadasDelYate.cs` | E2E-02 (solo el propietario cambia sus fechas) no se revisa: la aplicación no autentica a quien llama. |
+| GEN-SUP-47 | Contratos con propietarios y clientes > respuesta_por_defecto y casos | Valores de prueba: CONP-0001 firmado; el propietario de prueba PROP-SIN-CONTRATO no tiene contrato firmado. |
+
 ## Limitaciones conocidas
 
-- Un solo agregado por contexto (G2). Las entidades (G9) y los objetos de valor con Cardinalidad Muchos en `guarda` (G4) todavía no se generan; el generador se detiene con un mensaje claro si los encuentra.
-- Un evento de otro contexto que dispara un comando debe llegar con la identidad de la raíz de este contexto; disparar con otra identidad se agrega con Disponibilidad de yates (G3). Un evento que solo se recuerda (`requiere`) sí puede llegar con otra.
-- Las consultas sobre todas las raíces devuelven agregaciones; las listas (SB-04, SB-26) vienen después (G5).
+- Las entidades con identidad propia dentro de una raíz (G9) todavía no se generan; el generador se detiene con un mensaje claro si las encuentra.
+- Una consulta lee una raíz por su identidad o recorre todas las de un tipo; una consulta por identidad que combine varias raíces (SB-18) y el orden de una lista (SB-26) vienen después (G5).
+- Una política interna entre raíces con distinta identidad todavía no se genera (`specs.py` lo dice).
 - Los servicios SA se llaman antes de `ValidarReglas`, porque las reglas usan sus respuestas (REG-01 necesita el estado del contrato). Por eso una solicitud rechazada por una regla ya consultó al CRM simulado.
 - Los eventos que un contexto publica llegan al bus entre contextos, pero nadie se suscribe todavía (G12). Mientras tanto, los eventos de otros contextos se prueban con sus endpoints.
 - Si se quita el YAML de un contexto, el generador borra sus archivos generados pero no su código a mano: avisa que esa carpeta quedó suelta.

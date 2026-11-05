@@ -1347,6 +1347,7 @@ El dominio Disponibilidad de yates tiene dos agregados, "Agregado Yate" y "Agreg
 | Límite | Agregado Yate | El yate se registra una vez y cambia poco; sus fechas van en el agregado Calendario del yate, que tiene sus propias reglas (V4-DEC-03). |
 | Raíz | Yate | Embarcación de un propietario, guardada en una marina aliada, que YateGear ofrece en arriendo. Identidad: identificador del yate en el inventario. Realiza "Yate" (V4). |
 | Objeto de valor | Datos del yate | Nombre, matrícula y capacidad. Fuente: SB-01. |
+| Campo | Propietario | Gestión del arriendo lo copia al registrar la solicitud (V8-DEC-04). Fuente: SB-01. |
 | Campo | Precio por día | Fuente: SB-01, CTX-01. |
 | Campo | Documentos al día ante la DIMAR | Fuente: SB-01, NOR-01. |
 | Campo | Referencia del contrato del propietario | El contrato del propietario vive en Gestión de contratos; el yate guarda su referencia. Fuente: SB-01, SA-02, INT-CON. |
@@ -1360,8 +1361,8 @@ Invariante del agregado: se registra solo con el contrato del propietario firmad
 |---|---|---|
 | Límite | Agregado Calendario del yate | Es el límite de "cero dobles reservas": solo lo escriben SB-03 y SB-05, y un solo agregado decide la disponibilidad (V4-DEC-03). |
 | Raíz | Calendario del yate | Fechas de un yate. Identidad: la del yate. Realiza "Calendario del yate" (V4). |
-| Objeto de valor | Rango de fechas | Inicio, fin, estado y, si está apartado u ocupado, el arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03). Fuente: SB-03, SB-05. |
-| Campo | Estado de cada fecha | Bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada. Va en cada rango de fechas (V6-SUP-03). Fuente: SB-03, SB-05. |
+| Objeto de valor | Rango de fechas | Inicio, fin, estado de la fecha y, si está apartado u ocupado, el número del arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03). Fuente: SB-03, SB-05. |
+| Campo | Estado de la fecha | Bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada. Va en cada rango de fechas (V6-SUP-03). Fuente: SB-03, SB-05. |
 
 Invariantes del agregado:
 

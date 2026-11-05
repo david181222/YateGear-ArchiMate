@@ -135,7 +135,7 @@ class Revisor:
                 self.error(donde, f'el enum "{n}" ya existe con otros valores: {", ".join(self.enums[n])}')
         return t
 
-    def campos(self, x, donde: str, libres: bool = False) -> dict[str, dict]:
+    def campos(self, x, donde: str, libres: bool = False, permitidos=()) -> dict[str, dict]:
         """Datos "nombre: tipo". La identidad y el estado se agregan solos, así que solo se
         pueden escribir donde se piden o se devuelven (libres=True): entrada de un SA y salida de una consulta."""
         out = {}
@@ -143,7 +143,7 @@ class Revisor:
             if not isinstance(nombre, str) or not nombre.strip():
                 self.error(donde, f"nombre de dato vacío o inválido: {nombre!r}")
                 continue
-            if not libres and nombre in (self.id_nombre, "estado"):
+            if not libres and nombre in (self.id_nombre, "estado") and nombre not in permitidos:
                 self.error(donde, f'"{nombre}" se agrega solo; no se escribe en el YAML')
                 continue
             t = self.tipo(texto, f'{donde} > {nombre}')
@@ -206,6 +206,190 @@ class Revisor:
             out[campo] = set(map(str, vals))
         return out
 
+    def revisar_valores(self, valores, bolsa: dict, donde: str, todos: dict) -> list[str]:
+        """Valores fijos: solo para datos de la raíz o de sus objetos de valor, cuyo tipo sale del modelo.
+        Los agrega a la bolsa y devuelve sus nombres."""
+        out = []
+        for k, v in self.mapa(valores, donde).items():
+            t_v = (todos.get(k) or self.componentes.get(k)) if k not in (self.id_nombre, "estado") else None
+            if t_v is None:
+                self.error(donde, f'"{k}" no es un campo de la raíz ni de sus objetos de valor')
+            elif not valor_valido(v, t_v):
+                self.error(donde, f'el valor {v!r} no es válido para "{k}" ({t_v["tipo"]})')
+            else:
+                self.agregar(bolsa, {k: t_v}, donde)
+                out.append(k)
+        return out
+
+    OPERACIONES_LISTA = ("agregar", "reemplazar", "quitar")
+
+    def revisar_guarda(self, guarda: list, bolsa: dict, propios: set, d: str, campos_raiz: dict, vos: dict,
+                       nombre_raiz: str) -> dict:
+        """Lo que se guarda en la raíz: objetos de valor y campos por su nombre, {campo: dato} para guardar un dato
+        con otro nombre, y en un objeto de valor con Cardinalidad Muchos (G4) {lista: agregar}, {lista: {reemplazar:
+        [claves]}} o {lista: {quitar: [claves]}}. Cada dato debe tener un solo destino. Devuelve lo guardado."""
+        guardados, destinos = {}, {}
+
+        def pedir_vo(v, solo=None):
+            for campo in v["campos"]:
+                if solo is not None and campo["nombre"] not in solo:
+                    continue
+                if campo["nombre"] in bolsa or not campo["opcional"] or solo is not None:
+                    self.pide(bolsa, {campo["nombre"]: campo}, d, f'el objeto de valor "{v["nombre"]}"', propios)
+
+        for g in guarda:
+            if isinstance(g, dict) and len(g) == 1 and next(iter(g)) in vos:     # operación sobre una lista
+                nombre_vo, op = next(iter(g.items()))
+                v = vos[nombre_vo]
+                if v["cardinalidad"] != "Muchos":
+                    self.error(d, f'"{nombre_vo}" tiene Cardinalidad {v["cardinalidad"]}: se guarda por su nombre, sin operación')
+                    continue
+                if op == "agregar":
+                    claves = None
+                elif isinstance(op, dict) and len(op) == 1 and next(iter(op)) in ("reemplazar", "quitar"):
+                    op, claves = next(iter(op.items()))
+                    claves = self.lista(claves, f"{d} > {nombre_vo} > {op}")
+                    nombres_vo = {c["nombre"] for c in v["campos"]}
+                    for k in claves:
+                        if k not in nombres_vo:
+                            self.error(d, f'la clave "{k}" no es un campo de "{nombre_vo}"')
+                    if not claves:
+                        self.error(d, f'{op} necesita la clave: los campos con que se encuentra el elemento de "{nombre_vo}"')
+                else:
+                    self.error(d, f'en "{nombre_vo}" (una lista) se escribe agregar, {{reemplazar: [claves]}} o {{quitar: [claves]}}')
+                    continue
+                pedir_vo(v, solo=set(claves) if op == "quitar" else None)
+                if op != "quitar":
+                    for campo in v["campos"]:
+                        guardados[campo["nombre"]] = campo
+                destinos.setdefault(nombre_vo, []).append(op)
+            elif isinstance(g, dict):                     # {campo de la raíz: dato}: guarda un dato con otro nombre
+                if len(g) != 1:
+                    self.error(d, "una correspondencia es {campo de la raíz: dato}, una por línea")
+                    continue
+                campo, dato = next(iter(g.items()))
+                if campo not in campos_raiz:
+                    self.error(d, f'"{campo}" no es un campo de la raíz {nombre_raiz} ni un objeto de valor')
+                    continue
+                if not isinstance(dato, str) or dato not in bolsa:
+                    self.error(d, f'"{campo}" se guarda con "{dato}", que el comando no tiene')
+                elif not mismo_tipo(bolsa[dato], campos_raiz[campo]):
+                    self.error(d, f'"{dato}" es {bolsa[dato]["tipo"]} y "{campo}" es {campos_raiz[campo]["tipo"]}')
+                guardados[campo] = campos_raiz[campo]
+                destinos.setdefault(campo, []).append(f'la raíz "{nombre_raiz}"')
+            elif not isinstance(g, str):
+                self.error(d, f"{g!r} no es un nombre, una correspondencia ni una operación sobre una lista")
+            elif g in vos:
+                v = vos[g]
+                if v["cardinalidad"] == "Muchos":
+                    self.error(d, f'"{g}" tiene Cardinalidad Muchos: se escribe {{{g}: agregar}}, {{{g}: {{reemplazar: [claves]}}}} '
+                                  f'o {{{g}: {{quitar: [claves]}}}}')
+                    continue
+                pedir_vo(v)
+                for campo in v["campos"]:
+                    guardados[campo["nombre"]] = campo
+                    destinos.setdefault(campo["nombre"], []).append(f'"{g}"')
+            elif g in campos_raiz:
+                self.pide(bolsa, {g: campos_raiz[g]}, d, f'el campo "{g}" de la raíz', propios)
+                guardados[g] = campos_raiz[g]
+                destinos.setdefault(g, []).append(f'la raíz "{nombre_raiz}"')
+            else:
+                self.error(d, f'"{g}" no es un objeto de valor ni un campo de la raíz {nombre_raiz}')
+        for nombre_dato, lugares in sorted(destinos.items()):
+            if len(lugares) > 1:
+                self.error(d, f'"{nombre_dato}" puede ir a más de un destino: {" y ".join(lugares)}')
+        return guardados
+
+    # ------------------------------------------------------------ raíces (una por agregado, G2)
+    def preparar_raiz(self, nombre_raiz: str, ag: dict, r_yaml) -> dict:
+        """Identidad, estado y datos de una raíz. No cambia la raíz actual (ver usar)."""
+        r = self.mapa(r_yaml, f"raices > {nombre_raiz}", ["identidad", "estado"], ["identidad", "estado"])
+        di = f"raices > {nombre_raiz} > identidad"
+        ident = self.mapa(r.get("identidad"), di, ["nombre", "tipo", "prefijo", "digitos", "de"], ["nombre", "tipo"])
+        id_nombre = ident.get("nombre", "")
+        id_tipo = self.tipo(ident.get("tipo"), f"{di} > tipo")
+        if id_tipo and (id_tipo["base"] != "string" or id_tipo["lista"] or id_tipo["opcional"]):
+            self.error(di, "la identidad debe ser string obligatorio")
+        campos_raiz = {c["nombre"]: c for c in ag["raiz"]["campos"]}
+        # La identidad es un consecutivo (prefijo y digitos) o se forma con datos (de), una de las dos (G3).
+        # Con un solo dato que se llama como la identidad, la identidad es recibida: llega con ese nombre.
+        id_de, componentes, recibida = None, {}, False
+        consecutivo = "prefijo" in ident or "digitos" in ident
+        if consecutivo == ("de" in ident):
+            self.error(di, "la identidad es un consecutivo (prefijo y digitos) o se forma con datos (de); una de las dos")
+        elif consecutivo:
+            if not isinstance(ident.get("prefijo"), str):
+                self.error(di, "prefijo debe ser texto, por ejemplo ARR-")
+            if not isinstance(ident.get("digitos"), int) or isinstance(ident.get("digitos"), bool) or ident.get("digitos", 0) < 1:
+                self.error(di, "digitos debe ser un entero mayor que 0")
+        else:
+            de = self.mapa(ident.get("de"), f"{di} > de")
+            if not de:
+                self.error(f"{di} > de", "di con qué datos se forma la identidad, en orden")
+            id_de = []
+            recibida = list(de) == [id_nombre]
+            for parte, texto in de.items():
+                dp = f"{di} > de > {parte}"
+                if parte == id_nombre and recibida:     # identidad recibida: su tipo es el de la identidad
+                    id_de.append(parte)
+                    continue
+                if parte in (id_nombre, "estado"):
+                    self.error(dp, "la identidad no se forma con la identidad (salvo si es su único dato) ni con el estado")
+                    continue
+                if texto is None:                         # campo de la raíz: su tipo sale del modelo
+                    if parte not in campos_raiz:
+                        self.error(dp, f'no es un campo de la raíz {nombre_raiz}; si no lo es, escribe su tipo')
+                        continue
+                    t_parte = tipos.interpretar(campos_raiz[parte]["tipo"])
+                else:                                     # dato que no es campo: la raíz lo guarda como parte de su identidad
+                    if parte in campos_raiz:
+                        self.error(dp, "es un campo de la raíz: no lleva tipo (sale del modelo)")
+                        continue
+                    t_parte = self.tipo(texto, dp)
+                    if not t_parte:
+                        continue
+                    componentes[parte] = t_parte
+                if t_parte["lista"] or t_parte["opcional"] or t_parte["base"] not in ("string", "int", "enum"):
+                    self.error(dp, f'una parte de la identidad es string, int o enum, obligatoria; aquí es {t_parte["tipo"]}')
+                id_de.append(parte)
+        estado_t = self.tipo(r.get("estado"), f"raices > {nombre_raiz} > estado")
+        if estado_t and (estado_t["base"] != "enum" or estado_t["opcional"]):
+            self.error(f"raices > {nombre_raiz} > estado", "el estado debe ser un enum obligatorio")
+            estado_t = None
+
+        # Campos de la raíz y de sus objetos de valor. Un nombre que está en dos de ellos es ambiguo:
+        # solo es error si un comando, evento o consulta lo usa sin que llegue por su entrada o por un SA.
+        vos = {v["nombre"]: v for v in ag["objetos_valor"] + ag["entidades"]}
+        todos, origenes = {}, {}
+        for dueno, lista in [(nombre_raiz, ag["raiz"]["campos"])] + [(v["nombre"], v["campos"]) for v in vos.values()]:
+            for c in lista:
+                if c["nombre"] in (id_nombre, "estado"):
+                    self.error("modelo", f'el campo "{c["nombre"]}" de "{dueno}" se llama igual que la identidad o el estado')
+                origenes.setdefault(c["nombre"], []).append(f'"{dueno}"')
+                todos.setdefault(c["nombre"], c)
+        for parte in componentes:
+            if parte in todos:
+                self.error(f"raices > {nombre_raiz} > identidad > de > {parte}", f"se llama igual que un campo de {origenes[parte][0]}")
+        base = {**({id_nombre: id_tipo} if id_tipo else {}), **componentes}
+        # Los campos de una lista (objeto de valor con Cardinalidad Muchos) no son datos sueltos de la raíz: no
+        # están disponibles por su nombre, aunque sí se pueden fijar con valores al guardar en la lista.
+        en_listas = {c["nombre"] for v in vos.values() if v["cardinalidad"] == "Muchos" for c in v["campos"]}
+        sueltos = {k: c for k, c in todos.items() if k not in en_listas or k in campos_raiz}
+        return {"nombre": nombre_raiz, "id": ag["raiz"]["id"], "agregado_id": ag["id"],
+                "id_nombre": id_nombre, "id_tipo": id_tipo, "id_de": id_de, "componentes": componentes,
+                "consecutivo": consecutivo, "recibida": recibida,
+                "estado_t": estado_t, "estados": estado_t["enum"]["valores"] if estado_t else [],
+                "campos_raiz": campos_raiz, "vos": vos, "todos": todos,
+                "ambiguos": {n: l for n, l in origenes.items() if len(l) > 1},
+                "base": base, "con_raiz": {**base, **sueltos, **({"estado": estado_t} if estado_t else {})}}
+
+    def usar(self, rc: dict):
+        """Hace de rc la raíz actual (la usan pide, campos, condicion y estados_validos) y devuelve sus datos."""
+        self.rc = rc
+        self.id_nombre, self.id_tipo, self.estados = rc["id_nombre"], rc["id_tipo"], rc["estados"]
+        self.ambiguos, self.componentes, self.id_de = rc["ambiguos"], rc["componentes"], rc["id_de"]
+        return rc["con_raiz"], rc["todos"], rc["campos_raiz"], rc["vos"], rc["base"], rc["estado_t"], rc["nombre"]
+
     # ------------------------------------------------------------ revisión
     def revisar(self):
         s = self.mapa(self.s, "archivo", ["contexto", "raices", "comandos", "eventos", "consultas",
@@ -224,77 +408,14 @@ class Revisor:
         raices_m = {a["raiz"]["nombre"]: {"id": a["raiz"]["id"]} for a in ctx["agregados"]}
         raices_y = self.mapa(s.get("raices"), "raices")
         self.cubre("raices", raices_y, raices_m, "raíz")
-        if len(raices_m) != 1:
-            self.error("raices", "el piloto admite un solo agregado por contexto")
+        if not raices_m:
+            self.error("raices", "el contexto no tiene agregados")
             return
-        nombre_raiz = next(iter(raices_m))
-        ag = agregados[raices_m[nombre_raiz]["id"]]
-        r = self.mapa(raices_y.get(nombre_raiz), f"raices > {nombre_raiz}", ["identidad", "estado"], ["identidad", "estado"])
-        di = f"raices > {nombre_raiz} > identidad"
-        ident = self.mapa(r.get("identidad"), di, ["nombre", "tipo", "prefijo", "digitos", "de"], ["nombre", "tipo"])
-        self.id_nombre = ident.get("nombre", "")
-        self.id_tipo = self.tipo(ident.get("tipo"), f"{di} > tipo")
-        if self.id_tipo and (self.id_tipo["base"] != "string" or self.id_tipo["lista"] or self.id_tipo["opcional"]):
-            self.error(di, "la identidad debe ser string obligatorio")
-        campos_raiz = {c["nombre"]: c for c in ag["raiz"]["campos"]}
-        # La identidad es un consecutivo (prefijo y digitos) o se forma con datos (de), una de las dos (G3).
-        self.id_de, self.componentes = None, {}
-        consecutivo = "prefijo" in ident or "digitos" in ident
-        if consecutivo == ("de" in ident):
-            self.error(di, "la identidad es un consecutivo (prefijo y digitos) o se forma con datos (de); una de las dos")
-        elif consecutivo:
-            if not isinstance(ident.get("prefijo"), str):
-                self.error(di, "prefijo debe ser texto, por ejemplo ARR-")
-            if not isinstance(ident.get("digitos"), int) or isinstance(ident.get("digitos"), bool) or ident.get("digitos", 0) < 1:
-                self.error(di, "digitos debe ser un entero mayor que 0")
-        else:
-            de = self.mapa(ident.get("de"), f"{di} > de")
-            if not de:
-                self.error(f"{di} > de", "di con qué datos se forma la identidad, en orden")
-            self.id_de = []
-            for parte, texto in de.items():
-                dp = f"{di} > de > {parte}"
-                if parte in (self.id_nombre, "estado"):
-                    self.error(dp, "la identidad no se forma con la identidad ni con el estado")
-                    continue
-                if texto is None:                         # campo de la raíz: su tipo sale del modelo
-                    if parte not in campos_raiz:
-                        self.error(dp, f'no es un campo de la raíz {nombre_raiz}; si no lo es, escribe su tipo')
-                        continue
-                    t_parte = tipos.interpretar(campos_raiz[parte]["tipo"])
-                else:                                     # dato que no es campo: la raíz lo guarda como parte de su identidad
-                    if parte in campos_raiz:
-                        self.error(dp, "es un campo de la raíz: no lleva tipo (sale del modelo)")
-                        continue
-                    t_parte = self.tipo(texto, dp)
-                    if not t_parte:
-                        continue
-                    self.componentes[parte] = t_parte
-                if t_parte["lista"] or t_parte["opcional"] or t_parte["base"] not in ("string", "int", "enum"):
-                    self.error(dp, f'una parte de la identidad es string, int o enum, obligatoria; aquí es {t_parte["tipo"]}')
-                self.id_de.append(parte)
-        estado_t = self.tipo(r.get("estado"), f"raices > {nombre_raiz} > estado")
-        if estado_t and (estado_t["base"] != "enum" or estado_t["opcional"]):
-            self.error(f"raices > {nombre_raiz} > estado", "el estado debe ser un enum obligatorio")
-            estado_t = None
-        self.estados = estado_t["enum"]["valores"] if estado_t else []
-
-        # Campos de la raíz y de sus objetos de valor. Un nombre que está en dos de ellos es ambiguo:
-        # solo es error si un comando, evento o consulta lo usa sin que llegue por su entrada o por un SA.
-        vos = {v["nombre"]: v for v in ag["objetos_valor"] + ag["entidades"]}
-        todos, origenes = {}, {}
-        for dueno, lista in [(nombre_raiz, ag["raiz"]["campos"])] + [(v["nombre"], v["campos"]) for v in vos.values()]:
-            for c in lista:
-                if c["nombre"] in (self.id_nombre, "estado"):
-                    self.error("modelo", f'el campo "{c["nombre"]}" de "{dueno}" se llama igual que la identidad o el estado')
-                origenes.setdefault(c["nombre"], []).append(f'"{dueno}"')
-                todos.setdefault(c["nombre"], c)
-        for parte in self.componentes:
-            if parte in todos:
-                self.error(f"raices > {nombre_raiz} > identidad > de > {parte}", f"se llama igual que un campo de {origenes[parte][0]}")
-        self.ambiguos = {n: l for n, l in origenes.items() if len(l) > 1}
-        base = {**({self.id_nombre: self.id_tipo} if self.id_tipo else {}), **self.componentes}
-        con_raiz = {**base, **todos, **({"estado": estado_t} if estado_t else {})}
+        # Cada raíz se prepara por separado; cada comando, evento, consulta y paso usa la de su agregado (G2).
+        self.raices = {n: self.preparar_raiz(n, agregados[raices_m[n]["id"]], raices_y.get(n)) for n in sorted(raices_m)}
+        self.raiz_por_id = {rc["id"]: rc for rc in self.raices.values()}
+        self.raiz_por_agregado = {rc["agregado_id"]: rc for rc in self.raices.values()}
+        con_raiz, todos, campos_raiz, vos, base, estado_t, nombre_raiz = self.usar(next(iter(self.raices.values())))
 
         # ---- servicios SA (antes que los comandos, porque los comandos los usan)
         sas_m = {x["nombre"]: x for x in ctx["servicios_sa"]}
@@ -336,41 +457,55 @@ class Revisor:
         # Eventos de otros contextos: los comandos que los requieren (requiere) los necesitan desde ya.
         ext_y = s.get("eventos_de_otros_contextos") if isinstance(s.get("eventos_de_otros_contextos"), dict) else {}
         self.requeridos: dict[str, list[str]] = {}          # evento de otro contexto -> comandos que lo requieren
+        crean_por_raiz: dict[str, list[str]] = {}
         for n in sorted(set(cmds_y) & set(cmds_m)):
             d = f"comandos > {n}"
             m = cmds_m[n]
+            rc = self.raiz_por_id.get(m["raiz_id"])
+            if rc is None:
+                continue
+            con_raiz, todos, campos_raiz, vos, base, estado_t, nombre_raiz = self.usar(rc)
             c = self.mapa(cmds_y[n], d, ["crea", "desde", "a", "entrada", "valores", "requiere", "usa", "guarda", "eventos",
                                          "resultados"], ["entrada"])
             crea = c.get("crea", False)
-            if crea not in (True, False):
-                self.error(d, "crea debe ser true o false")
+            if crea not in (True, False, "si_no_existe"):
+                self.error(d, "crea es true, false o si_no_existe")
                 crea = False
-            if crea:
+            si_no_existe = crea == "si_no_existe"         # carga la raíz y, si no existe, la crea vacía
+            if si_no_existe:
+                crea = False
+                if not rc["recibida"]:
+                    self.error(d, "crea: si_no_existe necesita una identidad recibida (de con un solo dato, la identidad): "
+                                  "la raíz nueva toma la identidad que trae el comando")
+                for campo in campos_raiz.values():
+                    if not campo["opcional"]:
+                        self.error(d, f'crea: si_no_existe crea la raíz vacía, y su campo "{campo["nombre"]}" es obligatorio')
+                for v in vos.values():
+                    if v["cardinalidad"] == "Uno":
+                        self.error(d, f'crea: si_no_existe crea la raíz vacía, y "{v["nombre"]}" tiene Cardinalidad Uno')
+            if crea or si_no_existe:
                 crean.append(n)
+                crean_por_raiz.setdefault(nombre_raiz, []).append(n)
                 if m["acceso"] not in ESCRIBEN:
                     self.error(d, f"el comando crea la raíz pero en el modelo su acceso es de {m['acceso']}")
-            ent = self.campos(c.get("entrada"), f"{d} > entrada")
-            entradas_cmd[n] = {"entrada": ent, "crea": crea}
+            # El comando que crea una raíz con identidad recibida la trae en su entrada.
+            ent = self.campos(c.get("entrada"), f"{d} > entrada", permitidos=(self.id_nombre,) if crea and rc["recibida"] else ())
+            if crea and rc["recibida"] and self.id_nombre not in ent:
+                self.error(f"{d} > entrada", f'crea "{nombre_raiz}", cuya identidad es recibida: falta "{self.id_nombre}" en la entrada')
+            entradas_cmd[n] = {"entrada": ent, "crea": crea, "raiz": nombre_raiz}
             # El comando que crea la raíz no tiene raíz ni identidad hasta que la guarda (la identidad se
             # asigna al guardar, después de ValidarReglas): sus SA y condiciones solo usan entrada y SA.
             bolsa = {} if crea else dict(con_raiz)
             self.agregar(bolsa, ent, f"{d} > entrada")
             propios = set(ent)
-            origenes_cmd = {} if crea else {k: ["raíz"] for k in todos}
+            origenes_cmd = {} if crea else {k: ["raíz"] for k in todos if k in con_raiz}
             for k in ent:
                 origenes_cmd.setdefault(k, []).append("entrada")
 
             # Valores fijos del comando: solo para datos de la raíz, cuyo tipo sale del modelo o de la identidad.
-            for k, v in self.mapa(c.get("valores"), f"{d} > valores").items():
-                t_v = (todos.get(k) or self.componentes.get(k)) if k not in (self.id_nombre, "estado") else None
-                if t_v is None:
-                    self.error(f"{d} > valores", f'"{k}" no es un campo de la raíz ni de sus objetos de valor')
-                elif not valor_valido(v, t_v):
-                    self.error(f"{d} > valores", f'el valor {v!r} no es válido para "{k}" ({t_v["tipo"]})')
-                else:
-                    self.agregar(bolsa, {k: t_v}, f"{d} > valores")
-                    propios.add(k)
-                    origenes_cmd.setdefault(k, []).append("valores")
+            for k in self.revisar_valores(c.get("valores"), bolsa, f"{d} > valores", todos):
+                propios.add(k)
+                origenes_cmd.setdefault(k, []).append("valores")
 
             # Eventos de otros contextos que el comando requiere (D5): si no han llegado para su identidad, 409.
             # Sus datos entran a la bolsa del comando.
@@ -412,45 +547,10 @@ class Revisor:
                     self.varios_origenes.append(f'{n}: "{k}" llega de {", ".join(lista_o)}; se usa {lista_o[-1]}')
 
             # Lo que guarda en la raíz. Cada dato debe tener un solo destino (regla de los datos).
-            guardados, destinos = {}, {}
             guarda = self.lista(c.get("guarda"), f"{d} > guarda")
             if guarda and m["acceso"] not in ESCRIBEN:
                 self.error(f"{d} > guarda", f"el comando guarda datos pero en el modelo su acceso a la raíz es de {m['acceso']}")
-            for g in guarda:
-                if isinstance(g, dict):                   # {campo de la raíz: dato}: guarda un dato con otro nombre
-                    if len(g) != 1:
-                        self.error(f"{d} > guarda", "una correspondencia es {campo de la raíz: dato}, una por línea")
-                        continue
-                    campo, dato = next(iter(g.items()))
-                    if campo not in campos_raiz:
-                        self.error(f"{d} > guarda", f'"{campo}" no es un campo de la raíz {nombre_raiz}')
-                        continue
-                    if not isinstance(dato, str) or dato not in bolsa:
-                        self.error(f"{d} > guarda", f'"{campo}" se guarda con "{dato}", que el comando no tiene')
-                    elif not mismo_tipo(bolsa[dato], campos_raiz[campo]):
-                        self.error(f"{d} > guarda", f'"{dato}" es {bolsa[dato]["tipo"]} y "{campo}" es {campos_raiz[campo]["tipo"]}')
-                    guardados[campo] = campos_raiz[campo]
-                    destinos.setdefault(campo, []).append(f'la raíz "{nombre_raiz}"')
-                elif not isinstance(g, str):
-                    self.error(f"{d} > guarda", f"{g!r} no es un nombre ni una correspondencia")
-                elif g in vos:
-                    v = vos[g]
-                    if v["cardinalidad"] == "Muchos":
-                        self.error(f"{d} > guarda", f'"{g}" tiene Cardinalidad Muchos; el piloto todavía no la guarda')
-                    for campo in v["campos"]:
-                        if campo["nombre"] in bolsa or not campo["opcional"]:
-                            self.pide(bolsa, {campo["nombre"]: campo}, f"{d} > guarda", f'el objeto de valor "{g}"', propios)
-                        guardados[campo["nombre"]] = campo
-                        destinos.setdefault(campo["nombre"], []).append(f'"{g}"')
-                elif g in campos_raiz:
-                    self.pide(bolsa, {g: campos_raiz[g]}, f"{d} > guarda", f'el campo "{g}" de la raíz', propios)
-                    guardados[g] = campos_raiz[g]
-                    destinos.setdefault(g, []).append(f'la raíz "{nombre_raiz}"')
-                else:
-                    self.error(f"{d} > guarda", f'"{g}" no es un objeto de valor ni un campo de la raíz {nombre_raiz}')
-            for nombre_dato, lugares in sorted(destinos.items()):
-                if len(lugares) > 1:
-                    self.error(f"{d} > guarda", f'"{nombre_dato}" puede ir a más de un destino: {" y ".join(lugares)}')
+            guardados = self.revisar_guarda(guarda, bolsa, propios, f"{d} > guarda", campos_raiz, vos, nombre_raiz)
             if crea:
                 for v in vos.values():
                     if v["cardinalidad"] == "Uno" and v["nombre"] not in guarda:
@@ -474,6 +574,7 @@ class Revisor:
             lectura = m["acceso"] not in ESCRIBEN
 
             # Eventos: exactamente los que el comando dispara en el modelo.
+            bolsas_resultado = {}                         # evento -> (bolsa, guardados, propios) de su resultado
             del_modelo = {ev_por_id[i] for i in m["eventos"]}
             if ("eventos" in c) == ("resultados" in c):
                 self.error(d, "debe tener eventos o resultados (uno de los dos)")
@@ -490,7 +591,15 @@ class Revisor:
                 usados: dict[str, dict[str, set]] = {}
                 for ev, rr in res.items():
                     dr = f"{d} > resultados > {ev}"
-                    rr = self.mapa(rr, dr, ["si", "desde", "a"], ["si"])
+                    rr = self.mapa(rr, dr, ["si", "desde", "a", "valores", "guarda"], ["si"])
+                    # Lo que guarda y fija solo este resultado (además de lo del comando).
+                    bolsa_r, propios_r = dict(bolsa), set(propios)
+                    propios_r |= set(self.revisar_valores(rr.get("valores"), bolsa_r, f"{dr} > valores", todos))
+                    guarda_r = self.lista(rr.get("guarda"), f"{dr} > guarda")
+                    if guarda_r and m["acceso"] not in ESCRIBEN:
+                        self.error(f"{dr} > guarda", f"el comando guarda datos pero en el modelo su acceso a la raíz es de {m['acceso']}")
+                    guardados_r = self.revisar_guarda(guarda_r, bolsa_r, propios_r, f"{dr} > guarda", campos_raiz, vos, nombre_raiz)
+                    bolsas_resultado[ev] = (bolsa_r, {**guardados, **guardados_r}, propios_r)
                     for campo, vals in self.condicion(rr.get("si"), bolsa, f"{dr} > si", propios).items():
                         for otro, vals_otro in usados.get(campo, {}).items():
                             if vals & vals_otro:
@@ -515,16 +624,18 @@ class Revisor:
             for ev in sorted(del_yaml - del_modelo):
                 self.error(d, f'el YAML declara "{ev}" y en el modelo el comando no lo dispara')
 
-            bolsa_ev = dict(bolsa)
-            self.agregar(bolsa_ev, guardados, d)
-            if crea:                       # después de guardar ya hay identidad y estado
-                bolsa_ev.update(base)
-                if estado_t:
-                    bolsa_ev["estado"] = estado_t
             for ev in del_yaml & del_modelo:
-                bolsas_evento.setdefault(ev, []).append((n, bolsa_ev, frozenset(propios)))
-        if not crean:
-            self.error("comandos", f'ningún comando crea la raíz "{nombre_raiz}" (crea: true)')
+                bolsa_e, guardados_e, propios_e = bolsas_resultado.get(ev, (bolsa, guardados, propios))
+                bolsa_ev = dict(bolsa_e)
+                self.agregar(bolsa_ev, guardados_e, d)
+                if crea:                   # después de guardar ya hay identidad y estado
+                    bolsa_ev.update(base)
+                    if estado_t:
+                        bolsa_ev["estado"] = estado_t
+                bolsas_evento.setdefault(ev, []).append((n, bolsa_ev, frozenset(propios_e), self.rc["nombre"]))
+        for nr in self.raices:
+            if nr not in crean_por_raiz:
+                self.error("comandos", f'ningún comando crea la raíz "{nr}" (crea: true o crea: si_no_existe)')
         for sa, info in sorted(sas.items()):
             if not info["usado_por"]:
                 self.error("servicios_sa", f'ningún comando usa "{sa}" (V9-DEC-03)')
@@ -535,11 +646,15 @@ class Revisor:
         datos_evento = {}
         for n in sorted(set(evs_y) & set(evs_m)):
             d = f"eventos > {n}"
+            rc = self.raiz_por_agregado.get(evs_m[n]["agregado_id"])
+            if rc:                                        # el evento lleva la identidad de la raíz de su agregado
+                self.usar(rc)
             e = self.mapa(evs_y[n], d, ["datos", "calculados"], ["datos"])
             datos = self.campos(e.get("datos"), f"{d} > datos")
             calc = self.campos(e.get("calculados"), f"{d} > calculados")
             datos_evento[n] = {**datos, **calc}
-            for cmd, bolsa, propios in bolsas_evento.get(n, []):
+            for cmd, bolsa, propios, nraiz in bolsas_evento.get(n, []):
+                self.usar(self.raices[nraiz])
                 self.pide(bolsa, datos, f"{d} > datos", f'el evento (publicado por "{cmd}")', propios)
                 for k in calc:
                     if k in bolsa:
@@ -552,6 +667,12 @@ class Revisor:
             if ev not in datos_evento or cmd not in entradas_cmd:
                 continue
             d = f'política "{ev}" dispara "{cmd}"'
+            ev_m = next((e for e in ctx["eventos"] if e["nombre"] == ev), None)
+            r_ev = self.raiz_por_agregado.get(ev_m["agregado_id"]) if ev_m else None
+            r_cmd = self.raices.get(entradas_cmd[cmd]["raiz"])
+            if r_ev and r_cmd and r_ev["id_nombre"] != r_cmd["id_nombre"]:
+                self.error(d, f'el evento lleva "{r_ev["id_nombre"]}" y "{cmd}" necesita "{r_cmd["id_nombre"]}": '
+                              "una política entre raíces con distinta identidad todavía no se genera")
             if entradas_cmd[cmd]["crea"]:
                 self.error(d, f'"{cmd}" crea la raíz: un evento no puede dispararlo')
             for k, t in entradas_cmd[cmd]["entrada"].items():
@@ -567,13 +688,30 @@ class Revisor:
         self.cubre("consultas", qs_y, qs_m, "consulta")
         for n in sorted(set(qs_y) & set(qs_m)):
             d = f"consultas > {n}"
-            q = self.mapa(qs_y[n], d, ["entrada", "sobre", "filtro", "salida", "agrega", "calculados"], ["entrada"])
+            q = self.mapa(qs_y[n], d, ["entrada", "sobre", "de", "filtro", "filtro_manual", "salida", "agrega", "lista",
+                                       "calculados"], ["entrada"])
             if "salida" not in q and "calculados" not in q:
                 self.error(d, "debe tener salida o calculados")
+            # La raíz de la consulta: la única que lee, o la que dice "de" (sobre cuál recorre, si lee varias).
+            leidas = [self.raiz_por_id[x["raiz_id"]]["nombre"] for x in qs_m[n]["lee"] if x["raiz_id"] in self.raiz_por_id]
+            if "de" in q:
+                if "sobre" not in q:
+                    self.error(f"{d} > de", "de solo va con sobre: todas")
+                if q["de"] not in leidas:
+                    self.error(f"{d} > de", f'"{q["de"]}" no es una raíz que la consulta lea en el modelo; lee: {", ".join(leidas)}')
+                    continue
+                nombre_q = q["de"]
+            elif len(leidas) == 1:
+                nombre_q = leidas[0]
+            else:
+                self.error(d, f'lee {len(leidas)} raíces ({", ".join(leidas)}): con sobre: todas, di con "de" sobre cuál recorre; '
+                              "una consulta por identidad sobre varias raíces todavía no se genera (G5)")
+                continue
+            con_raiz, todos, *_ = self.usar(self.raices[nombre_q])
             if "sobre" in q:
                 self.revisar_consulta_sobre_todas(q, d, con_raiz)
                 continue
-            for k in ("filtro", "agrega"):
+            for k in ("filtro", "filtro_manual", "agrega", "lista"):
                 if k in q:
                     self.error(d, f"{k} solo va con sobre: todas")
             bolsa = dict(con_raiz)
@@ -602,6 +740,12 @@ class Revisor:
                 self.error(d, f'"{n}" no existe en el modelo como evento de otro contexto')
             elif x.get("de") not in catalogo[n]:
                 self.error(d, f'en el modelo "{n}" es de {", ".join(catalogo[n])}, no de "{x.get("de")}"')
+            # La raíz del evento: la del comando que dispara; si no dispara y hay varias raíces, su identidad se escribe.
+            cmd_d = x.get("dispara")
+            if cmd_d in entradas_cmd:
+                self.usar(self.raices[entradas_cmd[cmd_d]["raiz"]])
+            elif "identidad" not in x and len(self.raices) > 1:
+                self.error(f"{d} > identidad", "el contexto tiene varias raíces: di con qué dato llega el evento (identidad)")
             # identidad: el dato con que llega el evento (por defecto, la identidad de la raíz de este contexto).
             id_ev = x.get("identidad", self.id_nombre)
             if not isinstance(id_ev, str) or not id_ev.strip():
@@ -618,9 +762,9 @@ class Revisor:
                 self.campos(x.get("datos"), f"{d} > datos")
                 continue
             cmd = x.get("dispara")
-            if id_ev != self.id_nombre:
-                self.error(f"{d} > identidad", f'dispara "{cmd}", así que debe llegar con la identidad de la raíz ("{self.id_nombre}"); '
-                                               "disparar con otra identidad todavía no se genera (G3)")
+            otra_identidad = id_ev != self.id_nombre      # G3: la identidad de la raíz sale de los datos, por su nombre
+            if otra_identidad and self.id_nombre not in (x.get("datos") or {}):
+                self.error(f"{d} > datos", f'llega con "{id_ev}" y dispara "{cmd}": debe traer "{self.id_nombre}", la identidad de la raíz')
             if cmd not in entradas_cmd:
                 self.error(d, f'dispara "{cmd}", que no es un comando especificado del contexto')
                 continue
@@ -628,7 +772,11 @@ class Revisor:
                 self.error(d, f'"{cmd}" crea la raíz: un evento de otro contexto no puede dispararlo')
             ent = entradas_cmd[cmd]["entrada"]
             aporta = {}
-            self.agregar(aporta, self.campos(x.get("datos"), f"{d} > datos"), f"{d} > datos")
+            self.agregar(aporta, self.campos(x.get("datos"), f"{d} > datos", permitidos=(self.id_nombre,) if otra_identidad else ()),
+                         f"{d} > datos")
+            if otra_identidad:                            # la identidad del evento también le sirve al comando
+                aporta.pop(self.id_nombre, None)
+                aporta.setdefault(id_ev, tipos.interpretar("string"))
             for k, v in self.mapa(x.get("con"), f"{d} > con").items():
                 if k not in ent:
                     self.error(f"{d} > con", f'"{k}" no está en la entrada de "{cmd}"')
@@ -691,7 +839,17 @@ class Revisor:
                 self.error(f"{d} > filtro", f'"{dato}" no es un dato de la raíz: no hay con qué compararlo')
             elif not mismo_tipo(ent[dato], con_raiz[dato]):
                 self.error(f"{d} > filtro", f'"{dato}" llega como {ent[dato]["tipo"]} y en la raíz es {con_raiz[dato]["tipo"]}')
+        if q.get("filtro_manual", False) not in (True, False):
+            self.error(f"{d} > filtro_manual", "es true o false")
         sal = self.campos(q.get("salida"), f"{d} > salida", libres=True)
+        if "agrega" not in q:
+            # Sin agregaciones, la consulta devuelve una lista: un elemento por raíz, con los datos de la salida.
+            if not isinstance(q.get("lista"), str) or not q["lista"].strip():
+                self.error(d, "sin agrega, la consulta devuelve una lista: di su nombre con lista (por ejemplo, lista: yates disponibles)")
+            self.pide(con_raiz, sal, f"{d} > salida", "un elemento de la lista")
+            return
+        if "lista" in q:
+            self.error(f"{d} > lista", "con agrega la consulta devuelve agregaciones, no una lista")
         agrega = self.mapa(q.get("agrega"), f"{d} > agrega")
         for k in sorted(set(sal) - set(agrega)):
             self.error(f"{d} > agrega", f'falta cómo se calcula "{k}": en una consulta sobre todas, cada dato de la salida es una agregación')
@@ -762,7 +920,9 @@ class Revisor:
                 llamados.add(nombre)
                 dp = f"{dp} ({nombre})"
                 if nombre in entradas_cmd:
-                    tipo, campos = "comando", entradas_cmd[nombre]["entrada"]
+                    tipo, campos = "comando", dict(entradas_cmd[nombre]["entrada"])
+                    if not entradas_cmd[nombre]["crea"]:  # la identidad de su raíz puede ir en con
+                        campos.setdefault(self.raices[entradas_cmd[nombre]["raiz"]]["id_nombre"], tipos.interpretar("string"))
                 elif nombre in qs_y:
                     tipo = "consulta"
                     campos = {k: tipos.interpretar(v) for k, v in ((qs_y[nombre] or {}).get("entrada") or {}).items()}
@@ -808,6 +968,8 @@ class Revisor:
                                 salida_q[k] = tipos.interpretar(v)
                             except tipos.TipoInvalido:
                                 pass
+                        if isinstance(qy.get("lista"), str):     # una lista se compara por cuántos elementos tiene
+                            salida_q = {qy["lista"]: tipos.interpretar("int")}
                         if not esp:
                             self.error(f"{dp} > espera", "di qué datos de la salida se esperan")
                         for k, v in esp.items():

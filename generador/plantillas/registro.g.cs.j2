@@ -18,11 +18,13 @@ public static class Registro
         servicios.AddSingleton<Bitacora>();
         servicios.AddSingleton(s => new BusDeEventos(s.GetRequiredService<Bitacora>(),
             s.GetRequiredService<BusEntreContextos>(), {{ contexto | cadena }}));
+{% for raiz in raices %}
 {% if raiz.consecutivo %}
         servicios.AddSingleton(new Repositorio<{{ raiz.clase }}>({{ raiz.prefijo | cadena }}, {{ raiz.digitos }}));
 {% else %}
         servicios.AddSingleton(new Repositorio<{{ raiz.clase }}>());
 {% endif %}
+{% endfor %}
 {% if memoria %}
         servicios.AddSingleton<MemoriaDeEventos>();
 {% endif %}

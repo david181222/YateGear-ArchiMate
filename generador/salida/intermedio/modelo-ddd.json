@@ -1160,7 +1160,7 @@
                   "enum": null
                 },
                 {
-                  "nombre": "estado",
+                  "nombre": "estado de la fecha",
                   "tipo": "enum Estado de la fecha(bloqueada, apartada, ocupada)",
                   "base": "enum",
                   "lista": false,
@@ -1175,7 +1175,7 @@
                   }
                 },
                 {
-                  "nombre": "arriendo",
+                  "nombre": "número del arriendo",
                   "tipo": "string?",
                   "base": "string",
                   "lista": false,
@@ -1193,6 +1193,14 @@
             "id": "id-d50ced5f46a849f7b744fc977ab040e9",
             "nombre": "Yate",
             "campos": [
+              {
+                "nombre": "propietario",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
               {
                 "nombre": "precio por día",
                 "tipo": "decimal",
@@ -1475,7 +1483,7 @@
           "usado_en": [
             {
               "objeto_id": "id-ada4b300178d4ff6a7a01bc9405f74fb",
-              "campo": "estado"
+              "campo": "estado de la fecha"
             }
           ]
         }

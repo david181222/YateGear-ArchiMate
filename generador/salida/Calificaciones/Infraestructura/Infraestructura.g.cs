@@ -45,6 +45,13 @@ public sealed class Repositorio<T>(string prefijo = "", int digitos = 0) where T
         }
     }
 
+    /// <summary>Una raíz nueva que todavía no se guarda, con su identidad (crea: si_no_existe). Se guarda con Guardar.</summary>
+    public static T ConIdentidad(T raiz, string identidad)
+    {
+        raiz.AsignarIdentidad(identidad);
+        return raiz;
+    }
+
     /// <summary>Todas las raíces, en el orden en que se agregaron.</summary>
     public IReadOnlyList<T> Todas()
     {
@@ -158,7 +165,7 @@ public sealed record RespuestaDeComando(string Identidad, IReadOnlyList<string> 
 /// <summary>Se incumplió una regla del contrato. Responde 422.</summary>
 public sealed class ReglaIncumplida(string regla, string motivo) : Exception($"{regla}: {motivo}")
 {
-    /// <summary>Fuente de la regla, por ejemplo REG-01.</summary>
+    /// <summary>Código de la regla en el modelo o en el contrato.</summary>
     public string Regla { get; } = regla;
 
     /// <summary>Por qué se rechazó.</summary>

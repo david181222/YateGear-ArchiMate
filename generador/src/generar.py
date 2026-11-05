@@ -133,6 +133,12 @@ class Ambito:
     def agregar(self, capa: dict):
         self.capas.append(capa)
 
+    def con(self, capa: dict) -> "Ambito":
+        """Una copia con una capa más, que gana sobre las anteriores."""
+        a = Ambito()
+        a.capas = self.capas + [capa]
+        return a
+
     def buscar(self, nombre: str):
         for capa in reversed(self.capas):
             if nombre in capa:
@@ -232,10 +238,23 @@ class Generador:
 
     # ------------------------------------------------------------ raíz y objetos de valor
     def preparar_raiz(self):
-        ags = self.ctx["agregados"]
-        if len(ags) != 1:
-            raise ErrorDeGeneracion("el piloto genera un contexto con un solo agregado")
-        ag = ags[0]
+        """Prepara cada raíz del contexto (una por agregado, G2). Cada comando, evento, consulta y paso de
+        escenario trabaja con la de su agregado: ver usar_raiz."""
+        self.raices = {}
+        for ag in sorted(self.ctx["agregados"], key=lambda a: a["raiz"]["nombre"]):
+            self.preparar_una_raiz(ag)
+        self.usar_raiz(next(iter(self.raices)))
+
+    def usar_raiz(self, clave: str) -> dict:
+        """Hace de una raíz la actual (por su nombre, su ID o el ID de su agregado) y la devuelve."""
+        x = self.raices.get(clave) or next((v for v in self.raices.values()
+                                            if clave in (v["raiz"]["id"], v["raiz"]["agregado"]["id"])), None)
+        if x is None:
+            raise ErrorDeGeneracion(f'no hay una raíz "{clave}" en el contexto')
+        self.raiz, self.fuentes_raiz, self.tipos_raiz, self.vos = x["raiz"], x["fuentes"], x["tipos"], x["vos"]
+        return self.raiz
+
+    def preparar_una_raiz(self, ag: dict):
         if ag["entidades"]:
             raise ErrorDeGeneracion(f'"{ag["nombre"]}" tiene entidades; el generador todavía no las genera (G9)')
         r = ag["raiz"]
@@ -249,12 +268,13 @@ class Generador:
         raiz = {"id": r["id"], "nombre": r["nombre"], "clase": clase, "var": var, "agregado": ag,
                 "id_nombre": ident["nombre"], "id_prop": nombres.pascal(ident["nombre"]),
                 "consecutivo": "de" not in ident, "prefijo": ident.get("prefijo"), "digitos": ident.get("digitos"),
-                "id_de": list(de), "componentes": [],
+                "id_de": list(de), "componentes": [], "recibida": list(de) == [ident["nombre"]],
+                "repositorio": "repositorio" + clase,
                 "estado_t": estado_t, "estado_clase": cs_tipo(estado_t), "campos": [], "vos": []}
         fuentes = {ident["nombre"]: fuente(f'{var}.{raiz["id_prop"]}', {**tipos.interpretar("string")}),
                    "estado": fuente(f"{var}.Estado", estado_t)}
         for parte, texto in de.items():           # las partes que no son campos: la raíz las guarda
-            if texto is not None:
+            if texto is not None and parte != ident["nombre"]:
                 t = self.tipo(texto, f'identidad de "{r["nombre"]}" (YAML)')
                 comp = {"nombre": parte, "prop": nombres.pascal(parte), "tipo": t, "cs": cs_tipo(t)}
                 raiz["componentes"].append(comp)
@@ -270,7 +290,7 @@ class Generador:
                 decl = f"required {cs_tipo(t)} {prop} {{ get; set; }}"
             raiz["campos"].append({"nombre": c["nombre"], "prop": prop, "tipo_yaml": c["tipo"], "decl": decl})
             fuentes[c["nombre"]] = fuente(f"{var}.{prop}", t)
-        self.vos = {}
+        vos_raiz = {}
         for v in ag["objetos_valor"]:
             vclase = self.tipo_cs_nuevo(nombres.pascal(v["nombre"]), f'objeto de valor "{v["nombre"]}"')
             campos = []
@@ -290,7 +310,7 @@ class Generador:
             vo = {"id": v["id"], "nombre": v["nombre"], "clase": vclase, "prop": prop, "card": card,
                   "comp_id": v["composicion_id"], "campos": campos, "decl": decl}
             raiz["vos"].append(vo)
-            self.vos[v["nombre"]] = vo
+            vos_raiz[v["nombre"]] = vo
             for c in campos:
                 if card == "Uno":
                     fuentes.setdefault(c["nombre"], fuente(f"{var}.{prop}.{c['prop']}", c["tipo"]))
@@ -300,9 +320,13 @@ class Generador:
                         f"{var}.{prop}?.{c['prop']}"))
         self.revisar_miembros(clase, [raiz["id_prop"], "Estado"] + [c["prop"] for c in raiz["componentes"]]
                               + [c["prop"] for c in raiz["campos"]] + [v["prop"] for v in raiz["vos"]])
-        self.raiz, self.fuentes_raiz = raiz, fuentes
-        # Tipo de cada dato de la raíz por su nombre (para valores fijos de los comandos).
-        self.tipos_raiz = {k: f["tipo"] for k, f in fuentes.items()}
+        # Tipo de cada dato de la raíz por su nombre (para valores fijos de los comandos), incluidos los de sus
+        # objetos de valor con Cardinalidad Muchos, que no son fuentes de la raíz.
+        tipos_raiz = {k: f["tipo"] for k, f in fuentes.items()}
+        for vo in raiz["vos"]:
+            for c in vo["campos"]:
+                tipos_raiz.setdefault(c["nombre"], c["tipo"])
+        self.raices[r["nombre"]] = {"raiz": raiz, "fuentes": fuentes, "tipos": tipos_raiz, "vos": vos_raiz}
 
         dom = f"{self.proyecto}/Dominio"
         self.render("raiz.g.cs.j2", f"{dom}/{clase}.g.cs", r=raiz,
@@ -375,13 +399,13 @@ class Generador:
 
     # ------------------------------------------------------------ eventos
     def preparar_eventos(self):
-        r = self.raiz
         self.eventos = {}
         publica = {}
         for c in self.ctx["comandos"]:
             for e in c["eventos"]:
                 publica.setdefault(e, []).append(f'"{c["nombre"]}" ({c["codigo"]})')
         for me in self.ctx["eventos"]:
+            r = self.usar_raiz(me["agregado_id"])      # el evento lleva la identidad de la raíz de su agregado
             se = self.s["eventos"][me["nombre"]]
             clase = self.tipo_cs_nuevo(nombres.pascal(me["nombre"]), f'evento "{me["nombre"]}"')
             datos = self.campos(se.get("datos"), f'datos del evento "{me["nombre"]}" (YAML)')
@@ -389,7 +413,7 @@ class Generador:
             params = [{"cs": "string", "prop": r["id_prop"]}] + datos + calc
             self.revisar_miembros(clase, [p["prop"] for p in params] + ["NombreEnElModelo", "Identidad"])
             ev = {"id": me["id"], "nombre": me["nombre"], "clase": clase, "datos": datos, "calculados": calc,
-                  "parametros": params, "publicado_por": ", ".join(publica.get(me["id"], []))}
+                  "parametros": params, "publicado_por": ", ".join(publica.get(me["id"], [])), "raiz": r["nombre"]}
             self.eventos[me["nombre"]] = ev
             archivo = f"{self.proyecto}/Eventos/{clase}.g.cs"
             self.render("evento.g.cs.j2", archivo, e=ev, raiz=r,
@@ -398,15 +422,17 @@ class Generador:
 
     # ------------------------------------------------------------ comandos
     def preparar_comandos(self):
-        r, v = self.raiz, self.raiz["var"]
         self.comandos = []
         ev_por_id = {e["id"]: e["nombre"] for e in self.ctx["eventos"]}
         for mc in self.ctx["comandos"]:
+            r = self.usar_raiz(mc["raiz_id"])          # la raíz del agregado del comando (G2)
+            v = r["var"]
             sc = self.s["comandos"][mc["nombre"]]
             clase = nombres.pascal(mc["nombre"])
             n = {k: self.tipo_cs_nuevo(x, f'comando "{mc["nombre"]}"') for k, x in
                  {"clase": clase, "datos": f"{clase}Datos", "manejador": f"{clase}Manejador"}.items()}
-            crea = sc.get("crea", False)
+            crea = sc.get("crea") is True
+            si_no_existe = sc.get("crea") == "si_no_existe"   # carga la raíz y, si no existe, la crea vacía
 
             def estado(nombre_estado):                # literal de C# de un estado de la raíz
                 return f'{r["estado_clase"]}.{nombres.pascal(nombre_estado)}'
@@ -482,30 +508,26 @@ class Generador:
                 eventos_cmd = list(sc.get("eventos") or [])
             self.revisar_miembros(n["datos"], [p["prop"] for p in datos_props])
 
-            # Lo que guarda (después de ValidarReglas).
-            asignaciones = []
+            # Lo que guarda (después de ValidarReglas): el comando y, si tiene resultados, cada resultado.
+            asignaciones, operaciones = self.guardar(sc.get("guarda"), antes, r)
             if crea:
-                asignaciones.append({"prop": "Estado", "expr": f'{r["estado_clase"]}.{nombres.pascal(sc["a"])}'})
-            for g in sc.get("guarda") or []:
-                if isinstance(g, dict):                # {campo de la raíz: dato}
-                    campo, dato = next(iter(g.items()))
-                    c = next(x for x in r["campos"] if x["nombre"] == campo)
-                    asignaciones.append({"prop": c["prop"], "expr": antes.expr(dato, tipos.interpretar(c["tipo_yaml"])["opcional"])})
-                elif g in self.vos:
-                    vo = self.vos[g]
-                    args = []
-                    for c in vo["campos"]:
-                        args.append(antes.expr(c["nombre"], c["tipo"]["opcional"]) if antes.buscar(c["nombre"]) else "null")
-                    asignaciones.append({"prop": vo["prop"], "expr": f'new {vo["clase"]}({", ".join(args)})'})
-                else:
-                    c = next(x for x in r["campos"] if x["nombre"] == g)
-                    t = tipos.interpretar(c["tipo_yaml"])
-                    asignaciones.append({"prop": c["prop"], "expr": antes.expr(g, t["opcional"])})
+                asignaciones.insert(0, {"prop": "Estado", "expr": f'{r["estado_clase"]}.{nombres.pascal(sc["a"])}'})
+            capas_val_r = {}
+            for x in resultados:
+                rr = sc["resultados"][x["evento"]]
+                capas_val_r[x["evento"]] = {k: fuente(cs_literal(val, self.tipos_raiz[k]), self.tipos_raiz[k])
+                                            for k, val in (rr.get("valores") or {}).items()}
+                x["asignaciones"], x["operaciones"] = self.guardar(rr.get("guarda"), antes.con(capas_val_r[x["evento"]]), r)
 
             # Identidad formada con datos (G3): sus partes que no son campos se guardan en la raíz, y la identidad
             # se arma uniéndolas con "/". Al agregarla, el repositorio responde 409 si ya existe.
-            identidad_expr = None
+            identidad_expr, partes_obligatorias = None, []
             if crea and not r["consecutivo"]:
+                # Las partes de texto que llegan en la entrada no pueden faltar (si no, la identidad quedaría a medias).
+                for parte in r["id_de"]:
+                    f_parte = antes.buscar(parte)
+                    if f_parte and f_parte["tipo"]["base"] == "string" and f_parte["requerido"].startswith("comando."):
+                        partes_obligatorias.append({"expr": f_parte["requerido"], "nombre": cs_cadena(parte)})
                 for comp in r["componentes"]:
                     asignaciones.append({"prop": comp["prop"], "expr": antes.expr(comp["nombre"], False)})
                 partes = []
@@ -528,8 +550,9 @@ class Generador:
             publicar = {}
             for nombre_ev in eventos_cmd:
                 ev = self.eventos[nombre_ev]
+                amb_ev = despues.con(capas_val_r.get(nombre_ev, {}))     # con los valores de su resultado
                 args = [f'{v}.{r["id_prop"]}']
-                args += [despues.expr(d["nombre"], d["tipo"]["opcional"]) for d in ev["datos"]]
+                args += [amb_ev.expr(d["nombre"], d["tipo"]["opcional"]) for d in ev["datos"]]
                 for k in ev["calculados"]:
                     if k["prop"] not in vistos:
                         vistos.add(k["prop"])
@@ -551,14 +574,17 @@ class Generador:
                    "dependencias": [{"cs": f'Repositorio<{r["clase"]}>', "var": "repositorio"},
                                     {"cs": "BusDeEventos", "var": "bus"}] + deps,
                    "llamadas": llamadas, "resultados": resultados, "enum_resultado": enum_res,
-                   "requeridos": requeridos, "identidad_expr": identidad_expr,
+                   "requeridos": requeridos, "identidad_expr": identidad_expr, "operaciones": operaciones,
+                   "raiz_nombre": r["nombre"], "si_no_existe": si_no_existe,
+                   "id_cadena": cs_cadena(r["id_nombre"]), "partes_obligatorias": partes_obligatorias, "estado_inicial": estado(self.raiz["estado_t"]["enum"]["valores"][0]),
+                   "resultados_con_guarda": [x for x in resultados if x["asignaciones"] or x["operaciones"]],
                    "operacion": cs_cadena(mc["nombre"]),
                    "desde": [] if crea else [estado(x) for x in sc.get("desde") or []],
                    "a": estado(sc["a"]) if sc.get("a") and not crea else None,
                    "resultados_con_desde": [x for x in resultados if x["desde"]],
                    "resultados_con_a": [x for x in resultados if x["a"]],
                    "sin_resultado": cs_cadena(f'Ningún resultado de "{mc["nombre"]}" se cumple con estos datos.'),
-                   "escribe": crea or mc["acceso"] in ("escritura", "lectura y escritura"),
+                   "escribe": crea or si_no_existe or mc["acceso"] in ("escritura", "lectura y escritura"),
                    "asignaciones": asignaciones, "eventos": [publicar[e] for e in eventos_cmd],
                    "calculados": calculados, "contrato": k, "servicio_negocio": mc["servicio_negocio"],
                    "reglas": lineas(k["reglas"]) if k["reglas"] else ["El contrato no tiene reglas."],
@@ -582,12 +608,54 @@ class Generador:
             self.traza_de(k["id"], "Contract", k["nombre"], com["archivo"], n["manejador"])
             self.traza_de(k["id"], "Contract", k["nombre"], com["manual"], f'{n["manejador"]}.ValidarReglas (manual)')
 
+    def guardar(self, guarda, amb: Ambito, r: dict) -> tuple[list[dict], list[str]]:
+        """Lo que escribe en la raíz (YAML: guarda). Devuelve las asignaciones (propiedad = expresión) y las
+        operaciones sobre listas (sentencias de C#) de los objetos de valor con Cardinalidad Muchos (G4)."""
+        asignaciones, operaciones = [], []
+        v = r["var"]
+
+        def nuevo(vo):
+            args = [amb.expr(c["nombre"], c["tipo"]["opcional"]) if amb.buscar(c["nombre"]) else "null" for c in vo["campos"]]
+            return f'new {vo["clase"]}({", ".join(args)})'
+
+        for g in guarda or []:
+            if isinstance(g, dict) and next(iter(g)) in self.vos:      # operación sobre una lista
+                nombre_vo, op = next(iter(g.items()))
+                vo = self.vos[nombre_vo]
+                lista = f'{v}.{vo["prop"]}'
+                if op == "agregar":
+                    operaciones.append(f"{lista}.Add({nuevo(vo)});")
+                    continue
+                tipo_op, claves = next(iter(op.items()))
+                props = {c["nombre"]: c["prop"] for c in vo["campos"]}
+                pred = " && ".join(f'e.{props[k]} == {amb.expr(k, True)}' for k in claves)
+                if tipo_op == "quitar":                  # no falla si ya no estaba
+                    operaciones.append(f"{lista}.RemoveAll(e => {pred});")
+                else:                                    # reemplazar: 404 si no hay ninguno con esa clave
+                    falta = cs_cadena(f'No hay un "{nombre_vo}" con ese {" y ".join(claves)}.')
+                    operaciones.append(f"if ({lista}.RemoveAll(e => {pred}) == 0) throw new NoEncontrado({falta});")
+                    operaciones.append(f"{lista}.Add({nuevo(vo)});")
+            elif isinstance(g, dict):                    # {campo de la raíz: dato}
+                campo, dato = next(iter(g.items()))
+                c = next(x for x in r["campos"] if x["nombre"] == campo)
+                asignaciones.append({"prop": c["prop"], "expr": amb.expr(dato, tipos.interpretar(c["tipo_yaml"])["opcional"])})
+            elif g in self.vos:
+                vo = self.vos[g]
+                asignaciones.append({"prop": vo["prop"], "expr": nuevo(vo)})
+            else:
+                c = next(x for x in r["campos"] if x["nombre"] == g)
+                asignaciones.append({"prop": c["prop"], "expr": amb.expr(g, tipos.interpretar(c["tipo_yaml"])["opcional"])})
+        return asignaciones, operaciones
+
     # ------------------------------------------------------------ consultas
     def preparar_consultas(self):
-        r, v = self.raiz, self.raiz["var"]
         self.consultas = []
         for mq in self.ctx["consultas"]:
             sq = self.s["consultas"][mq["nombre"]]
+            # La raíz de la consulta: la que dice "de" o la única que lee (G2). Las demás que lee van en datos.
+            leidas = [self.usar_raiz(x["raiz_id"])["nombre"] for x in mq["lee"]]
+            r = self.usar_raiz(sq.get("de") or leidas[0])
+            otras = [self.raices[x]["raiz"] for x in dict.fromkeys(leidas) if x != r["nombre"]]
             clase = nombres.pascal(mq["nombre"])
             n = {k: self.tipo_cs_nuevo(x, f'consulta "{mq["nombre"]}"') for k, x in
                  {"clase": clase, "salida": f"{clase}Salida", "datos": f"{clase}Datos", "manejador": f"{clase}Manejador"}.items()}
@@ -598,8 +666,21 @@ class Generador:
             amb = Ambito()
             amb.agregar(dict(self.fuentes_raiz))
             amb.agregar({c["nombre"]: fuente(f'consulta.{c["prop"]}', c["tipo"]) for c in ent})
-            salida, filtro = [], []
-            if todas:
+            salida, filtro, elemento = [], [], None
+            lista = todas and "agrega" not in sq          # sin agregaciones devuelve una lista (G5)
+            if lista:
+                ent_por_nombre = {c["nombre"]: c for c in ent}
+                for dato in sq.get("filtro") or []:
+                    filtro.append(f'{self.fuentes_raiz[dato]["opcional"]} == consulta.{ent_por_nombre[dato]["prop"]}')
+                elemento = self.tipo_cs_nuevo(f"{clase}Elemento", f'consulta "{mq["nombre"]}"')
+                campos_el = [{**c, "expr": self.fuentes_raiz[c["nombre"]]["requerido"]}
+                             for c in self.campos(sq.get("salida"), f'salida de "{mq["nombre"]}" (YAML)')]
+                self.revisar_miembros(elemento, [c["prop"] for c in campos_el])
+                prop_lista = nombres.pascal(sq["lista"])
+                salida.append({"nombre": sq["lista"], "prop": prop_lista, "cs": f"List<{elemento}>",
+                               "tipo": {"base": "lista", "lista": True, "opcional": False, "enum": None, "tipo": "lista"},
+                               "expr": f"elementos"})
+            elif todas:
                 # Filtro: igualdad entre el dato de la raíz y el de la entrada con el mismo nombre.
                 ent_por_nombre = {c["nombre"]: c for c in ent}
                 for dato in sq.get("filtro") or []:
@@ -624,7 +705,9 @@ class Generador:
                  "salida_campos": salida, "calculados": calculados, "contrato": k, "servicio_negocio": mq["servicio_negocio"],
                  "reglas": lineas(k["reglas"]) if k["reglas"] else ["El contrato no tiene reglas."],
                  "salida_contrato": lineas(k["salida"]),
-                 "todas": todas, "filtro": " && ".join(filtro) or "true",
+                 "todas": todas, "filtro": " && ".join(filtro) or "true", "lista": lista, "elemento": elemento,
+                 "elemento_campos": campos_el if lista else [], "filtro_manual": bool(sq.get("filtro_manual")),
+                 "otras": otras, "raiz_nombre": r["nombre"],
                  "ruta": f'{self.ruta_base}/consultas/{nombres.ruta(mq["nombre"])}' + ("" if todas else f"/{{{id_param}}}"),
                  "ruta_prueba": f'/consultas/{nombres.ruta(mq["nombre"])}',
                  "lambda_params": ", ".join(lambda_params), "args": ", ".join(args),
@@ -633,13 +716,15 @@ class Generador:
             self.consultas.append(q)
             cab = self.cabecera("ApplicationService", mq["nombre"], mq["id"], mq["codigo"])
             self.render("consulta.g.cs.j2", q["archivo"], q=q, raiz=r, cabecera=cab)
-            self.render("consulta_manual.cs.j2", q["manual"], manual=True, q=q, cabecera=cab)
+            self.render("consulta_manual.cs.j2", q["manual"], manual=True, q=q, raiz=r, cabecera=cab)
             for x in ("clase", "salida", "datos", "manejador"):
                 self.traza_de(mq["id"], "ApplicationService", mq["nombre"], q["archivo"], n[x])
             self.traza_de(mq["id"], "ApplicationService", mq["nombre"], q["manual"], f'{n["manejador"]} (manual)')
             self.traza_de(mq["id"], "ApplicationService", mq["nombre"], f"{self.proyecto}/Registro.g.cs", f'GET {q["ruta"]}')
             for lee in mq["lee"]:
-                self.traza_de(lee["acceso_id"], "Access", f'{mq["nombre"]} -> {r["nombre"]} (lectura)', q["archivo"], n["manejador"])
+                leida = self.usar_raiz(lee["raiz_id"])["nombre"]
+                self.traza_de(lee["acceso_id"], "Access", f'{mq["nombre"]} -> {leida} (lectura)', q["archivo"], n["manejador"])
+            self.usar_raiz(r["nombre"])
             self.traza_de(mq["servicio_negocio"]["id"], "BusinessService", mq["servicio_negocio"]["nombre"], q["archivo"], n["manejador"])
             self.traza_de(k["id"], "Contract", k["nombre"], q["archivo"], n["manejador"])
             self.traza_de(k["id"], "Contract", k["nombre"], q["manual"], f'{n["manejador"]}.ValidarReglas (manual)')
@@ -660,12 +745,12 @@ class Generador:
 
     # ------------------------------------------------------------ políticas
     def preparar_politicas(self):
-        r = self.raiz
         ev_por_id = {e["id"]: e["nombre"] for e in self.ctx["eventos"]}
         cmd_por_id = {c["id"]: c for c in self.comandos}
         self.politicas = []
         for p in self.ctx["politicas"]:
             ev = self.eventos[ev_por_id[p["evento_id"]]]
+            r = self.usar_raiz(ev["raiz"])
             cmd = cmd_por_id[p["comando_id"]]
             props_ev = {d["nombre"]: d for d in ev["datos"] + ev["calculados"]}
             args = [f'e.{r["id_prop"]}']
@@ -685,7 +770,6 @@ class Generador:
 
     # ------------------------------------------------------------ eventos de otros contextos (capa 3)
     def preparar_eventos_externos(self):
-        r = self.raiz
         catalogo = {(o["nombre"], e["nombre"]): e["id"] for o in self.ctx["otros_contextos"] for e in o["eventos"]}
         cmd_por_nombre = {c["nombre"]: c for c in self.comandos}
         ext = self.s.get("eventos_de_otros_contextos") or {}
@@ -694,6 +778,8 @@ class Generador:
         self.externos, manejadores = [], {}
         for nombre in sorted(ext):
             se = ext[nombre]
+            # La raíz del evento: la del comando que dispara (G2). Sin dispara, la identidad se escribe en el YAML.
+            r = self.usar_raiz(cmd_por_nombre[se["dispara"]]["raiz_nombre"]) if "dispara" in se else self.raiz
             clase = self.tipo_cs_nuevo(clases[nombre], f'evento de otro contexto "{nombre}"')
             datos = self.campos(se.get("datos"), f'datos de "{nombre}" (YAML)')
             # El evento llega con su identidad (YAML: identidad; por defecto, la de la raíz de este contexto).
@@ -720,7 +806,10 @@ class Generador:
             fuentes_ev = [(nombres.camel(g) if junto else "evento", {k: tipos.interpretar(t) for k, t in (ext[g].get("datos") or {}).items()})
                           for g in (grupo if junto else [nombre])]
             con = se.get("con") or {}
-            args = [f'evento.{id_prop}']
+            # La identidad de la raíz: la del evento, o (si llega con otra, G3) el dato de la raíz por su nombre.
+            id_raiz = f'evento.{id_prop}' if id_nombre == r["id_nombre"] else f'evento.{r["id_prop"]}'
+            args = [id_raiz]
+            fuentes_ev = [(var, {**d, id_nombre: tipos.interpretar("string")}) for var, d in fuentes_ev]
             for c in cmd["entrada_campos"]:
                 if c["nombre"] in con:
                     args.append(cs_literal(con[c["nombre"]], c["tipo"]))
@@ -759,18 +848,18 @@ class Generador:
     def preparar_escenarios(self) -> list[dict]:
         """Cada escenario del YAML, con la llamada HTTP de cada paso, su identidad y lo esperado (de "espera").
 
-        La identidad de cada paso: un comando que crea la raíz la recibe (el siguiente consecutivo, que una
-        solicitud rechazada no gasta, o la que se forma con sus datos); los demás pasos usan la de la última
-        raíz creada en el escenario. Un evento de otro contexto con su propia identidad la toma de con.
+        Cada paso trabaja con la raíz de su comando, consulta o evento (G2). Su identidad: un comando que crea la
+        raíz la recibe (el siguiente consecutivo de esa raíz, que una solicitud rechazada no gasta, o la que se
+        forma con sus datos); los demás pasos la toman de con, o si no, de la última identidad con el mismo nombre
+        de dato en el escenario (regla de los datos: el calendario de un yate tiene la identidad del yate). Un
+        evento de otro contexto con su propia identidad la toma de con.
         """
-        r = self.raiz
         cmd = {c["nombre"]: c for c in self.comandos}
         qs = {q["nombre"]: q for q in self.consultas}
         ext = {x["nombre"]: x for x in self.externos}
-        id_json = nombres.camel(r["id_nombre"])
-        escenarios, contador = [], 0
+        escenarios, contador = [], {}
         for nombre_e, pasos in self.s["escenarios"].items():
-            actual, primera, lista = None, None, []
+            actual, primera, lista = {}, None, []
             for i, paso in enumerate(pasos, 1):
                 nombre, op = (paso, {}) if isinstance(paso, str) else next(iter(paso.items()))
                 op = op or {}
@@ -778,14 +867,23 @@ class Generador:
                 esp = op.get("espera")
                 rechazo = isinstance(esp, int)
 
-                def cuerpo(campos, identidad=None, nombre_id=id_json):
+                def cuerpo(campos, identidad=None, nombre_id=None):
                     b = {nombre_id: identidad} if identidad is not None else {}
                     for c in campos:
                         v = con[c["nombre"]] if c["nombre"] in con else None
                         b[nombres.camel(c["nombre"])] = valor_json(v, c["tipo"]) if c["nombre"] in con else ejemplo(c["nombre"], c["tipo"])
                     return b
 
-                ident = actual
+                if nombre in cmd:
+                    raiz_paso = cmd[nombre]["raiz_nombre"]
+                elif nombre in qs:
+                    raiz_paso = qs[nombre]["raiz_nombre"]
+                else:
+                    raiz_paso = cmd[ext[nombre]["comando"]]["raiz_nombre"] if ext[nombre]["comando"] else None
+                r = self.usar_raiz(raiz_paso) if raiz_paso else None
+                id_json = nombres.camel(r["id_nombre"]) if r else None
+                previa = (con.get(r["id_nombre"]) or actual.get(r["id_nombre"])) if r else None
+                ident = previa
                 if nombre in cmd:
                     c = cmd[nombre]
                     tipo, metodo, ruta = "comando", "POST", c["ruta"].removeprefix(self.ruta_base)
@@ -793,13 +891,14 @@ class Generador:
                     if crea:
                         datos = cuerpo(c["entrada_campos"])
                         if r["consecutivo"]:
-                            ident = None if rechazo else r["prefijo"] + str(contador + 1).zfill(r["digitos"])
-                            contador += 0 if rechazo else 1
+                            n_sig = contador.get(raiz_paso, 0) + 1
+                            ident = None if rechazo else r["prefijo"] + str(n_sig).zfill(r["digitos"])
+                            contador[raiz_paso] = n_sig - (1 if rechazo else 0)
                         else:
                             valores = {**{k: valor_json(v, self.tipos_raiz[k]) for k, v in (c["spec"].get("valores") or {}).items()},
                                        **{e["nombre"]: datos[nombres.camel(e["nombre"])] for e in c["entrada_campos"]}}
                             for g in c["spec"].get("guarda") or []:     # {campo: dato}: el campo vale lo que el dato
-                                if isinstance(g, dict):
+                                if isinstance(g, dict) and isinstance(next(iter(g.values())), str):
                                     campo, dato = next(iter(g.items()))
                                     if dato in valores:
                                         valores.setdefault(campo, valores[dato])
@@ -811,14 +910,15 @@ class Generador:
                                     f'(sale de un evento o de un servicio SA); los escenarios solo calculan la identidad con esos dos')
                             ident = "/".join(str(valores[parte]) for parte in r["id_de"])
                         if not rechazo:
-                            actual = ident
                             primera = primera or ident
                     else:
-                        datos = cuerpo(c["entrada_campos"], actual)
+                        datos = cuerpo(c["entrada_campos"], ident, id_json)
                 elif nombre in qs:
                     q = qs[nombre]
                     tipo, metodo, crea, datos = "consulta", "GET", False, None
-                    ruta = q["ruta_prueba"] if q["todas"] else f'{q["ruta_prueba"]}/{actual}'
+                    ruta = q["ruta_prueba"] if q["todas"] else f'{q["ruta_prueba"]}/{ident}'
+                    if q["todas"]:
+                        ident = None
                     extra = cuerpo(q["entrada_campos"])
                     if extra:
                         ruta += "?" + "&".join(f"{a}={b}" for a, b in extra.items())
@@ -826,24 +926,32 @@ class Generador:
                     x = ext[nombre]
                     tipo, metodo, crea = "evento de otro contexto", "POST", False
                     ruta = x["ruta"].removeprefix(self.ruta_base)
-                    if x["id_nombre"] == r["id_nombre"]:
-                        datos = cuerpo(x["datos_campos"], actual)
+                    if r and x["id_nombre"] == r["id_nombre"]:
+                        datos = cuerpo(x["datos_campos"], ident, id_json)
                     else:                               # el evento llega con su propia identidad: sale de con
                         id_ev = con.get(x["id_nombre"], ejemplo(x["id_nombre"], tipos.interpretar("string")))
                         datos = cuerpo(x["datos_campos"], id_ev, nombres.camel(x["id_nombre"]))
+                        if r:                           # la identidad de la raíz va en sus datos (G3)
+                            if r["id_nombre"] not in con and previa:
+                                datos[id_json] = previa
+                            ident = datos.get(id_json)
+                        else:
+                            ident = None
+                if r and ident and not rechazo:
+                    actual[r["id_nombre"]] = ident
                 if esp is None:
                     espera = {"tipo": "exito", "texto": "HTTP 2xx"}
                 elif rechazo:
                     espera = {"tipo": "codigo", "valor": esp, "texto": f"HTTP {esp}"}
                 elif isinstance(esp, str):
                     espera = {"tipo": "evento", "valor": esp, "texto": f'HTTP 2xx y el evento "{esp}"'}
-                else:                                   # {dato de la salida: valor, ...}
+                else:                                   # {dato de la salida: valor, ...}; en una lista, su número
                     tipos_salida = {s["nombre"]: s["tipo"] for s in qs[nombre]["salida_campos"]}
                     espera = {"tipo": "salida", "valores": {nombres.camel(k): valor_json(v, tipos_salida[k]) for k, v in esp.items()},
                               "texto": "HTTP 2xx y " + ", ".join(f'{k} = {v}' for k, v in esp.items())}
                 lista.append({"numero": i, "nombre": nombre, "tipo": tipo, "crea": crea, "identidad": ident,
                               "metodo": metodo, "ruta": ruta, "cuerpo": datos, "espera": espera})
-            escenarios.append({"nombre": nombre_e, "identidad": primera or actual or "", "pasos": lista})
+            escenarios.append({"nombre": nombre_e, "identidad": primera or "", "pasos": lista})
         return escenarios
 
     def pruebas_de_escenarios(self, escenarios: list[dict]) -> list[dict]:
@@ -935,7 +1043,8 @@ class Generador:
         self.render("enums.g.cs.j2", f"{p}/Dominio/Enums.g.cs", enums=enums, cabecera=cab_ctx)
         self.render("infraestructura.g.cs.j2", f"{p}/Infraestructura/Infraestructura.g.cs", cabecera=cab_ctx)
         self.render("politicas.g.cs.j2", f"{p}/Politicas/Politicas.g.cs", politicas=self.politicas, cabecera=cab_ctx)
-        self.render("registro.g.cs.j2", f"{p}/Registro.g.cs", cabecera=cab_ctx, contexto=ctx["nombre"], raiz=r,
+        self.render("registro.g.cs.j2", f"{p}/Registro.g.cs", cabecera=cab_ctx, contexto=ctx["nombre"],
+                    raices=[x["raiz"] for x in self.raices.values()],
                     sas=list(self.sas.values()), comandos=self.comandos, consultas=self.consultas,
                     externos=self.externos, ruta_base=self.ruta_base,
                     memoria=any(c["requeridos"] for c in self.comandos))
@@ -950,9 +1059,10 @@ class Generador:
             self.traza_de(ctx["id"], "ApplicationComponent", ctx["nombre"], self.escenarios_json, "")
         else:
             escenarios, pruebas = [], self.preparar_pruebas()
+        consecutivas = [x["raiz"] for x in self.raices.values() if x["raiz"]["consecutivo"]]
         self.render("pruebas.http.j2", f"{self.pruebas}/pruebas.http", cabecera=cab_ctx, ruta_base=self.ruta_base,
                     pruebas=pruebas, con_escenarios=bool(escenarios),
-                    primero=r["prefijo"] + "1".zfill(r["digitos"]) if r["consecutivo"] else "")
+                    primero=consecutivas[0]["prefijo"] + "1".zfill(consecutivas[0]["digitos"]) if consecutivas else "")
         for archivo, clase in [(f"{p}/{p}.csproj", ""), (f"{p}/Registro.g.cs", "Registro"),
                                (f"{p}/Infraestructura/Infraestructura.g.cs", "infraestructura"),
                                (f"{p}/Dominio/Enums.g.cs", "enums"), (f"{self.pruebas}/pruebas.http", "")]:

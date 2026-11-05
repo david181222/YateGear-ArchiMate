@@ -1,0 +1,216 @@
+# Generado desde ArchiMate: ApplicationComponent "Contexto Disponibilidad de yates" (id-0d93d731f6fd4b21acbf20d3cb28cf6f).
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
+# "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
+# y revisa solo; aquí se pueden ejecutar uno por uno.
+# Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
+# de empezar para que la primera raíz sea YATE-0001. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+
+@base = http://localhost:5080/disponibilidad-de-yates
+
+# ==============================================================================
+# Escenario 1: Registro y ocupación (YATE-0001)
+# ==============================================================================
+
+### Registro y ocupación · paso 1: Registrar yate en el inventario
+# Comando. Espera: HTTP 2xx y el evento "Yate registrado".
+POST {{base}}/comandos/registrar-yate-en-el-inventario
+Content-Type: application/json
+
+{
+  "propietario": "PROP-0001",
+  "identificadorDeLaMarina": "MAR-01",
+  "nombre": "nombre",
+  "matricula": "matrícula",
+  "capacidad": 1,
+  "precioPorDia": 100,
+  "documentosAlDiaAnteLaDIMAR": true
+}
+
+### Registro y ocupación · paso 2: Definir las fechas bloqueadas del yate
+# Comando. Espera: HTTP 2xx y el evento "Fechas bloqueadas".
+POST {{base}}/comandos/definir-las-fechas-bloqueadas-del-yate
+Content-Type: application/json
+
+{
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-03-01",
+  "fin": "2026-03-05",
+  "accion": "Bloquear"
+}
+
+### Registro y ocupación · paso 3: Reserva solicitada
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Fechas apartadas".
+POST {{base}}/eventos-externos/reserva-solicitada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-03-10",
+  "fin": "2026-03-12"
+}
+
+### Registro y ocupación · paso 4: Consultar yates disponibles
+# Consulta. Espera: HTTP 2xx y yates disponibles = 0.
+GET {{base}}/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-11&fin=2026-03-15
+
+### Registro y ocupación · paso 5: Consultar yates disponibles
+# Consulta. Espera: HTTP 2xx y yates disponibles = 1.
+GET {{base}}/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-20&fin=2026-03-22
+
+### Registro y ocupación · paso 6: Reserva confirmada
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Fechas ocupadas".
+POST {{base}}/eventos-externos/reserva-confirmada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-03-10",
+  "fin": "2026-03-12"
+}
+
+### Registro y ocupación · paso 7: Definir las fechas bloqueadas del yate
+# Comando. Espera: HTTP 422.
+POST {{base}}/comandos/definir-las-fechas-bloqueadas-del-yate
+Content-Type: application/json
+
+{
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-03-11",
+  "fin": "2026-03-11",
+  "accion": "Bloquear"
+}
+
+### Registro y ocupación · paso 8: Reserva solicitada
+# Evento de otro contexto. Espera: HTTP 422.
+POST {{base}}/eventos-externos/reserva-solicitada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-03-12",
+  "fin": "2026-03-14"
+}
+
+### Registro y ocupación · paso 9: Reserva cancelada
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Fechas liberadas".
+POST {{base}}/eventos-externos/reserva-cancelada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-03-10",
+  "fin": "2026-03-12"
+}
+
+### Registro y ocupación · paso 10: Consultar yates disponibles
+# Consulta. Espera: HTTP 2xx y yates disponibles = 1.
+GET {{base}}/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-11&fin=2026-03-15
+
+### Registro y ocupación · paso 11: Definir las fechas bloqueadas del yate
+# Comando. Espera: HTTP 2xx y el evento "Fechas desbloqueadas".
+POST {{base}}/comandos/definir-las-fechas-bloqueadas-del-yate
+Content-Type: application/json
+
+{
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-03-01",
+  "fin": "2026-03-05",
+  "accion": "Desbloquear"
+}
+
+# ==============================================================================
+# Escenario 2: Registro rechazado ()
+# ==============================================================================
+
+### Registro rechazado · paso 1: Registrar yate en el inventario
+# Comando. Espera: HTTP 422.
+POST {{base}}/comandos/registrar-yate-en-el-inventario
+Content-Type: application/json
+
+{
+  "propietario": "PROP-SIN-CONTRATO",
+  "identificadorDeLaMarina": "identificador de la marina",
+  "nombre": "nombre",
+  "matricula": "matrícula",
+  "capacidad": 1,
+  "precioPorDia": 100,
+  "documentosAlDiaAnteLaDIMAR": true
+}
+
+### Registro rechazado · paso 2: Registrar yate en el inventario
+# Comando. Espera: HTTP 422.
+POST {{base}}/comandos/registrar-yate-en-el-inventario
+Content-Type: application/json
+
+{
+  "propietario": "PROP-0002",
+  "identificadorDeLaMarina": "identificador de la marina",
+  "nombre": "nombre",
+  "matricula": "matrícula",
+  "capacidad": 1,
+  "precioPorDia": 100,
+  "documentosAlDiaAnteLaDIMAR": false
+}
+
+# ==============================================================================
+# Escenario 3: Otra marina (YATE-0002)
+# ==============================================================================
+
+### Otra marina · paso 1: Registrar yate en el inventario
+# Comando. Espera: HTTP 2xx y el evento "Yate registrado".
+POST {{base}}/comandos/registrar-yate-en-el-inventario
+Content-Type: application/json
+
+{
+  "propietario": "PROP-0003",
+  "identificadorDeLaMarina": "MAR-02",
+  "nombre": "nombre",
+  "matricula": "matrícula",
+  "capacidad": 1,
+  "precioPorDia": 100,
+  "documentosAlDiaAnteLaDIMAR": true
+}
+
+### Otra marina · paso 2: Consultar yates disponibles
+# Consulta. Espera: HTTP 2xx y yates disponibles = 1.
+GET {{base}}/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-02&inicio=2026-03-11&fin=2026-03-15
+
+### Otra marina · paso 3: Reserva confirmada
+# Evento de otro contexto. Espera: HTTP 404.
+POST {{base}}/eventos-externos/reserva-confirmada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0003",
+  "identificadorDelYate": "YATE-0002",
+  "inicio": "2026-04-01",
+  "fin": "2026-04-02"
+}
+
+### Otra marina · paso 4: Reserva solicitada
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Fechas apartadas".
+POST {{base}}/eventos-externos/reserva-solicitada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0004",
+  "identificadorDelYate": "YATE-0002",
+  "inicio": "2026-04-10",
+  "fin": "2026-04-12"
+}
+
+### Otra marina · paso 5: Arriendo no realizado por riesgo alto
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Fechas liberadas".
+POST {{base}}/eventos-externos/arriendo-no-realizado-por-riesgo-alto
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0004",
+  "identificadorDelYate": "YATE-0002",
+  "inicio": "2026-04-10",
+  "fin": "2026-04-12"
+}

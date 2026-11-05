@@ -45,6 +45,7 @@ public sealed partial class ObtenerElNivelDeRiesgoDelClienteManejador(
     /// <summary>Ejecuta el comando.</summary>
     public RespuestaDeComando Manejar(ObtenerElNivelDeRiesgoDelCliente comando)
     {
+        if (string.IsNullOrEmpty(comando.NumeroDelArriendo)) throw new DatoFaltante("número del arriendo");
         // 1. Cargar la raíz.
         var arriendo = repositorio.Obtener(comando.NumeroDelArriendo)
             ?? throw new NoEncontrado($"No existe arriendo {comando.NumeroDelArriendo}.");

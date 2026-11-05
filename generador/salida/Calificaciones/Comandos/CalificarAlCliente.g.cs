@@ -35,6 +35,7 @@ public sealed partial class CalificarAlClienteManejador(
     /// <summary>Ejecuta el comando.</summary>
     public RespuestaDeComando Manejar(CalificarAlCliente comando)
     {
+        if (string.IsNullOrEmpty(comando.NumeroDelArriendo)) throw new DatoFaltante("número del arriendo");
         // 1. El comando crea la raíz: se arma en el paso 6, después de ValidarReglas.
 
         // 1c. Eventos de otros contextos que el comando requiere (D5): si no han llegado para su identidad, 409.

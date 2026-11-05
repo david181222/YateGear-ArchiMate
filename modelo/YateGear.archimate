@@ -1721,10 +1721,11 @@ Fuente: H-15; conversación INT-ASE.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Yate" id="id-d50ced5f46a849f7b744fc977ab040e9">
         <documentation>Raíz del agregado Yate: embarcación de un propietario, guardada en una marina aliada, que YateGear ofrece en arriendo. Identidad: identificador del yate en el inventario.
-Objeto de valor: datos del yate (nombre, matrícula y capacidad). Campos de la raíz: precio por día, documentos al día ante la DIMAR, referencia del contrato del propietario e identificador de la marina donde está guardado. El contrato del propietario vive en Gestión de contratos y el yate guarda su referencia (SA-02). La ficha de la marina es un dato de referencia que el yate cita por su identificador (V6-DEC-07).
+Objeto de valor: datos del yate (nombre, matrícula y capacidad). Campos de la raíz: propietario, precio por día, documentos al día ante la DIMAR, referencia del contrato del propietario e identificador de la marina donde está guardado. Gestión del arriendo copia el propietario al registrar la solicitud (V8-DEC-04). El contrato del propietario vive en Gestión de contratos y el yate guarda su referencia (SA-02). La ficha de la marina es un dato de referencia que el yate cita por su identificador (V6-DEC-07).
 Realiza el objeto de negocio &quot;Yate&quot; de la V4.
 Fuente: H-01; contrato de SB-01 (V4); conversación CTX-01, INT-CON, NOR-01.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: propietario" value="string"/>
         <property key="Campo: precio por día" value="decimal"/>
         <property key="Campo: documentos al día ante la DIMAR" value="bool"/>
         <property key="Campo: referencia del contrato del propietario" value="string"/>
@@ -1741,7 +1742,7 @@ Fuente: contrato de SB-01 (V4).</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Calendario del yate" id="id-b3dcca7f045e43f49523fe907a138a79">
         <documentation>Raíz del agregado Calendario del yate: fechas de un yate. Identidad: la del yate.
-Objeto de valor: rango de fechas, con inicio, fin, estado (bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada) y, si está apartado u ocupado, el arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03).
+Objeto de valor: rango de fechas, con inicio, fin, estado de la fecha (bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada) y, si está apartado u ocupado, el número del arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03).
 Realiza el objeto de negocio &quot;Calendario del yate&quot; de la V4.
 Fuente: H-08, H-17; contratos de SB-03 y SB-05 (V4); conversación E2E-02, REG-02.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
@@ -1954,8 +1955,8 @@ Fuente: SB-03, SB-05; V6-SUP-03.</documentation>
         <property key="Tipo DDD" value="Objeto de valor"/>
         <property key="Campo: inicio" value="DateOnly"/>
         <property key="Campo: fin" value="DateOnly"/>
-        <property key="Campo: estado" value="enum Estado de la fecha(bloqueada, apartada, ocupada)"/>
-        <property key="Campo: arriendo" value="string?"/>
+        <property key="Campo: estado de la fecha" value="enum Estado de la fecha(bloqueada, apartada, ocupada)"/>
+        <property key="Campo: número del arriendo" value="string?"/>
       </element>
       <element xsi:type="archimate:DataObject" name="Daño encontrado" id="id-77723acb9d8548ae97e705f95c114cc6">
         <documentation>Objeto de valor del agregado Acta de inspección: cada daño encontrado en la inspección, con su valor. No tiene identidad propia: vive dentro de Acta de inspección (V6-DEC-16).

@@ -11,6 +11,13 @@
       "trazabilidad": "trazabilidad/Calificaciones.csv"
     },
     {
+      "nombre": "Contexto Disponibilidad de yates",
+      "proyecto": "DisponibilidadDeYates",
+      "ruta_base": "/disponibilidad-de-yates",
+      "escenarios": "pruebas/DisponibilidadDeYates/escenarios.json",
+      "trazabilidad": "trazabilidad/DisponibilidadDeYates.csv"
+    },
+    {
       "nombre": "Contexto Gestión del arriendo",
       "proyecto": "GestionDelArriendo",
       "ruta_base": "/gestion-del-arriendo",
