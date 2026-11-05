@@ -1,0 +1,141 @@
+# Especificaciones del Contexto Calificaciones
+#
+# Qué es este archivo, sus secciones y sus tipos: ver el comentario inicial de gestion-del-arriendo.yaml
+# y la sección "Formato del YAML" del README del generador. Aquí se usan además:
+#   identidad > de     la identidad se forma con datos, en orden (G3). Un campo de la raíz va sin tipo; un
+#                      dato que no es campo lleva su tipo y la raíz lo guarda como parte de su identidad.
+#   valores            datos fijos del comando.
+#   requiere           eventos de otros contextos que deben haber llegado para la identidad del comando (D5);
+#                      sus datos quedan disponibles para el comando.
+#   guarda {campo: dato}   guarda un dato en un campo que se llama distinto.
+#   eventos_de_otros_contextos sin dispara: el evento solo se recuerda, para los comandos que lo requieren.
+#   consultas > sobre: todas, filtro, agrega   consulta sobre todas las calificaciones (G5).
+#
+# Fuentes: los contratos de SB-28, SB-29 y SB-30 de la V4, la V6 (agregado Calificación) y la V8.
+# Todo dato que no sale del README lleva "# supuesto".
+
+contexto: Contexto Calificaciones
+
+raices:
+  Calificación:
+    identidad:                                    # V6: "Identidad: el arriendo y quién califica" (V6-DEC-15)
+      nombre: identificador de la calificación    # supuesto: nombre del dato
+      tipo: string
+      de:                                         # se escribe "ARR-0001/Cliente" (supuesto: separadas con "/")
+        número del arriendo: string               # la identidad del arriendo en Gestión del arriendo
+        quién califica:                           # campo de la raíz
+    # supuesto: la calificación no cambia después (V6), así que tiene un solo estado.
+    estado: enum Estado de la calificación(registrada)
+
+comandos:
+
+  Calificar al propietario:                       # contrato SB-28; lo inicia el cliente (V6, V4-SUP-06)
+    crea: true
+    a: registrada
+    entrada:
+      número del arriendo: string
+      calificación dada: int
+    requiere: [Arriendo cerrado]                  # "se rechaza si el arriendo no está cerrado" (SB-28, D5)
+    valores:
+      quién califica: cliente                     # el cliente califica al propietario (SB-28: "si el cliente ya calificó")
+    guarda:
+      - quién califica
+      - calificación dada
+      - calificado: propietario                   # el propietario del arriendo cerrado (lo trae "Arriendo cerrado")
+    eventos: [Propietario calificado]
+
+  Calificar al cliente:                           # contrato SB-29; lo inicia el propietario (V6, V4-SUP-06)
+    crea: true
+    a: registrada
+    entrada:
+      número del arriendo: string
+      calificación dada: int
+    requiere: [Arriendo cerrado]                  # "se rechaza si el arriendo no está cerrado" (SB-29, D5)
+    valores:
+      quién califica: propietario                 # el propietario califica al cliente (SB-29: "si el propietario ya calificó")
+    guarda:
+      - quién califica
+      - calificación dada
+      - calificado: referencia al CRM             # el cliente del arriendo cerrado, por su referencia al CRM
+    eventos: [Cliente calificado]
+
+eventos:
+
+  Propietario calificado:
+    datos:
+      calificado: string
+      calificación dada: int
+
+  Cliente calificado:
+    datos:
+      calificado: string
+      calificación dada: int
+
+consultas:
+
+  Consultar calificaciones promedio:              # contrato SB-30
+    sobre: todas
+    entrada:
+      calificado: string                          # "propietario o cliente": su referencia
+    filtro: [calificado]
+    salida:                                       # "calificación promedio y número de calificaciones"
+      calificación promedio: decimal?             # supuesto: sin calificaciones no hay promedio (null)
+      número de calificaciones: int
+    agrega:
+      calificación promedio: promedio de calificación dada
+      número de calificaciones: conteo
+
+# Eventos entre dominios de la V6 que este contexto recibe.
+# supuesto: en un Partnership los dos contextos acuerdan los datos del evento (V8-SUP-02); los datos van con
+# los nombres que publica Gestión del arriendo (D2).
+eventos_de_otros_contextos:
+
+  Arriendo cerrado:                               # V8: Calificaciones toma el arriendo cerrado de Gestión del arriendo
+    de: Contexto Gestión del arriendo
+    identidad: número del arriendo                # llega con la identidad del arriendo, no con la de la calificación
+    datos:                                        # los de "Arriendo cerrado" en gestion-del-arriendo.yaml
+      referencia al CRM: string
+      propietario: string
+      fecha y hora del cambio: DateTime
+
+servicios_sa: {}
+
+escenarios:
+
+  Calificaciones mutuas:
+    - Arriendo cerrado:                           # llega de Gestión del arriendo y se recuerda
+        con: {número del arriendo: ARR-0001, referencia al CRM: CRM-0001, propietario: PROP-0001}
+    - Calificar al propietario:
+        con: {número del arriendo: ARR-0001, calificación dada: 5}
+        espera: Propietario calificado
+    - Calificar al cliente:
+        con: {número del arriendo: ARR-0001, calificación dada: 4}
+        espera: Cliente calificado
+    - Consultar calificaciones promedio:
+        con: {calificado: PROP-0001}
+        espera: {calificación promedio: 5, número de calificaciones: 1}
+
+  Promedio de varias:
+    - Arriendo cerrado:
+        con: {número del arriendo: ARR-0002, referencia al CRM: CRM-0002, propietario: PROP-0001}
+    - Calificar al propietario:
+        con: {número del arriendo: ARR-0002, calificación dada: 2}
+        espera: Propietario calificado
+    - Consultar calificaciones promedio:          # 5 (ARR-0001) y 2 (ARR-0002)
+        con: {calificado: PROP-0001}
+        espera: {calificación promedio: 3.5, número de calificaciones: 2}
+
+  Calificar sin arriendo cerrado:                 # rechazo a propósito: no llegó "Arriendo cerrado"
+    - Calificar al cliente:
+        con: {número del arriendo: ARR-0099, calificación dada: 3}
+        espera: 409
+
+  Calificar dos veces:                            # rechazo a propósito: una calificación por cada parte y arriendo
+    - Calificar al propietario:
+        con: {número del arriendo: ARR-0001, calificación dada: 1}
+        espera: 409
+
+  Sin calificaciones:
+    - Consultar calificaciones promedio:
+        con: {calificado: PROP-SIN-CALIFICAR}
+        espera: {número de calificaciones: 0}

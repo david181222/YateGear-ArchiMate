@@ -58,6 +58,14 @@ public sealed partial class {{ c.manejador }}(
         // 1b. Estados desde los que se permite el comando (capa 2), antes de llamar a los SA.
         Estados.Exigir({{ c.operacion }}, {{ raiz.var }}.Estado, {{ c.desde | join(", ") }});
 {% endif %}
+{% if c.requeridos %}
+
+        // 1c. Eventos de otros contextos que el comando requiere (D5): si no han llegado para su identidad, 409.
+{% for q in c.requeridos %}
+        var {{ q.var }} = memoria.Buscar<{{ q.clase }}>({{ q.nombre }}, {{ q.identidad }})
+            ?? throw new FaltaEventoRequerido({{ c.operacion }}, {{ q.nombre }}, {{ q.identidad }});
+{% endfor %}
+{% endif %}
 {% if c.llamadas %}
 
         // 2. Servicios SA que usa, en orden.
@@ -92,14 +100,23 @@ public sealed partial class {{ c.manejador }}(
         ValidarReglas(datos);
 {% if c.crea %}
 
+{% if c.identidad_expr %}
+        // 6. Crear la raíz con su estado inicial y lo que guarda el comando. Su identidad se forma con datos;
+        //    si ya existe una raíz con esa identidad, 409.
+{% else %}
         // 6. Crear la raíz con su estado inicial y lo que guarda el comando. Al guardarla recibe su identidad.
+{% endif %}
         var {{ raiz.var }} = new {{ raiz.clase }}
         {
 {% for a in c.asignaciones %}
             {{ a.prop }} = {{ a.expr }},
 {% endfor %}
         };
+{% if c.identidad_expr %}
+        repositorio.Agregar({{ raiz.var }}, {{ c.identidad_expr }});
+{% else %}
         repositorio.Guardar({{ raiz.var }});
+{% endif %}
 {% elif c.escribe %}
 
         // 6. Guardar en la raíz lo que escribe el comando y su nuevo estado (capa 2).

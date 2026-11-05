@@ -1,0 +1,217 @@
+{
+  "generado_desde": "Generado desde ArchiMate: ApplicationComponent \"Contexto Calificaciones\" (id-6f29abc193cb4f2fa1234cec80bf0675).",
+  "ruta_base": "/calificaciones",
+  "escenarios": [
+    {
+      "nombre": "Calificaciones mutuas",
+      "identidad": "ARR-0001/Cliente",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Arriendo cerrado",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/arriendo-cerrado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "referenciaAlCRM": "CRM-0001",
+            "propietario": "PROP-0001",
+            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Calificar al propietario",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0001/Cliente",
+          "metodo": "POST",
+          "ruta": "/comandos/calificar-al-propietario",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "calificacionDada": 5
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Propietario calificado",
+            "texto": "HTTP 2xx y el evento \"Propietario calificado\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Calificar al cliente",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0001/Propietario",
+          "metodo": "POST",
+          "ruta": "/comandos/calificar-al-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "calificacionDada": 4
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Cliente calificado",
+            "texto": "HTTP 2xx y el evento \"Cliente calificado\""
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Consultar calificaciones promedio",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0001/Propietario",
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-calificaciones-promedio?calificado=PROP-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "calificacionPromedio": 5,
+              "numeroDeCalificaciones": 1
+            },
+            "texto": "HTTP 2xx y calificación promedio = 5, número de calificaciones = 1"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Promedio de varias",
+      "identidad": "ARR-0002/Cliente",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Arriendo cerrado",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/arriendo-cerrado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "referenciaAlCRM": "CRM-0002",
+            "propietario": "PROP-0001",
+            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Calificar al propietario",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0002/Cliente",
+          "metodo": "POST",
+          "ruta": "/comandos/calificar-al-propietario",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "calificacionDada": 2
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Propietario calificado",
+            "texto": "HTTP 2xx y el evento \"Propietario calificado\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Consultar calificaciones promedio",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0002/Cliente",
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-calificaciones-promedio?calificado=PROP-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "calificacionPromedio": 3.5,
+              "numeroDeCalificaciones": 2
+            },
+            "texto": "HTTP 2xx y calificación promedio = 3.5, número de calificaciones = 2"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Calificar sin arriendo cerrado",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Calificar al cliente",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0099/Propietario",
+          "metodo": "POST",
+          "ruta": "/comandos/calificar-al-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0099",
+            "calificacionDada": 3
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "texto": "HTTP 409"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Calificar dos veces",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Calificar al propietario",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0001/Cliente",
+          "metodo": "POST",
+          "ruta": "/comandos/calificar-al-propietario",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "calificacionDada": 1
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "texto": "HTTP 409"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Sin calificaciones",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Consultar calificaciones promedio",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-calificaciones-promedio?calificado=PROP-SIN-CALIFICAR",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "numeroDeCalificaciones": 0
+            },
+            "texto": "HTTP 2xx y número de calificaciones = 0"
+          }
+        }
+      ]
+    }
+  ]
+}

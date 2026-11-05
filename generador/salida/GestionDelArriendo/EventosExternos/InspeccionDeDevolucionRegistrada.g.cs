@@ -12,6 +12,6 @@ public sealed record InspeccionDeDevolucionRegistrada(
     /// <summary>Nombre del evento en el modelo.</summary>
     public string NombreEnElModelo => "Inspección de devolución registrada";
 
-    /// <summary>Identidad de la raíz.</summary>
+    /// <summary>Identidad con que llega el evento: número del arriendo.</summary>
     public string Identidad => NumeroDelArriendo;
 }

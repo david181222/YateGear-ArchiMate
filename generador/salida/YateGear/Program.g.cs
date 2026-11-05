@@ -10,14 +10,17 @@ builder.Services.ConfigureHttpJsonOptions(o => Json.Configurar(o.SerializerOptio
 builder.Services.AddSingleton<BusEntreContextos>();
 
 // Contextos.
+YateGear.Calificaciones.Registro.AgregarServicios(builder.Services);         // Contexto Calificaciones
 YateGear.GestionDelArriendo.Registro.AgregarServicios(builder.Services);         // Contexto Gestión del arriendo
 
 var app = builder.Build();
+YateGear.Calificaciones.Registro.MapearEndpoints(app);
 YateGear.GestionDelArriendo.Registro.MapearEndpoints(app);
 
 // Infraestructura (no sale del modelo): los contextos generados y los eventos que pasaron por el bus entre contextos.
 app.MapGet("/contextos", () => new[]
 {
+    new { nombre = "Contexto Calificaciones", ruta = "/calificaciones" },
     new { nombre = "Contexto Gestión del arriendo", ruta = "/gestion-del-arriendo" },
 });
 app.MapGet("/eventos-entre-contextos", (BusEntreContextos bus) => bus.Historial());

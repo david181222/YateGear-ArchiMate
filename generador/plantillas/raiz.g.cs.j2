@@ -6,8 +6,17 @@ namespace {{ ns }};
 /// <summary>Raíz "{{ r.nombre | xml }}" del "{{ r.agregado.nombre | xml }}" ({{ r.agregado.id }}).</summary>
 public sealed partial class {{ r.clase }} : IRaiz
 {
+{% if r.consecutivo %}
     /// <summary>Identidad: {{ r.id_nombre | xml }}. La asigna el repositorio al guardar ({{ r.prefijo }}{{ "1".zfill(r.digitos) }}, ...).</summary>
+{% else %}
+    /// <summary>Identidad: {{ r.id_nombre | xml }}. Se forma con {{ r.id_de | join(", ") | xml }}, separados con "/".</summary>
+{% endif %}
     public string {{ r.id_prop }} { get; private set; } = "";
+{% for c in r.componentes %}
+
+    /// <summary>Parte de la identidad: "{{ c.nombre | xml }}" ({{ c.tipo.tipo | xml }}).</summary>
+    public required {{ c.cs }} {{ c.prop }} { get; init; }
+{% endfor %}
 
     /// <summary>Estado de la raíz (lista cerrada del YAML).</summary>
     public {{ r.estado_clase }} Estado { get; set; }

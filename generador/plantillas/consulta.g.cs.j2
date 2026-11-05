@@ -10,8 +10,13 @@ namespace {{ ns }};
 /// <summary>Salida de la consulta "{{ q.nombre | xml }}".</summary>
 {{ m.record(q.salida, q.salida_campos, ";") }}
 
+{% if q.todas %}
+/// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y las raíces que cumplen el filtro.</summary>
+public sealed record {{ q.datos }}({{ q.clase }} Consulta, IReadOnlyList<{{ raiz.clase }}> Raices);
+{% else %}
 /// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y la raíz.</summary>
 public sealed record {{ q.datos }}({{ q.clase }} Consulta, {{ raiz.clase }} {{ raiz.clase }});
+{% endif %}
 
 /// <summary>Manejador de la consulta "{{ q.nombre | xml }}" ({{ q.codigo }}). No cambia la raíz.</summary>
 /// <remarks>
@@ -34,9 +39,15 @@ public sealed partial class {{ q.manejador }}(Repositorio<{{ raiz.clase }}> repo
     /// <summary>Ejecuta la consulta.</summary>
     public {{ q.salida }} Manejar({{ q.clase }} consulta)
     {
+{% if q.todas %}
+        // Sobre todas las raíces que cumplen el filtro (filtro del YAML).
+        var raices = repositorio.Todas().Where({{ raiz.var }} => {{ q.filtro }}).ToList();
+        var datos = new {{ q.datos }}(consulta, raices);
+{% else %}
         var {{ raiz.var }} = repositorio.Obtener(consulta.{{ raiz.id_prop }})
             ?? throw new NoEncontrado($"No existe {{ raiz.nombre | lower }} {consulta.{{ raiz.id_prop }}}.");
         var datos = new {{ q.datos }}(consulta, {{ raiz.var }});
+{% endif %}
         ValidarReglas(datos);
         return new {{ q.salida }}(
 {% for s in q.salida_campos %}

@@ -106,23 +106,54 @@ Todo se busca por tipo y por relación, nunca solo por nombre, porque hay nombre
 | Política | Disparo evento --> comando, los dos del contexto. |
 | Contrato | Comando o consulta --> realiza --> servicio de negocio con el mismo código --> asociación --> contrato. Su texto se separa en Entrada, Salida y Reglas. |
 
+## Formato del YAML
+
+Cada contexto que se quiere generar tiene un `specs/<contexto>.yaml`. El modelo dice qué elementos hay y cómo se relacionan; el YAML declara lo que el modelo no dice y el generador necesita. Las claves son los nombres exactos del modelo, y `specs.py` revisa cada una: si falta un elemento del contexto, se nombra uno que no existe o una clave no se conoce, el generador se detiene. Todo dato que no sale de la documentación lleva el comentario `# supuesto`.
+
+**Tipos** (los mismos de los campos del modelo, V6-DEC-17): `string`, `int`, `decimal`, `bool`, `DateOnly`, `DateTime`, `List<tipo>`, el sufijo `?` para un dato opcional y `enum <Nombre>(valor, valor, ...)`. Las fechas de ejemplo van entre comillas.
+
+**Regla de los datos:** un dato pasa de un lugar a otro por su nombre (ver "Reglas del generador"). Cuando un dato debe ir a un campo que se llama distinto, se declara con una correspondencia (`guarda: [{campo: dato}]`).
+
+| Sección y clave | Qué declara | Ejemplo |
+|---|---|---|
+| `contexto` | Nombre exacto del componente de aplicación del contexto. | `Contexto Calificaciones` |
+| `raices > <raíz> > identidad` | `nombre` y `tipo` (string) de la identidad, y cómo se forma: un consecutivo con `prefijo` y `digitos`, o con datos, en orden, con `de`. En `de`, un campo de la raíz va sin tipo; un dato que no es campo lleva su tipo, y la raíz lo guarda como parte de su identidad. Las partes se unen con `/`. | `prefijo: ARR-` y `digitos: 4`; o `de: {número del arriendo: string, quién califica: }` |
+| `raices > <raíz> > estado` | Los estados de la raíz, como `enum`. | `enum Estado del arriendo(reserva solicitada, ...)` |
+| `comandos > <comando> > entrada` | Datos que recibe. La identidad de la raíz se agrega sola, salvo en el que la crea. | `cliente: string` |
+| `... > crea` | `true` si el comando crea la raíz. Lleva `a` (estado inicial) y no lleva `desde` ni `resultados`. | `crea: true` |
+| `... > valores` | Datos fijos del comando, para campos de la raíz o de sus objetos de valor. | `quién califica: cliente` |
+| `... > requiere` | Eventos de otros contextos que deben haber llegado para la identidad del comando (se buscan con el dato que es su identidad). Si no, 409. Sus datos quedan disponibles para el comando. | `[Arriendo cerrado]` |
+| `... > usa` | Servicios SA que llama, en orden. Sus salidas quedan disponibles. | `[Clientes del CRM]` |
+| `... > guarda` | Lo que escribe en la raíz: objetos de valor y campos por su nombre, o `{campo: dato}` para guardar un dato con otro nombre. | `[Fechas del arriendo, calificado: propietario]` |
+| `... > desde`, `a` | Estados desde los que se permite, y estado al que pasa. | `desde: [reserva solicitada]` |
+| `... > eventos` | Los eventos que publica: exactamente los del modelo. | `[Reserva confirmada]` |
+| `... > resultados` | En lugar de `eventos`: un evento por resultado, elegido con `si` (un dato y sus valores), con su propio `desde` y `a`. | `Arriendo iniciado: {si: {nuevo estado: [en curso]}, a: en curso}` |
+| `eventos > <evento> > datos`, `calculados` | Datos que lleva cada evento. Los `calculados` salen de una regla del contrato y los escribe el código a mano. | `inicio: DateOnly` |
+| `consultas > <consulta> > entrada`, `salida`, `calculados` | Datos que recibe y devuelve. Por defecto lee una raíz por su identidad. | `estado: enum ...` |
+| `... > sobre: todas`, `filtro`, `agrega` | Consulta sobre todas las raíces: `filtro` las compara por igualdad con datos de la entrada del mismo nombre, y cada dato de la salida es una agregación de `agrega`: `conteo`, o `promedio`, `suma`, `mínimo` o `máximo` `de <dato de la raíz>`. Sin raíces no hay promedio, mínimo ni máximo: esos van con `?`. | `calificación promedio: promedio de calificación dada` |
+| `eventos_de_otros_contextos > <evento>` | `de` (contexto que lo publica), `datos`, e `identidad` si llega con un dato distinto de la identidad de la raíz. Con `dispara`, ejecuta ese comando; `con` fija valores de su entrada y `junto_con` espera a otros eventos. Sin `dispara`, solo se recuerda para los comandos que lo `requiere`n. | `Arriendo cerrado: {de: ..., identidad: número del arriendo}` |
+| `servicios_sa > <servicio>` | `entrada`, `salida`, `respuesta_por_defecto` y `casos` (con `si`) del sistema externo simulado. Todo fijo: sin azar ni fecha de hoy. | `respuesta_por_defecto: {nivel: medio}` |
+| `escenarios > <escenario>` | Lista de pasos (comando, consulta o evento de otro contexto), cada uno con `con` y `espera` (ver "Escenarios y pruebas"). | `- Cancelar la reserva: {espera: Reserva cancelada}` |
+
+Cada YAML empieza con un comentario que explica sus secciones; `specs/gestion-del-arriendo.yaml` y `specs/calificaciones.yaml` sirven de ejemplo.
+
 ## Qué genera cada elemento del modelo
 
 | Elemento del modelo | Qué genera en `salida/` |
 |---|---|
 | Contexto (con YAML) | Un proyecto biblioteca, `<Proyecto>/<Proyecto>.csproj`, con `Registro.g.cs` (servicios, políticas y endpoints), su referencia en el host y su entrada en la `.sln`. El nombre del proyecto sale del contexto sin "Contexto ": "Contexto Gestión del arriendo" --> `GestionDelArriendo`. |
 | Modelo | La solución `<Modelo>.sln`, el host `<Modelo>/` (un solo programa que registra todos los contextos, con un solo puerto) y `contextos.json`, que dice a los scripts qué hay. |
-| Agregado y raíz | Clase parcial con su identidad, su `Estado` (enum) y sus campos, y una propiedad por composición: Uno --> `T`, Cero o uno --> `T?`, Muchos --> `List<T>`. |
+| Agregado y raíz | Clase parcial con su identidad, su `Estado` (enum) y sus campos, y una propiedad por composición: Uno --> `T`, Cero o uno --> `T?`, Muchos --> `List<T>`. Si la identidad se forma con datos que no son campos, también una propiedad por cada uno. |
 | Objeto de valor | `sealed record` con sus campos. |
 | Tipos `enum` (del modelo o del YAML) | `enum` de C#. En JSON viaja como texto, por ejemplo `"Medio"` o `"EnCurso"`. |
 | Comando | El record del comando, un manejador parcial (`.g.cs`), un endpoint `POST /<contexto>/comandos/<comando>` (por ejemplo `/gestion-del-arriendo/comandos/confirmar-la-reserva`) y un archivo manual (`.cs`). |
 | Contrato | Comentarios XML en el manejador (entrada, salida y reglas). Sus reglas aparecen además como comentario en `ValidarReglas`, en el archivo manual. |
 | Evento | Record del evento, con la identidad y sus datos. |
 | Política | Una suscripción en el bus de eventos, en `Politicas.g.cs`. |
-| Consulta | Records de entrada y salida, un manejador, un endpoint `GET /<contexto>/consultas/<consulta>/{identidad}` y un archivo manual. |
+| Consulta | Records de entrada y salida, un manejador, un endpoint `GET /<contexto>/consultas/<consulta>/{identidad}` y un archivo manual. Con `sobre: todas`, el endpoint no lleva identidad (`GET /<contexto>/consultas/<consulta>?dato=valor`) y el manejador recorre las raíces que cumplen el filtro. |
 | Servicio SA | Interfaz, records de entrada y salida, y una implementación simulada que responde con los valores del YAML. |
 | Interfaz, contraparte y flujos | Comentarios en el servicio SA y filas en la trazabilidad del contexto. |
-| Evento de otro contexto (del YAML) | Record del evento, un método en `ReceptorDeEventosExternos` que lo lee desde JSON y revisa sus datos obligatorios, y un endpoint `POST /<contexto>/eventos-externos/<evento>`. |
+| Evento de otro contexto (del YAML) | Record del evento, un método en `ReceptorDeEventosExternos` que lo lee desde JSON y revisa sus datos obligatorios, y un endpoint `POST /<contexto>/eventos-externos/<evento>`. Si un comando lo requiere, se guarda en `MemoriaDeEventos`; sin `dispara`, solo se guarda. |
 
 Además se generan, por contexto, `pruebas/<Proyecto>/pruebas.http` y `pruebas/<Proyecto>/escenarios.json` (desde los escenarios del YAML) y `trazabilidad/<Proyecto>.csv`; y para toda la solución, `global.json`, el proyecto `Integracion` (bus entre contextos) y la infraestructura de cada contexto.
 
@@ -156,11 +187,11 @@ Un dato pasa de un lugar a otro por su **nombre** y su **tipo**, que son los del
 ### Pasos de un comando
 
 1. Cargar la raíz (404 si no existe). El comando que crea la raíz la arma en el paso 6.
-2. Revisar que el estado actual esté en su `desde` (409 si no). Se revisa antes de llamar a los SA, para que un arriendo en un estado inválido no consulte a sistemas externos.
-3. Llamar a los servicios SA de `usa`, en orden.
+2. Revisar que el estado actual esté en su `desde` (409 si no). Se revisa antes de llamar a los SA, para que una raíz en un estado inválido no consulte a sistemas externos.
+3. Buscar los eventos de otros contextos de `requiere` por su identidad (409 si alguno no ha llegado), y llamar a los servicios SA de `usa`, en orden.
 4. Elegir el resultado con la condición `si`, y revisar el `desde` de ese resultado (409).
 5. `ValidarReglas`, en el archivo manual (422 si se incumple una regla).
-6. Escribir lo de `guarda` y el nuevo estado (`a`), y guardar la raíz. Al guardar una raíz nueva, el repositorio le asigna el consecutivo (ARR-0001, ARR-0002, ...), así que una solicitud rechazada no gasta número.
+6. Escribir lo de `guarda` y el nuevo estado (`a`), y guardar la raíz. Si la identidad es un consecutivo, el repositorio se lo asigna al guardar una raíz nueva (ARR-0001, ARR-0002, ...), así que una solicitud rechazada no gasta número. Si se forma con datos, la raíz nueva se agrega con ella, y responde 409 si ya existe.
 7. Publicar los eventos.
 
 ### Capas
@@ -187,9 +218,13 @@ Si un manual queda sin su `.g.cs` (por ejemplo, porque se quitó un comando), el
 
 ## Escenarios y pruebas
 
-La sección `escenarios` del YAML define pruebas de punta a punta. Cada escenario tiene su propio arriendo, porque su primer paso lo crea. Un paso es un comando, una consulta o un evento de otro contexto. `con` fija valores de su entrada, y `espera` dice el resultado: un evento, un código HTTP (409, 422, 404 o 202) o, en una consulta, `{estado: ...}`. Sin `espera`, el paso debe responder 2xx.
+La sección `escenarios` del YAML define pruebas de punta a punta. Un paso es un comando, una consulta o un evento de otro contexto. `con` fija valores de su entrada, y `espera` dice el resultado: un evento, un código HTTP (409, 422, 404 o 202) o, en una consulta, `{dato de la salida: valor, ...}`. Sin `espera`, el paso debe responder 2xx.
 
-`specs.py` revisa que los escenarios estén bien escritos: que los nombres existan, que los valores de `con` sean válidos y que `espera` sea un evento que ese paso puede publicar, un código permitido o un estado de la lista cerrada. No simula los datos. De los escenarios salen `pruebas.http` y `escenarios.json`, y `probar.ps1` los ejecuta.
+Cada paso tiene su identidad. Un comando que crea la raíz recibe la siguiente (el consecutivo, que una solicitud rechazada no gasta, o la que se forma con sus datos), y se revisa que la respuesta la traiga; los demás pasos usan la de la última raíz creada en el escenario. Un evento de otro contexto que llega con su propia identidad la toma de `con`. Los consecutivos siguen de un escenario al siguiente, en orden, porque todos corren contra la misma aplicación.
+
+`specs.py` revisa que los escenarios estén bien escritos: que los nombres existan, que los valores de `con` sean válidos y que `espera` sea un evento que ese paso puede publicar, un código permitido o datos de la salida de la consulta con valores válidos. No simula los datos. De los escenarios salen `pruebas/<Proyecto>/pruebas.http` y `escenarios.json`, y `probar.ps1` los ejecuta.
+
+Gestión del arriendo:
 
 | Escenario | Arriendo | Qué prueba |
 |---|---|---|
@@ -197,6 +232,16 @@ La sección `escenarios` del YAML define pruebas de punta a punta. Cada escenari
 | Riesgo alto | ARR-0002 | El cliente de prueba `CLI-RIESGO-ALTO` termina en "no realizado por riesgo alto". |
 | Cancelación | ARR-0003 | Cancelar, y luego registrar el avance de un arriendo cancelado: 409 a propósito. |
 | Confirmar sin riesgo evaluado | ARR-0004 | Confirmar sin evaluar el riesgo: 422 por REG-01, escrita a mano. |
+
+Calificaciones:
+
+| Escenario | Qué prueba |
+|---|---|
+| Calificaciones mutuas | Llega "Arriendo cerrado" (se recuerda); el cliente califica al propietario (`ARR-0001/Cliente`) y el propietario al cliente (`ARR-0001/Propietario`); el promedio del propietario es 5 con 1 calificación. |
+| Promedio de varias | Otro arriendo del mismo propietario: el promedio de 5 y 2 es 3.5, con 2 calificaciones. |
+| Calificar sin arriendo cerrado | No llegó "Arriendo cerrado" de ARR-0099: 409 a propósito (`requiere`). |
+| Calificar dos veces | El cliente ya calificó ARR-0001: 409 a propósito (la identidad ya existe). |
+| Sin calificaciones | Un propietario sin calificaciones: 0, y sin promedio. |
 
 ## Reproducibilidad y trazabilidad
 
@@ -214,7 +259,7 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 | Dónde | Qué revisa |
 |---|---|
 | `extraer.py` (modelo) | La regla del agregado. Cada objeto de valor tiene exactamente una composición desde su raíz o entidad, con Cardinalidad. Cada `Campo:` tiene un tipo permitido. No hay nombres repetidos dentro del mismo tipo entre los elementos del contexto. Cada comando tiene exactamente un acceso a la raíz de su agregado; además puede leer otras raíces del contexto, y escribir otra raíz es error. Cada evento lo dispara al menos un comando del contexto. Cada comando, consulta y servicio SA tiene un solo contrato. |
-| `specs.py` (YAML) | Cada comando, evento, consulta y servicio SA del contexto está en el YAML, y el YAML no nombra nada que no exista. Hay claves conocidas y no repetidas, tipos permitidos y estados de la lista cerrada. Los eventos de cada comando son exactamente los del modelo. Se cumple la regla de los datos. Las políticas, `junto_con` y `con` están completos. Los escenarios están bien escritos. |
+| `specs.py` (YAML) | Cada comando, evento, consulta y servicio SA del contexto está en el YAML, y el YAML no nombra nada que no exista. Hay claves conocidas y no repetidas, tipos permitidos y estados de la lista cerrada. Los eventos de cada comando son exactamente los del modelo. Se cumple la regla de los datos. Las políticas, `junto_con` y `con` están completos. La identidad es un consecutivo o se forma con datos que el comando que crea tiene; los `valores` son válidos; cada evento de `requiere` está declarado y el comando tiene su identidad; las correspondencias de `guarda` tienen el mismo tipo; un evento sin `dispara` lo requiere algún comando; las consultas sobre todas filtran por datos de su entrada y sus agregaciones tienen el tipo correcto. Los escenarios están bien escritos. |
 
 ## Discrepancias encontradas
 
@@ -275,9 +320,27 @@ Del YAML del piloto. Cada uno está marcado `# supuesto` en `specs/gestion-del-a
 | GEN-SUP-33 | Avisos y actas de las marinas > entrada | El aviso lleva también la marina a la que va. |
 | GEN-SUP-34 | Avisos y actas de las marinas > respuesta_por_defecto | Valor de prueba: AVISO-RECIBIDO. |
 
+Del generador, desde Calificaciones:
+
+| ID | Supuesto | Por qué |
+|---|---|---|
+| GEN-SUP-35 | Los eventos de otros contextos que un comando requiere (`requiere`, D5) se guardan en memoria, por su nombre y su identidad, y se pierden al reiniciar; si llega otro igual, reemplaza al anterior. | Cada contexto guarda su propia copia de lo que recibe (V8-DEC-04), y el piloto no prueba la persistencia (GEN-SUP-02). |
+| GEN-SUP-36 | Una identidad formada con datos une sus partes con `/`, en el orden del YAML; un enum va con su nombre de C# (por ejemplo `ARR-0001/Cliente`). | Es legible, es estable y no choca con los prefijos de los consecutivos. |
+
+Del YAML de Calificaciones. Cada uno está marcado como supuesto en `specs/calificaciones.yaml`:
+
+| ID | Dónde | Supuesto |
+|---|---|---|
+| GEN-SUP-37 | raices > Calificación > identidad | El dato se llama "identificador de la calificación". |
+| GEN-SUP-38 | raices > Calificación > estado | Tiene un solo estado, "registrada", porque una calificación no cambia después (V6). |
+| GEN-SUP-39 | Consultar calificaciones promedio > salida | Sin calificaciones no hay promedio: la "calificación promedio" es opcional (null). |
+| GEN-SUP-40 | eventos_de_otros_contextos > Arriendo cerrado | Los datos llegan con los nombres que publica Gestión del arriendo (Partnership, V8-SUP-02; D2). |
+
 ## Limitaciones conocidas
 
 - Un solo agregado por contexto (G2). Las entidades (G9) y los objetos de valor con Cardinalidad Muchos en `guarda` (G4) todavía no se generan; el generador se detiene con un mensaje claro si los encuentra.
+- Un evento de otro contexto que dispara un comando debe llegar con la identidad de la raíz de este contexto; disparar con otra identidad se agrega con Disponibilidad de yates (G3). Un evento que solo se recuerda (`requiere`) sí puede llegar con otra.
+- Las consultas sobre todas las raíces devuelven agregaciones; las listas (SB-04, SB-26) vienen después (G5).
 - Los servicios SA se llaman antes de `ValidarReglas`, porque las reglas usan sus respuestas (REG-01 necesita el estado del contrato). Por eso una solicitud rechazada por una regla ya consultó al CRM simulado.
 - Los eventos que un contexto publica llegan al bus entre contextos, pero nadie se suscribe todavía (G12). Mientras tanto, los eventos de otros contextos se prueban con sus endpoints.
 - Si se quita el YAML de un contexto, el generador borra sus archivos generados pero no su código a mano: avisa que esa carpeta quedó suelta.

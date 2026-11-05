@@ -102,6 +102,14 @@ public static class Registro
         {
             return Results.UnprocessableEntity(new { regla = e.Regla, motivo = e.Motivo });
         }
+        catch (IdentidadRepetida e)
+        {
+            return Results.Conflict(new { identidad = e.Identidad, motivo = e.Message });
+        }
+        catch (FaltaEventoRequerido e)
+        {
+            return Results.Conflict(new { operacion = e.Operacion, requiere = e.Evento, identidad = e.Identidad });
+        }
         catch (DatoFaltante e)
         {
             return Results.UnprocessableEntity(new { regla = "dato faltante", motivo = e.Message });

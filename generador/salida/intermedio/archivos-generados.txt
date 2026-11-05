@@ -1,3 +1,16 @@
+Calificaciones/Calificaciones.csproj
+Calificaciones/Comandos/CalificarAlCliente.g.cs
+Calificaciones/Comandos/CalificarAlPropietario.g.cs
+Calificaciones/Consultas/ConsultarCalificacionesPromedio.g.cs
+Calificaciones/Dominio/Calificacion.g.cs
+Calificaciones/Dominio/Enums.g.cs
+Calificaciones/Eventos/ClienteCalificado.g.cs
+Calificaciones/Eventos/PropietarioCalificado.g.cs
+Calificaciones/EventosExternos/ArriendoCerrado.g.cs
+Calificaciones/EventosExternos/ReceptorDeEventosExternos.g.cs
+Calificaciones/Infraestructura/Infraestructura.g.cs
+Calificaciones/Politicas/Politicas.g.cs
+Calificaciones/Registro.g.cs
 GestionDelArriendo/Anticorrupcion/AvisosYActasDeLasMarinas.g.cs
 GestionDelArriendo/Anticorrupcion/ClientesDelCRM.g.cs
 GestionDelArriendo/Anticorrupcion/ContratosConPropietariosYClientes.g.cs
@@ -44,6 +57,9 @@ YateGear/Properties/launchSettings.json
 YateGear/YateGear.csproj
 contextos.json
 global.json
+pruebas/Calificaciones/escenarios.json
+pruebas/Calificaciones/pruebas.http
 pruebas/GestionDelArriendo/escenarios.json
 pruebas/GestionDelArriendo/pruebas.http
+trazabilidad/Calificaciones.csv
 trazabilidad/GestionDelArriendo.csv

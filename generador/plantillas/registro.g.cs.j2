@@ -18,7 +18,14 @@ public static class Registro
         servicios.AddSingleton<Bitacora>();
         servicios.AddSingleton(s => new BusDeEventos(s.GetRequiredService<Bitacora>(),
             s.GetRequiredService<BusEntreContextos>(), {{ contexto | cadena }}));
+{% if raiz.consecutivo %}
         servicios.AddSingleton(new Repositorio<{{ raiz.clase }}>({{ raiz.prefijo | cadena }}, {{ raiz.digitos }}));
+{% else %}
+        servicios.AddSingleton(new Repositorio<{{ raiz.clase }}>());
+{% endif %}
+{% if memoria %}
+        servicios.AddSingleton<MemoriaDeEventos>();
+{% endif %}
 
         // Servicios de la capa anticorrupción, simulados.
 {% for s in sas %}
@@ -88,6 +95,14 @@ public static class Registro
         catch (ReglaIncumplida e)
         {
             return Results.UnprocessableEntity(new { regla = e.Regla, motivo = e.Motivo });
+        }
+        catch (IdentidadRepetida e)
+        {
+            return Results.Conflict(new { identidad = e.Identidad, motivo = e.Message });
+        }
+        catch (FaltaEventoRequerido e)
+        {
+            return Results.Conflict(new { operacion = e.Operacion, requiere = e.Evento, identidad = e.Identidad });
         }
         catch (DatoFaltante e)
         {

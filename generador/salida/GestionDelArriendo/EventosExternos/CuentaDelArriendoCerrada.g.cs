@@ -12,6 +12,6 @@ public sealed record CuentaDelArriendoCerrada(
     /// <summary>Nombre del evento en el modelo.</summary>
     public string NombreEnElModelo => "Cuenta del arriendo cerrada";
 
-    /// <summary>Identidad de la raíz.</summary>
+    /// <summary>Identidad con que llega el evento: número del arriendo.</summary>
     public string Identidad => NumeroDelArriendo;
 }

@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calificaciones\Calificaciones.csproj" />
     <ProjectReference Include="..\GestionDelArriendo\GestionDelArriendo.csproj" />
     <ProjectReference Include="..\Integracion\Integracion.csproj" />
   </ItemGroup>

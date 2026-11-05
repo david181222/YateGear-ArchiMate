@@ -13,6 +13,6 @@ public sealed record AlquilerYSeguroCobrados(
     /// <summary>Nombre del evento en el modelo.</summary>
     public string NombreEnElModelo => "Alquiler y seguro cobrados";
 
-    /// <summary>Identidad de la raíz.</summary>
+    /// <summary>Identidad con que llega el evento: número del arriendo.</summary>
     public string Identidad => NumeroDelArriendo;
 }
