@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Generado desde ArchiMate: ApplicationComponent "Contexto Operación del arriendo" (id-909c52d6cdf845e6927af4c62d2847fb). -->
+  <!-- Biblioteca del contexto: la levanta el host. Solo referencia al bus entre contextos, nunca a otro contexto (D1). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>YateGear.OperacionDelArriendo</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Integracion\Integracion.csproj" />
+  </ItemGroup>
+</Project>

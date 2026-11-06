@@ -4,12 +4,16 @@
 #nullable enable
 namespace {{ ns }};
 
+{% if x.comando %}
 /// <summary>Evento "{{ x.nombre | xml }}" de "{{ x.de | xml }}", con los datos que declara el YAML. Dispara "{{ x.comando | xml }}".</summary>
+{% else %}
+/// <summary>Evento "{{ x.nombre | xml }}" de "{{ x.de | xml }}", con los datos que declara el YAML. Se recuerda para los comandos que lo requieren.</summary>
+{% endif %}
 {{ m.record(x.clase, x.parametros, " : IEvento") }}
 {
     /// <summary>Nombre del evento en el modelo.</summary>
     public string NombreEnElModelo => {{ x.nombre | cadena }};
 
-    /// <summary>Identidad de la raíz.</summary>
-    public string Identidad => {{ raiz.id_prop }};
+    /// <summary>Identidad con que llega el evento: {{ x.id_nombre | xml }}.</summary>
+    public string Identidad => {{ x.id_prop }};
 }

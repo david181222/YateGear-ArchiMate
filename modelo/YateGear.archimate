@@ -1144,7 +1144,7 @@ Reglas: Se rechaza un descuento sin evidencia (principio &quot;Todo cobro va con
         </element>
         <element xsi:type="archimate:Contract" name="Contrato de servicio: Registrar el acta de entrega" id="id-cebe80de47aa4662af8631258f3353b5">
           <documentation>Contrato del servicio SB-22 &quot;Registrar el acta de entrega&quot;.
-Entrada: Arriendo, fotos, nivel de combustible, hora de entrega y observaciones.
+Entrada: Arriendo, identificador del yate, fotos, nivel de combustible, hora de entrega y observaciones.
 Salida: Acta de entrega registrada.
 Reglas: Se rechaza si el arriendo no tiene la reserva confirmada (CIE-01) o si el acta no trae fotos (H-13).</documentation>
           <property key="Servicio" value="SB-22"/>
@@ -1225,7 +1225,7 @@ Reglas:</documentation>
         <element xsi:type="archimate:Contract" name="Contrato de servicio: Contratos con propietarios y clientes" id="id-3f0f0a61815d4247bbb2d2cf80f1ad6e">
           <documentation>Contrato del servicio SA-02 &quot;Contratos con propietarios y clientes&quot;.
 Entrada: Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.
-Salida: Estado del contrato (enviado o firmado), fecha de firma y condiciones de cancelación.
+Salida: Estado del contrato (enviado o firmado), fecha de firma, condiciones de cancelación y, si está firmado, la referencia del contrato firmado.
 Reglas: El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON).</documentation>
           <property key="Servicio" value="SA-02"/>
           <property key="Capa" value="5. Servicios de la capa anticorrupción (Anti-corruption Layer Service)"/>
@@ -1721,10 +1721,11 @@ Fuente: H-15; conversación INT-ASE.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Yate" id="id-d50ced5f46a849f7b744fc977ab040e9">
         <documentation>Raíz del agregado Yate: embarcación de un propietario, guardada en una marina aliada, que YateGear ofrece en arriendo. Identidad: identificador del yate en el inventario.
-Objeto de valor: datos del yate (nombre, matrícula y capacidad). Campos de la raíz: precio por día, documentos al día ante la DIMAR, referencia del contrato del propietario e identificador de la marina donde está guardado. El contrato del propietario vive en Gestión de contratos y el yate guarda su referencia (SA-02). La ficha de la marina es un dato de referencia que el yate cita por su identificador (V6-DEC-07).
+Objeto de valor: datos del yate (nombre, matrícula y capacidad). Campos de la raíz: propietario, precio por día, documentos al día ante la DIMAR, referencia del contrato del propietario e identificador de la marina donde está guardado. Gestión del arriendo copia el propietario al registrar la solicitud (V8-DEC-04). El contrato del propietario vive en Gestión de contratos y el yate guarda su referencia (SA-02). La ficha de la marina es un dato de referencia que el yate cita por su identificador (V6-DEC-07).
 Realiza el objeto de negocio &quot;Yate&quot; de la V4.
 Fuente: H-01; contrato de SB-01 (V4); conversación CTX-01, INT-CON, NOR-01.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: propietario" value="string"/>
         <property key="Campo: precio por día" value="decimal"/>
         <property key="Campo: documentos al día ante la DIMAR" value="bool"/>
         <property key="Campo: referencia del contrato del propietario" value="string"/>
@@ -1741,7 +1742,7 @@ Fuente: contrato de SB-01 (V4).</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Calendario del yate" id="id-b3dcca7f045e43f49523fe907a138a79">
         <documentation>Raíz del agregado Calendario del yate: fechas de un yate. Identidad: la del yate.
-Objeto de valor: rango de fechas, con inicio, fin, estado (bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada) y, si está apartado u ocupado, el arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03).
+Objeto de valor: rango de fechas, con inicio, fin, estado de la fecha (bloqueada por el propietario, apartada por una reserva en trámite u ocupada por una reserva confirmada) y, si está apartado u ocupado, el número del arriendo. Una fecha que no está en ningún rango está libre (V6-SUP-03).
 Realiza el objeto de negocio &quot;Calendario del yate&quot; de la V4.
 Fuente: H-08, H-17; contratos de SB-03 y SB-05 (V4); conversación E2E-02, REG-02.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
@@ -1779,7 +1780,7 @@ Fuente: contrato de SB-05 (V4); V4-SUP-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Acta de entrega" id="id-f4fb995872c5435f8ccb7e85e17cbee9">
         <documentation>Raíz del agregado Acta de entrega: registro de la marina al entregar el yate. Identidad: la del arriendo.
-Campos de la raíz: fotos, nivel de combustible (tanque lleno), hora de entrega y observaciones.
+Campos de la raíz: fotos, nivel de combustible (tanque lleno), hora de entrega, observaciones e identificador del yate, que une el yate con su arriendo (SB-26, SB-27).
 Realiza el objeto de negocio &quot;Acta de entrega&quot; de la V4.
 Fuente: H-13; contrato de SB-22 (V4); conversación E2E-01, INT-MAR.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
@@ -1787,6 +1788,7 @@ Fuente: H-13; contrato de SB-22 (V4); conversación E2E-01, INT-MAR.</documentat
         <property key="Campo: nivel de combustible" value="decimal"/>
         <property key="Campo: hora de entrega" value="DateTime"/>
         <property key="Campo: observaciones" value="string?"/>
+        <property key="Campo: identificador del yate" value="string"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Registrar el acta de entrega" id="id-8addfcc26ad744b8a15ea09a54227d4d">
         <documentation>Comando del agregado Acta de entrega. Realiza SB-22 &quot;Registrar el acta de entrega&quot; de la V4. Guarda el acta, las fotos y el nivel de combustible que reporta la marina al entregar el yate.
@@ -1860,12 +1862,13 @@ Fuente: H-12; conversación INT-GPS, EXC-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Calificación" id="id-e848e3b4bf284a969c9a0a9d2e4de26f">
         <documentation>Raíz del agregado Calificación: la que se dan cliente y propietario al cerrar un arriendo. Identidad: el arriendo y quién califica.
-Campos de la raíz: quién califica y la calificación dada.
+Campos de la raíz: quién califica, la calificación dada y el calificado: la referencia al CRM del cliente o el identificador del propietario, según quién califica. SB-30 promedia por este campo.
 Realiza el objeto de negocio &quot;Calificación&quot; de la V4.
 Fuente: H-16; contratos de SB-28, SB-29 y SP-06 (V4); conversación E2E-07.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
         <property key="Campo: quién califica" value="enum Parte que califica(cliente, propietario)"/>
         <property key="Campo: calificación dada" value="int"/>
+        <property key="Campo: calificado" value="string"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Calificar al propietario" id="id-b058bd36e7784e5ea81ab24c8dd3a4bb">
         <documentation>Comando del agregado Calificación. Realiza SB-28 &quot;Calificar al propietario&quot; de la V4. El cliente califica al propietario por su experiencia con el yate.
@@ -1952,8 +1955,8 @@ Fuente: SB-03, SB-05; V6-SUP-03.</documentation>
         <property key="Tipo DDD" value="Objeto de valor"/>
         <property key="Campo: inicio" value="DateOnly"/>
         <property key="Campo: fin" value="DateOnly"/>
-        <property key="Campo: estado" value="enum Estado de la fecha(bloqueada, apartada, ocupada)"/>
-        <property key="Campo: arriendo" value="string?"/>
+        <property key="Campo: estado de la fecha" value="enum Estado de la fecha(bloqueada, apartada, ocupada)"/>
+        <property key="Campo: número del arriendo" value="string?"/>
       </element>
       <element xsi:type="archimate:DataObject" name="Daño encontrado" id="id-77723acb9d8548ae97e705f95c114cc6">
         <documentation>Objeto de valor del agregado Acta de inspección: cada daño encontrado en la inspección, con su valor. No tiene identidad propia: vive dentro de Acta de inspección (V6-DEC-16).
@@ -2699,6 +2702,18 @@ Fuente: EXC-02, D-03; V6, sección 9; V4-SUP-02.</documentation>
       <element xsi:type="archimate:RealizationRelationship" id="id-3d9bc0f246c340bc86521ae979d6a9e1" source="id-2bd3d028a61f4311b25dce71e63ff7e1" target="id-62bb9df0a395496a8b5f71a0a7e285fe"/>
       <element xsi:type="archimate:RealizationRelationship" id="id-1c1e8fa1b6fc48079bf18c8c50e1447a" source="id-e8e67f96248f447ba5e0975a82342240" target="id-fccb23713f1f452385791ada758278f7"/>
       <element xsi:type="archimate:AggregationRelationship" id="id-6acffacd9d5e4d6984b83e7a5e1048b2" source="id-bed34d916f84441ba22218b87c55451c" target="id-60d66be6c035440b8fc779d9918f6ae0"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-d8502f48545c5e0c8a6e31798c758ac5" source="id-29d996ed0b0e4d8b8ba622da657f9388" target="id-f4fb995872c5435f8ccb7e85e17cbee9" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
+      <element xsi:type="archimate:AccessRelationship" id="id-f713fc86cff95c7a82ab7c80ea76faf7" source="id-29d996ed0b0e4d8b8ba622da657f9388" target="id-2856d4f6a4b0480a86d14826dd18dedf" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
+      <element xsi:type="archimate:AccessRelationship" id="id-4bd06352df91511ba0c4de158e5a3319" source="id-c742e57f7d34406c8162646ca3080c19" target="id-f4fb995872c5435f8ccb7e85e17cbee9" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
+      <element xsi:type="archimate:AccessRelationship" id="id-14530e863a185898a8f1cc688852259a" source="id-c742e57f7d34406c8162646ca3080c19" target="id-2856d4f6a4b0480a86d14826dd18dedf" accessType="1">
+        <documentation>Lee el acta para saber si el arriendo está en curso: hay acta de entrega y todavía no hay acta de inspección. SB-26 y SB-27 solo actúan con un arriendo en curso (V8, Partnership con Gestión del arriendo). Fuente: discrepancia 9 del generador.</documentation>
+      </element>
       <element xsi:type="archimate:AccessRelationship" id="id-4d177ec47e5e4f2b92c5e7de315814e2" source="id-60d66be6c035440b8fc779d9918f6ae0" target="id-e1d1c15205ba48a4a268ba022590c305"/>
       <element xsi:type="archimate:AggregationRelationship" id="id-589236991ac04d20a7d7a020f3410b71" source="id-bed34d916f84441ba22218b87c55451c" target="id-ca9597cf3052403c99ebbb59510f497b"/>
       <element xsi:type="archimate:AccessRelationship" id="id-a59a394459944498a7787dca7f6a1a27" source="id-ca9597cf3052403c99ebbb59510f497b" target="id-79b4e5f58e944efeb2843c21a189f6eb" accessType="3"/>
@@ -4457,7 +4472,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
           <feature name="deriveElementLineColor" value="false"/>
           <content>Capacidad impactada por la aplicación</content>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-cdf1b33cfe954ffcb2c7bbc4d095e056" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-91ad4241aa344c69b988aa417dd60a08" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-cdf1b33cfe954ffcb2c7bbc4d095e056" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-91ad4241aa344c69b988aa417dd60a08" type="1">
           <bounds x="40" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-49e37cdbffd24b6eaccf2951b10addbd" fillColor="#D98880" archimateElement="id-0ce823ca86ea4ece8ec876ed07dde36e">
@@ -4470,7 +4485,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="15" y="194" width="190" height="65"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-d539c06c9bf34cbfa4e473f2f1f60954" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-109bb52ebcd24fff932f2455c48eb8fb" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-d539c06c9bf34cbfa4e473f2f1f60954" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-109bb52ebcd24fff932f2455c48eb8fb" type="1">
           <bounds x="290" y="80" width="425" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-659397718b2640cf9c3829b8a01738b9" fillColor="#7FB3D5" archimateElement="id-bb470d63486b4dc3bec2b5b1ccfaca63">
@@ -4499,7 +4514,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="15" y="194" width="190" height="65"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-19910213eb9245519c1cdca556bfc3d9" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-96274de615f64f2894959ac0bcf06fb0" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-19910213eb9245519c1cdca556bfc3d9" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-96274de615f64f2894959ac0bcf06fb0" type="1">
           <bounds x="745" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-24452a81eabf4b3eb94f083bda2ea465" lineWidth="3" lineColor="#7B1FA2" fillColor="#7FB3D5" archimateElement="id-27dfa6ebc5e147ffb6af3db9c12a68e1">
@@ -4515,7 +4530,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <feature name="deriveElementLineColor" value="false"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-2e949d63d9564a9e96f04d87b661ab44" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-f3ce5bf7a5ed4702b5c311fe7bd4e141" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-2e949d63d9564a9e96f04d87b661ab44" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-f3ce5bf7a5ed4702b5c311fe7bd4e141" type="1">
           <bounds x="995" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-fd0af0816dd141cc893baa3fcf2031d2" lineWidth="3" lineColor="#7B1FA2" fillColor="#7FB3D5" archimateElement="id-888a79f729ec4d4da8245d3aa613d75d">
@@ -4537,7 +4552,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <bounds x="15" y="348" width="190" height="65"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-076ef7d4d79a4ca4a0566778e2171d32" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-e9f5e8e2f8c64631b39f7be428519414" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-076ef7d4d79a4ca4a0566778e2171d32" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-e9f5e8e2f8c64631b39f7be428519414" type="1">
           <bounds x="1245" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-8234a679b1b3444b994dfb9161c05919" fillColor="#7FB3D5" archimateElement="id-37b405ea7c744c95bec2cc569b2b68bc">
@@ -4548,7 +4563,7 @@ Fuente: conversación E2E-01, INT-RIE.</documentation>
             <feature name="deriveElementLineColor" value="false"/>
           </child>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="id-84dfb8472eef488491a7b8c53dae26f9" font="|9|1" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-928fa90337204e8fa5a5a7c2f889ab77" type="1">
+        <child xsi:type="archimate:DiagramObject" id="id-84dfb8472eef488491a7b8c53dae26f9" font="1|Sans|9.0|1|GTK|1|" fontColor="#2C3E50" lineColor="#9AA5B1" fillColor="#F4F6F9" archimateElement="id-928fa90337204e8fa5a5a7c2f889ab77" type="1">
           <bounds x="1495" y="80" width="220" height="428"/>
           <feature name="deriveElementLineColor" value="false"/>
           <child xsi:type="archimate:DiagramObject" id="id-589f0dd702e5416983708ace4a4146d2" fillColor="#A9DFBF" archimateElement="id-66692219783f46fca2c7a25e135cdfe2">

@@ -1,7 +1,7 @@
 """Huella (SHA-256) de la salida del generador, para comprobar que es determinista.
 
-Recorre todos los archivos de la carpeta, salvo bin/, obj/ y el XML exportado
-(intermedio/YateGear.xml, que no se versiona). La huella total se calcula sobre la
+Recorre todos los archivos de la carpeta, salvo bin/, obj/, el XML exportado
+(intermedio/<modelo>.xml, que no se versiona) y los registros de la aplicación (intermedio/*.log). La huella total se calcula sobre la
 lista ordenada "ruta  huella" de todos los archivos.
 
 uso:
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 EXCLUIDOS = {"bin", "obj"}
-XML_EXPORTADO = "intermedio/YateGear.xml"
+NO_VERSIONADOS = (".xml", ".log")          # dentro de intermedio/: el XML exportado y los registros
 
 
 def huellas(carpeta: Path) -> dict[str, str]:
@@ -25,7 +25,7 @@ def huellas(carpeta: Path) -> dict[str, str]:
         if not p.is_file():
             continue
         rel = p.relative_to(carpeta).as_posix()
-        if EXCLUIDOS & set(rel.split("/")) or rel == XML_EXPORTADO:
+        if EXCLUIDOS & set(rel.split("/")) or (rel.startswith("intermedio/") and rel.endswith(NO_VERSIONADOS)):
             continue
         out[rel] = hashlib.sha256(p.read_bytes()).hexdigest()
     return out

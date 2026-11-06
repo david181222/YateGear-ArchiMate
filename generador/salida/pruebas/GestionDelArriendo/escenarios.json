@@ -11,6 +11,7 @@
           "nombre": "Registrar la solicitud de reserva",
           "tipo": "comando",
           "crea": true,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
@@ -38,6 +39,7 @@
           "nombre": "Obtener el nivel de riesgo del cliente",
           "tipo": "comando",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/comandos/obtener-el-nivel-de-riesgo-del-cliente",
           "cuerpo": {
@@ -54,6 +56,7 @@
           "nombre": "Verificar los requisitos del cliente",
           "tipo": "consulta",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "GET",
           "ruta": "/consultas/verificar-los-requisitos-del-cliente/ARR-0001",
           "cuerpo": null,
@@ -67,6 +70,7 @@
           "nombre": "Alquiler y seguro cobrados",
           "tipo": "evento de otro contexto",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/eventos-externos/alquiler-y-seguro-cobrados",
           "cuerpo": {
@@ -85,6 +89,7 @@
           "nombre": "Depósito bloqueado",
           "tipo": "evento de otro contexto",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/eventos-externos/deposito-bloqueado",
           "cuerpo": {
@@ -102,14 +107,16 @@
           "nombre": "Consultar el arriendo",
           "tipo": "consulta",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "GET",
           "ruta": "/consultas/consultar-el-arriendo/ARR-0001",
           "cuerpo": null,
           "espera": {
-            "tipo": "estado",
-            "valor": "reserva confirmada",
-            "json": "ReservaConfirmada",
-            "texto": "HTTP 2xx y estado \"reserva confirmada\""
+            "tipo": "salida",
+            "valores": {
+              "estado": "ReservaConfirmada"
+            },
+            "texto": "HTTP 2xx y estado = reserva confirmada"
           }
         },
         {
@@ -117,6 +124,7 @@
           "nombre": "Enviar el aviso de reserva confirmada",
           "tipo": "comando",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/comandos/enviar-el-aviso-de-reserva-confirmada",
           "cuerpo": {
@@ -132,6 +140,7 @@
           "nombre": "Yate entregado al cliente",
           "tipo": "evento de otro contexto",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/eventos-externos/yate-entregado-al-cliente",
           "cuerpo": {
@@ -149,6 +158,7 @@
           "nombre": "Inspección de devolución registrada",
           "tipo": "evento de otro contexto",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/eventos-externos/inspeccion-de-devolucion-registrada",
           "cuerpo": {
@@ -166,6 +176,7 @@
           "nombre": "Cuenta del arriendo cerrada",
           "tipo": "evento de otro contexto",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "POST",
           "ruta": "/eventos-externos/cuenta-del-arriendo-cerrada",
           "cuerpo": {
@@ -183,14 +194,16 @@
           "nombre": "Consultar el arriendo",
           "tipo": "consulta",
           "crea": false,
+          "identidad": "ARR-0001",
           "metodo": "GET",
           "ruta": "/consultas/consultar-el-arriendo/ARR-0001",
           "cuerpo": null,
           "espera": {
-            "tipo": "estado",
-            "valor": "cerrado",
-            "json": "Cerrado",
-            "texto": "HTTP 2xx y estado \"cerrado\""
+            "tipo": "salida",
+            "valores": {
+              "estado": "Cerrado"
+            },
+            "texto": "HTTP 2xx y estado = cerrado"
           }
         }
       ]
@@ -204,6 +217,7 @@
           "nombre": "Registrar la solicitud de reserva",
           "tipo": "comando",
           "crea": true,
+          "identidad": "ARR-0002",
           "metodo": "POST",
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
@@ -231,6 +245,7 @@
           "nombre": "Obtener el nivel de riesgo del cliente",
           "tipo": "comando",
           "crea": false,
+          "identidad": "ARR-0002",
           "metodo": "POST",
           "ruta": "/comandos/obtener-el-nivel-de-riesgo-del-cliente",
           "cuerpo": {
@@ -247,14 +262,16 @@
           "nombre": "Consultar el arriendo",
           "tipo": "consulta",
           "crea": false,
+          "identidad": "ARR-0002",
           "metodo": "GET",
           "ruta": "/consultas/consultar-el-arriendo/ARR-0002",
           "cuerpo": null,
           "espera": {
-            "tipo": "estado",
-            "valor": "no realizado por riesgo alto",
-            "json": "NoRealizadoPorRiesgoAlto",
-            "texto": "HTTP 2xx y estado \"no realizado por riesgo alto\""
+            "tipo": "salida",
+            "valores": {
+              "estado": "NoRealizadoPorRiesgoAlto"
+            },
+            "texto": "HTTP 2xx y estado = no realizado por riesgo alto"
           }
         }
       ]
@@ -268,6 +285,7 @@
           "nombre": "Registrar la solicitud de reserva",
           "tipo": "comando",
           "crea": true,
+          "identidad": "ARR-0003",
           "metodo": "POST",
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
@@ -295,6 +313,7 @@
           "nombre": "Cancelar la reserva",
           "tipo": "comando",
           "crea": false,
+          "identidad": "ARR-0003",
           "metodo": "POST",
           "ruta": "/comandos/cancelar-la-reserva",
           "cuerpo": {
@@ -313,6 +332,7 @@
           "nombre": "Registrar el avance del arriendo",
           "tipo": "comando",
           "crea": false,
+          "identidad": "ARR-0003",
           "metodo": "POST",
           "ruta": "/comandos/registrar-el-avance-del-arriendo",
           "cuerpo": {
@@ -323,7 +343,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 409,
-            "texto": "HTTP 409"
+            "campos": {
+              "estadoActual": "Cancelado"
+            },
+            "texto": "HTTP 409 y estado actual = cancelado"
           }
         }
       ]
@@ -337,6 +360,7 @@
           "nombre": "Registrar la solicitud de reserva",
           "tipo": "comando",
           "crea": true,
+          "identidad": "ARR-0004",
           "metodo": "POST",
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
@@ -364,6 +388,7 @@
           "nombre": "Confirmar la reserva",
           "tipo": "comando",
           "crea": false,
+          "identidad": "ARR-0004",
           "metodo": "POST",
           "ruta": "/comandos/confirmar-la-reserva",
           "cuerpo": {
@@ -375,7 +400,10 @@
           "espera": {
             "tipo": "codigo",
             "valor": 422,
-            "texto": "HTTP 422"
+            "campos": {
+              "regla": "REG-01"
+            },
+            "texto": "HTTP 422 y regla = REG-01"
           }
         }
       ]

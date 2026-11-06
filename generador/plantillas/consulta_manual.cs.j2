@@ -10,10 +10,16 @@ public sealed partial class {{ q.manejador }}
 {% endfor %}
     //
     // Para rechazar la consulta:
-    //   throw new ReglaIncumplida("H-19", "motivo");
+    //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas({{ q.datos }} datos)
     {
     }
+{% if q.filtro_manual %}
+
+    // PENDIENTE: filtro de la lista que no es una igualdad (filtro_manual del YAML). Por ahora incluye todas.
+    // Regla de la que sale: contrato {{ q.codigo }}, reglas (arriba).
+    private partial bool Incluir({{ q.datos }} datos, {{ raiz.clase }} {{ raiz.var }}) => true;
+{% endif %}
 {% for k in q.calculados %}
 
     // PENDIENTE: valor provisional de "{{ k.nombre }}" ({{ k.tipo_yaml }}), dato calculado de la consulta.

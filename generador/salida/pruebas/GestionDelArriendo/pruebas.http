@@ -1,9 +1,9 @@
 # Generado desde ArchiMate: ApplicationComponent "Contexto Gestión del arriendo" (id-fdcc9b19f08a492f8ccd5dd4559926bc).
-# Escenarios del YAML (sección escenarios): cada uno tiene su propio arriendo y se ejecuta en orden.
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
 # "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
 # y revisa solo; aquí se pueden ejecutar uno por uno.
 # Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
-# de empezar para que el primer arriendo sea ARR-0001. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+# de empezar para que la primera raíz sea ARR-0001. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
 
 @base = http://localhost:5080/gestion-del-arriendo
 
@@ -67,7 +67,7 @@ Content-Type: application/json
 }
 
 ### Principal hasta el cierre · paso 6: Consultar el arriendo
-# Consulta. Espera: HTTP 2xx y estado "reserva confirmada".
+# Consulta. Espera: HTTP 2xx y estado = reserva confirmada.
 GET {{base}}/consultas/consultar-el-arriendo/ARR-0001
 
 ### Principal hasta el cierre · paso 7: Enviar el aviso de reserva confirmada
@@ -110,7 +110,7 @@ Content-Type: application/json
 }
 
 ### Principal hasta el cierre · paso 11: Consultar el arriendo
-# Consulta. Espera: HTTP 2xx y estado "cerrado".
+# Consulta. Espera: HTTP 2xx y estado = cerrado.
 GET {{base}}/consultas/consultar-el-arriendo/ARR-0001
 
 # ==============================================================================
@@ -148,7 +148,7 @@ Content-Type: application/json
 }
 
 ### Riesgo alto · paso 3: Consultar el arriendo
-# Consulta. Espera: HTTP 2xx y estado "no realizado por riesgo alto".
+# Consulta. Espera: HTTP 2xx y estado = no realizado por riesgo alto.
 GET {{base}}/consultas/consultar-el-arriendo/ARR-0002
 
 # ==============================================================================
@@ -188,7 +188,7 @@ Content-Type: application/json
 }
 
 ### Cancelación · paso 3: Registrar el avance del arriendo
-# Comando. Espera: HTTP 409.
+# Comando. Espera: HTTP 409 y estado actual = cancelado.
 POST {{base}}/comandos/registrar-el-avance-del-arriendo
 Content-Type: application/json
 
@@ -224,7 +224,7 @@ Content-Type: application/json
 }
 
 ### Confirmar sin riesgo evaluado · paso 2: Confirmar la reserva
-# Comando. Espera: HTTP 422.
+# Comando. Espera: HTTP 422 y regla = REG-01.
 POST {{base}}/comandos/confirmar-la-reserva
 Content-Type: application/json
 

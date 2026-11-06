@@ -3,10 +3,10 @@
 Cómo se juzga cada paso (lo esperado sale de "espera" en el YAML):
   - sin espera: la respuesta es 2xx;
   - un código: la respuesta tiene ese código;
-  - un evento: la respuesta es 2xx y la bitácora registró ese evento para el arriendo del escenario
+  - un evento: la respuesta es 2xx y la bitácora registró ese evento para la raíz del escenario
     durante ese paso (así se ven también los eventos que publica una política);
-  - {estado: ...}: la respuesta es 2xx y la consulta devuelve ese estado.
-En el primer paso de cada escenario se revisa además que el arriendo reciba la identidad esperada.
+  - {dato: valor, ...}: la respuesta es 2xx y la consulta devuelve esos valores.
+En cada paso que crea una raíz y debe responder con éxito se revisa además que reciba la identidad esperada.
 
 Termina con código 1 si algún paso falla. Lo usa probar.ps1, que levanta y detiene la aplicación.
 
@@ -35,6 +35,16 @@ def llamar(metodo: str, url: str, cuerpo) -> tuple[int, object]:
         return codigo, texto
 
 
+def igual(a, b) -> bool:
+    """Compara un valor de la respuesta con el esperado; los números, por su valor (5 == 5.0); una lista con un
+    número, por cuántos elementos tiene."""
+    if isinstance(a, list) and isinstance(b, int) and not isinstance(b, bool):
+        return len(a) == b
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not isinstance(a, bool) and not isinstance(b, bool):
+        return abs(a - b) < 1e-9
+    return a == b
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     if len(sys.argv) != 3:
@@ -48,30 +58,34 @@ def main():
 
     total = fallas = 0
     for e in esc["escenarios"]:
-        print(f'\nEscenario "{e["nombre"]}" ({e["identidad"]})')
+        print(f'\nEscenario "{e["nombre"]}"' + (f' ({e["identidad"]})' if e["identidad"] else ""))
         for p in e["pasos"]:
             total += 1
             antes = len(bitacora())
             codigo, cuerpo = llamar(p["metodo"], base + p["ruta"], p["cuerpo"])
             nuevos = bitacora()[antes:]
-            eventos = [n["nombre"] for n in nuevos if n["tipo"] == "evento" and (n["datos"] or {}).get("identidad") == e["identidad"]]
+            ident = p.get("identidad")
+            # Los eventos de la raíz del paso; un paso sin identidad (un comando sobre todas las raíces) acepta los de cualquiera.
+            eventos = [n["nombre"] for n in nuevos if n["tipo"] == "evento" and (ident is None or (n["datos"] or {}).get("identidad") == ident)]
             esp, exito = p["espera"], 200 <= codigo < 300
             if esp["tipo"] == "exito":
                 ok = exito
-            elif esp["tipo"] == "codigo":
-                ok = codigo == esp["valor"]
+            elif esp["tipo"] == "codigo":             # y, si los dice, los campos de la respuesta de error
+                ok = codigo == esp["valor"] and all(isinstance(cuerpo, dict) and cuerpo.get(k) == v
+                                                    for k, v in (esp.get("campos") or {}).items())
             elif esp["tipo"] == "evento":
                 ok = exito and esp["valor"] in eventos
             else:
-                ok = exito and isinstance(cuerpo, dict) and cuerpo.get("estado") == esp["json"]
+                ok = exito and isinstance(cuerpo, dict) and all(igual(cuerpo.get(k), v) for k, v in esp["valores"].items())
             detalle = f"HTTP {codigo}"
-            if p["crea"] and isinstance(cuerpo, dict):
+            if p["crea"] and exito and isinstance(cuerpo, dict):
                 detalle += f' {cuerpo.get("identidad")}'
-                if cuerpo.get("identidad") != e["identidad"]:
+                if cuerpo.get("identidad") != ident:
                     ok = False
-                    detalle += f' (se esperaba {e["identidad"]})'
-            if p["tipo"] == "consulta" and isinstance(cuerpo, dict) and "estado" in cuerpo:
-                detalle += f' estado {cuerpo["estado"]}'
+                    detalle += f' (se esperaba {ident})'
+            if p["tipo"] == "consulta" and exito and isinstance(cuerpo, dict):
+                mostrar = esp["valores"] if esp["tipo"] == "salida" else {k: v for k, v in cuerpo.items() if k == "estado"}
+                detalle += "".join(f" {k} {cuerpo.get(k)}" for k in mostrar)
             if eventos:
                 detalle += " eventos: " + ", ".join(eventos)
             if not exito and isinstance(cuerpo, dict):

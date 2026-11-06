@@ -1,0 +1,114 @@
+# Generado desde ArchiMate: ApplicationComponent "Contexto Calificaciones" (id-6f29abc193cb4f2fa1234cec80bf0675).
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
+# "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
+# y revisa solo; aquí se pueden ejecutar uno por uno.
+# Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
+# de empezar. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+
+@base = http://localhost:5080/calificaciones
+
+# ==============================================================================
+# Escenario 1: Calificaciones mutuas (ARR-0001/Cliente)
+# ==============================================================================
+
+### Calificaciones mutuas · paso 1: Arriendo cerrado
+# Evento de otro contexto. Espera: HTTP 2xx.
+POST {{base}}/eventos-externos/arriendo-cerrado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "referenciaAlCRM": "CRM-0001",
+  "propietario": "PROP-0001",
+  "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+}
+
+### Calificaciones mutuas · paso 2: Calificar al propietario
+# Comando. Espera: HTTP 2xx y el evento "Propietario calificado".
+POST {{base}}/comandos/calificar-al-propietario
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "calificacionDada": 5
+}
+
+### Calificaciones mutuas · paso 3: Calificar al cliente
+# Comando. Espera: HTTP 2xx y el evento "Cliente calificado".
+POST {{base}}/comandos/calificar-al-cliente
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "calificacionDada": 4
+}
+
+### Calificaciones mutuas · paso 4: Consultar calificaciones promedio
+# Consulta. Espera: HTTP 2xx y calificación promedio = 5, número de calificaciones = 1.
+GET {{base}}/consultas/consultar-calificaciones-promedio?calificado=PROP-0001
+
+# ==============================================================================
+# Escenario 2: Promedio de varias (ARR-0002/Cliente)
+# ==============================================================================
+
+### Promedio de varias · paso 1: Arriendo cerrado
+# Evento de otro contexto. Espera: HTTP 2xx.
+POST {{base}}/eventos-externos/arriendo-cerrado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "referenciaAlCRM": "CRM-0002",
+  "propietario": "PROP-0001",
+  "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+}
+
+### Promedio de varias · paso 2: Calificar al propietario
+# Comando. Espera: HTTP 2xx y el evento "Propietario calificado".
+POST {{base}}/comandos/calificar-al-propietario
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "calificacionDada": 2
+}
+
+### Promedio de varias · paso 3: Consultar calificaciones promedio
+# Consulta. Espera: HTTP 2xx y calificación promedio = 3.5, número de calificaciones = 2.
+GET {{base}}/consultas/consultar-calificaciones-promedio?calificado=PROP-0001
+
+# ==============================================================================
+# Escenario 3: Calificar sin arriendo cerrado ()
+# ==============================================================================
+
+### Calificar sin arriendo cerrado · paso 1: Calificar al cliente
+# Comando. Espera: HTTP 409 y requiere = Arriendo cerrado.
+POST {{base}}/comandos/calificar-al-cliente
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0099",
+  "calificacionDada": 3
+}
+
+# ==============================================================================
+# Escenario 4: Calificar dos veces ()
+# ==============================================================================
+
+### Calificar dos veces · paso 1: Calificar al propietario
+# Comando. Espera: HTTP 409 y identidad = ARR-0001/Cliente.
+POST {{base}}/comandos/calificar-al-propietario
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "calificacionDada": 1
+}
+
+# ==============================================================================
+# Escenario 5: Sin calificaciones ()
+# ==============================================================================
+
+### Sin calificaciones · paso 1: Consultar calificaciones promedio
+# Consulta. Espera: HTTP 2xx y número de calificaciones = 0.
+GET {{base}}/consultas/consultar-calificaciones-promedio?calificado=PROP-SIN-CALIFICAR

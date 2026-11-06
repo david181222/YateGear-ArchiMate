@@ -1,0 +1,279 @@
+# Especificaciones del Contexto Disponibilidad de yates
+#
+# Qué es este archivo, sus secciones y sus tipos: ver la sección "Formato del YAML" del README del generador.
+# Este contexto tiene dos agregados (G2): cada comando, evento y consulta usa la raíz de su agregado. Usa además:
+#   identidad > de con un solo dato que se llama como la identidad: identidad recibida (el Calendario del
+#                      yate tiene la del yate).
+#   crea: si_no_existe   carga la raíz y, si no existe, la crea vacía con el primer estado de su lista.
+#   guarda {lista: agregar | {reemplazar: [claves]} | {quitar: [claves]}}   objeto de valor con Cardinalidad
+#                      Muchos (G4); guarda y valores pueden ir dentro de cada resultado.
+#   eventos_de_otros_contextos con identidad propia que disparan un comando: la identidad de la raíz sale de
+#                      los datos del evento, por su nombre (G3).
+#   consultas sin agrega: devuelven una lista (lista), con filtro_manual para lo que no es una igualdad (G5).
+#
+# Fuentes: los contratos de SB-01, SB-03, SB-04, SB-05 y SA-02 de la V4, la V6 (agregados Yate y Calendario del
+# yate), la tabla de eventos entre dominios de la V6 y la V8. Todo dato que no sale del README lleva "# supuesto".
+
+contexto: Contexto Disponibilidad de yates
+
+raices:
+
+  Yate:
+    identidad:                                    # V6: "identificador del yate en el inventario"
+      nombre: identificador del yate              # el mismo nombre que usa Gestión del arriendo (D2)
+      tipo: string
+      prefijo: YATE-                              # D4: consecutivo, igual que el arriendo
+      digitos: 4                                  # supuesto
+    # supuesto: el modelo no le da ciclo de vida al yate en el inventario; tiene un solo estado.
+    estado: enum Estado del yate(registrado)
+
+  Calendario del yate:
+    identidad:                                    # V6: "Identidad: la del yate"
+      nombre: identificador del yate
+      tipo: string
+      de:
+        identificador del yate: string            # recibida: la que trae el comando o el evento
+    # supuesto: el calendario no tiene ciclo de vida; tiene un solo estado, que también es el inicial.
+    estado: enum Estado del calendario(activo)
+
+comandos:
+
+  Registrar yate en el inventario:                # contrato SB-01; lo inicia Comercial (V4-SUP-06)
+    crea: true
+    a: registrado
+    entrada:
+      propietario: string
+      identificador de la marina: string          # "marina": la ficha de la marina es un dato de referencia (V6-DEC-07)
+      nombre: string
+      matrícula: string
+      capacidad: int
+      precio por día: decimal
+      documentos al día ante la DIMAR: bool
+    usa: [Contratos con propietarios y clientes]  # "contrato firmado con el propietario" (SB-01, V9)
+    guarda:
+      - propietario
+      - identificador de la marina
+      - Datos del yate
+      - precio por día
+      - documentos al día ante la DIMAR
+      - referencia del contrato del propietario   # sale de SA-02
+    eventos: [Yate registrado]
+
+  Definir las fechas bloqueadas del yate:         # contrato SB-03; lo inicia el propietario (V4-SUP-06)
+    crea: si_no_existe                            # nadie crea el calendario: se crea con el primer cambio
+    desde: [activo]
+    entrada:
+      inicio: DateOnly
+      fin: DateOnly
+      acción: enum Acción sobre el bloqueo(bloquear, desbloquear)   # supuesto: nombre del enum
+    resultados:
+      Fechas bloqueadas:
+        si: {acción: [bloquear]}
+        valores: {estado de la fecha: bloqueada}
+        guarda:
+          - Rango de fechas: agregar
+      Fechas desbloqueadas:
+        si: {acción: [desbloquear]}
+        valores: {estado de la fecha: bloqueada}
+        guarda:
+          - Rango de fechas: {quitar: [inicio, fin, estado de la fecha]}   # supuesto: se desbloquea el mismo rango que se bloqueó
+
+  Gestionar la ocupación del calendario:          # contrato SB-05
+    crea: si_no_existe
+    desde: [activo]
+    entrada:
+      inicio: DateOnly
+      fin: DateOnly
+      número del arriendo: string
+      acción: enum Acción sobre la ocupación(apartar, ocupar, soltar)   # supuesto: nombre del enum
+    resultados:
+      Fechas apartadas:                           # al pedir la reserva (V4-SUP-01)
+        si: {acción: [apartar]}
+        valores: {estado de la fecha: apartada}
+        guarda:
+          - Rango de fechas: agregar
+      Fechas ocupadas:                            # al confirmarla (V4-SUP-01)
+        si: {acción: [ocupar]}
+        valores: {estado de la fecha: ocupada}
+        guarda:
+          - Rango de fechas: {reemplazar: [número del arriendo]}
+      Fechas liberadas:
+        si: {acción: [soltar]}
+        guarda:
+          - Rango de fechas: {quitar: [número del arriendo]}
+
+eventos:
+
+  Yate registrado:
+    datos:
+      identificador de la marina: string
+      precio por día: decimal
+
+  Fechas bloqueadas:
+    datos:
+      inicio: DateOnly
+      fin: DateOnly
+
+  Fechas desbloqueadas:
+    datos:
+      inicio: DateOnly
+      fin: DateOnly
+
+  Fechas apartadas:
+    datos:
+      número del arriendo: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Fechas ocupadas:
+    datos:
+      número del arriendo: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Fechas liberadas:
+    datos:
+      número del arriendo: string
+      inicio: DateOnly
+      fin: DateOnly
+
+consultas:
+
+  Consultar yates disponibles:                    # contrato SB-04
+    sobre: todas
+    de: Yate                                      # recorre los yates; lee también sus calendarios
+    entrada:
+      identificador de la marina: string          # supuesto: la "marina elegida"; la ubicación del cliente no se usa
+      inicio: DateOnly
+      fin: DateOnly
+    filtro: [identificador de la marina]
+    filtro_manual: true                           # H-08: sin bloqueo y sin otra reserva en esas fechas (a mano)
+    lista: yates disponibles                      # "puede venir vacía"
+    salida:                                       # "yates disponibles con su marina y su precio por día"
+      identificador del yate: string
+      identificador de la marina: string
+      precio por día: decimal
+
+# Eventos entre dominios de la V6 que disparan SB-05: Disponibilidad de yates aparta, ocupa o suelta las fechas.
+# Los datos van con los nombres que publica Gestión del arriendo (D2). Llegan con la identidad del arriendo; la del
+# calendario es el yate, que viene en sus datos.
+eventos_de_otros_contextos:
+
+  Reserva solicitada:
+    de: Contexto Gestión del arriendo
+    identidad: número del arriendo
+    dispara: Gestionar la ocupación del calendario
+    con: {acción: apartar}
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Reserva confirmada:
+    de: Contexto Gestión del arriendo
+    identidad: número del arriendo
+    dispara: Gestionar la ocupación del calendario
+    con: {acción: ocupar}
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Reserva cancelada:
+    de: Contexto Gestión del arriendo
+    identidad: número del arriendo
+    dispara: Gestionar la ocupación del calendario
+    con: {acción: soltar}
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+
+  Arriendo no realizado por riesgo alto:
+    de: Contexto Gestión del arriendo
+    identidad: número del arriendo
+    dispara: Gestionar la ocupación del calendario
+    con: {acción: soltar}
+    datos:
+      identificador del yate: string
+      inicio: DateOnly
+      fin: DateOnly
+
+servicios_sa:
+
+  Contratos con propietarios y clientes:          # contrato SA-02
+    entrada:
+      propietario: string                         # "datos del propietario para el contrato"
+    salida:
+      referencia del contrato del propietario: string   # el nombre del campo del Yate (regla de los datos)
+      estado del contrato: enum Estado del contrato(enviado, firmado)
+    respuesta_por_defecto:                        # supuesto: valores de prueba
+      referencia del contrato del propietario: CONP-0001
+      estado del contrato: firmado
+    casos:
+      - si: {propietario: [PROP-SIN-CONTRATO]}    # supuesto: propietario de prueba sin contrato firmado
+        respuesta:
+          referencia del contrato del propietario: CONP-SIN-FIRMA
+          estado del contrato: enviado
+
+escenarios:
+
+  Registro y ocupación:
+    - Registrar yate en el inventario:            # YATE-0001
+        con: {propietario: PROP-0001, identificador de la marina: MAR-01, documentos al día ante la DIMAR: true}
+        espera: Yate registrado
+    - Definir las fechas bloqueadas del yate:     # crea el calendario de YATE-0001
+        con: {inicio: "2026-03-01", fin: "2026-03-05", acción: bloquear}
+        espera: Fechas bloqueadas
+    - Reserva solicitada:
+        con: {número del arriendo: ARR-0001, identificador del yate: YATE-0001, inicio: "2026-03-10", fin: "2026-03-12"}
+        espera: Fechas apartadas
+    - Consultar yates disponibles:                # apartadas: no está disponible
+        con: {identificador de la marina: MAR-01, inicio: "2026-03-11", fin: "2026-03-15"}
+        espera: {yates disponibles: 0}
+    - Consultar yates disponibles:                # otras fechas: sí
+        con: {identificador de la marina: MAR-01, inicio: "2026-03-20", fin: "2026-03-22"}
+        espera: {yates disponibles: 1}
+    - Reserva confirmada:
+        con: {número del arriendo: ARR-0001, identificador del yate: YATE-0001, inicio: "2026-03-10", fin: "2026-03-12"}
+        espera: Fechas ocupadas
+    - Definir las fechas bloqueadas del yate:     # rechazo a propósito: REG-02, fechas con reserva confirmada
+        con: {inicio: "2026-03-11", fin: "2026-03-11", acción: bloquear}
+        espera: {código: 422, regla: REG-02}
+    - Reserva solicitada:                         # rechazo a propósito: REG-01, otro arriendo en esas fechas
+        con: {número del arriendo: ARR-0002, identificador del yate: YATE-0001, inicio: "2026-03-12", fin: "2026-03-14"}
+        espera: {código: 422, regla: REG-01}
+    - Reserva cancelada:
+        con: {número del arriendo: ARR-0001, identificador del yate: YATE-0001, inicio: "2026-03-10", fin: "2026-03-12"}
+        espera: Fechas liberadas
+    - Consultar yates disponibles:                # sueltas: vuelve a estar disponible
+        con: {identificador de la marina: MAR-01, inicio: "2026-03-11", fin: "2026-03-15"}
+        espera: {yates disponibles: 1}
+    - Definir las fechas bloqueadas del yate:
+        con: {inicio: "2026-03-01", fin: "2026-03-05", acción: desbloquear}
+        espera: Fechas desbloqueadas
+
+  Registro rechazado:
+    - Registrar yate en el inventario:            # rechazo a propósito: INT-CON, el propietario no tiene contrato firmado
+        con: {propietario: PROP-SIN-CONTRATO, documentos al día ante la DIMAR: true}
+        espera: {código: 422, regla: INT-CON}
+    - Registrar yate en el inventario:            # rechazo a propósito: NOR-01, documentos ante la DIMAR vencidos
+        con: {propietario: PROP-0002, documentos al día ante la DIMAR: false}
+        espera: {código: 422, regla: NOR-01}
+
+  Otra marina:
+    - Registrar yate en el inventario:            # YATE-0002 (los rechazados no gastan número)
+        con: {propietario: PROP-0003, identificador de la marina: MAR-02, documentos al día ante la DIMAR: true}
+        espera: Yate registrado
+    - Consultar yates disponibles:
+        con: {identificador de la marina: MAR-02, inicio: "2026-03-11", fin: "2026-03-15"}
+        espera: {yates disponibles: 1}
+    - Reserva confirmada:                         # rechazo a propósito: no hay fechas apartadas de ARR-0003 que ocupar
+        con: {número del arriendo: ARR-0003, identificador del yate: YATE-0002, inicio: "2026-04-01", fin: "2026-04-02"}
+        espera: 404
+    - Reserva solicitada:
+        con: {número del arriendo: ARR-0004, identificador del yate: YATE-0002, inicio: "2026-04-10", fin: "2026-04-12"}
+        espera: Fechas apartadas
+    - Arriendo no realizado por riesgo alto:      # Gestión del arriendo no lo realizó: se sueltan las fechas
+        con: {número del arriendo: ARR-0004, identificador del yate: YATE-0002, inicio: "2026-04-10", fin: "2026-04-12"}
+        espera: Fechas liberadas

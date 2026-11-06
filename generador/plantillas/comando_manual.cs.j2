@@ -10,10 +10,16 @@ public sealed partial class {{ c.manejador }}
 {% endfor %}
     //
     // Se llama antes de la transición de estado. Para rechazar la operación:
-    //   throw new ReglaIncumplida("REG-01", "motivo");
+    //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas({{ c.datos }} datos)
     {
     }
+{% if c.todas %}
+
+    // PENDIENTE: las raíces por las que se publica un evento (comando sobre todas). Por ahora, ninguna.
+    // Regla de la que sale: contrato {{ c.codigo }}, reglas (arriba).
+    private partial IEnumerable<{{ raiz.clase }}> Seleccionar({{ c.datos }} datos) => [];
+{% endif %}
 {% for k in c.calculados %}
 
     // PENDIENTE: valor provisional de "{{ k.nombre }}" ({{ k.tipo_yaml }}), dato calculado del evento "{{ k.evento }}".

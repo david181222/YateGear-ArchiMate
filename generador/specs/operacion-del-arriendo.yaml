@@ -1,0 +1,249 @@
+# Especificaciones del Contexto Operación del arriendo
+#
+# Qué es este archivo, sus secciones y sus tipos: ver la sección "Formato del YAML" del README del generador.
+# Este contexto tiene tres agregados (G2). Usa además:
+#   List<objeto de valor> en la entrada y guarda {lista: {todos: dato}}   los daños llegan con la inspección (G4).
+#   lee también (del modelo)   SB-24 carga el acta de entrega por el número del arriendo (G6).
+#   servicios_sa > recibe      las marinas y el proveedor le envían datos a YateGear (G7).
+#   comando sobre: todas y temporizador   SB-27 revisa las lecturas cada cierto tiempo (G8).
+#   consulta con orden          el recorrido de SB-26, de la primera lectura a la última (G5).
+#
+# Un arriendo está en curso si tiene acta de entrega y todavía no tiene acta de inspección (V8: SB-26 y SB-27
+# solo actúan con un arriendo en curso). Fuentes: los contratos de SB-22 a SB-27, SA-05 y SA-07 de la V4, la V6
+# (agregados de Operación del arriendo), la tabla de eventos entre dominios de la V6 y la V8.
+# Todo dato que no sale del README lleva "# supuesto".
+
+contexto: Contexto Operación del arriendo
+
+raices:
+
+  Acta de entrega:
+    identidad:                                    # V6: "Identidad: la del arriendo"
+      nombre: número del arriendo
+      tipo: string
+      de:
+        número del arriendo: string
+    # supuesto: el acta no cambia después de registrarse (V6); tiene un solo estado.
+    estado: enum Estado del acta de entrega(registrada)
+
+  Acta de inspección:
+    identidad:                                    # V6: "Identidad: la del arriendo"
+      nombre: número del arriendo
+      tipo: string
+      de:
+        número del arriendo: string
+    # supuesto: el acta no cambia después de registrarse (V6); tiene un solo estado.
+    estado: enum Estado del acta de inspección(registrada)
+
+  Lectura de ubicación y combustible:
+    identidad:                                    # V6: "Identidad: el yate y la hora de la lectura"
+      nombre: identificador de la lectura         # supuesto: nombre del dato
+      tipo: string
+      de:
+        identificador del yate: string            # el yate del inventario (SA-07 asocia la lectura al yate)
+        hora de la lectura:                       # campo de la raíz
+    # supuesto: una lectura no cambia después de guardarse; tiene un solo estado.
+    estado: enum Estado de la lectura(registrada)
+
+comandos:
+
+  Registrar el acta de entrega:                   # contrato SB-22; lo inicia la marina por SA-05 (V4-SUP-06)
+    crea: true
+    a: registrada
+    entrada:
+      número del arriendo: string
+      identificador del yate: string
+      fotos: List<string>
+      nivel de combustible: decimal
+      hora de entrega: DateTime
+      observaciones: string?
+    requiere: [Reserva confirmada]                # CIE-01: se rechaza si el arriendo no tiene la reserva confirmada
+    guarda: [identificador del yate, fotos, nivel de combustible, hora de entrega, observaciones]
+    eventos: [Yate entregado al cliente]
+
+  Registrar la inspección de devolución:          # contrato SB-23; lo inicia la marina por SA-05 (V4-SUP-06)
+    crea: true
+    a: registrada
+    entrada:
+      número del arriendo: string
+      fotos: List<string>
+      nivel de combustible: decimal
+      hora de regreso: DateTime
+      daños encontrados: List<Daño encontrado>   # "daños encontrados con su valor" (V4-SUP-03)
+    guarda:
+      - fotos
+      - nivel de combustible
+      - hora de regreso
+      - Daño encontrado: {todos: daños encontrados}
+    eventos: [Inspección de devolución registrada]
+
+  Determinar las diferencias entre entrega y devolución:   # contrato SB-24; lo dispara la política de la inspección
+    desde: [registrada]
+    entrada: {}
+    # supuesto: la "fecha y hora de fin acordadas" es el fin de la reserva confirmada que Operación recibió
+    # de Gestión del arriendo (cada contexto guarda su copia, V8-DEC-04).
+    requiere: [Reserva confirmada]
+    eventos: [Diferencias determinadas]
+
+  Registrar lecturas de ubicación y combustible:  # contrato SB-25; lo inicia el proveedor por SA-07
+    crea: true
+    a: registrada
+    entrada:
+      identificador del yate: string
+      latitud: decimal
+      longitud: decimal
+      nivel de combustible: decimal
+      hora de la lectura: DateTime
+    guarda: [latitud, longitud, nivel de combustible, hora de la lectura]
+    eventos: [Lectura registrada]
+
+  Detectar la pérdida de señal:                   # contrato SB-27; corre solo, cada cierto tiempo (G8)
+    sobre: todas                                  # elige la última lectura de cada yate en curso que perdió la señal
+    entrada:
+      minutos sin lecturas: int                   # "tiempo máximo sin lecturas"
+      ahora: DateTime                             # supuesto: la hora de la revisión llega en la entrada, para que la prueba no dependa del reloj
+    temporizador:                                 # D6
+      cada minutos: 5                             # supuesto: cada cuánto se revisa
+      con: {minutos sin lecturas: 30}             # supuesto: el tiempo lo fija Operaciones (V4-SUP-04)
+      ahora: ahora
+    eventos: [Pérdida de señal del yate]
+
+eventos:
+
+  Yate entregado al cliente:                      # lo escucha Gestión del arriendo (SB-09: "Arriendo iniciado")
+    datos:
+      identificador del yate: string
+      hora de entrega: DateTime                   # Gestión del arriendo lo recibe como "fecha y hora del cambio" (discrepancia 3, D2)
+
+  Inspección de devolución registrada:            # dispara SB-24; lo escucha Gestión del arriendo (SB-09: "Yate devuelto")
+    datos:
+      hora de regreso: DateTime
+
+  Diferencias determinadas:                       # lo escucha Cobros y depósito (SB-14 y SB-20 o SB-21)
+    datos: {}
+    calculados:                                   # "combustible consumido, horas adicionales y daños" (SB-24)
+      combustible consumido: decimal
+      horas adicionales: decimal
+      valor de los daños: decimal
+
+  Lectura registrada:
+    datos:
+      identificador del yate: string
+      hora de la lectura: DateTime
+
+  Pérdida de señal del yate:                      # "con la última lectura conocida" (SB-27); con él la marina contacta al cliente
+    datos:
+      identificador del yate: string
+      latitud: decimal
+      longitud: decimal
+      nivel de combustible: decimal
+      hora de la lectura: DateTime
+
+consultas:
+
+  Consultar ubicación y combustible del yate:     # contrato SB-26
+    sobre: todas
+    de: Lectura de ubicación y combustible        # recorre las lecturas; lee también las actas
+    entrada:
+      número del arriendo: string                 # "arriendo en curso"; quién consulta no se revisa (supuesto: sin autenticación)
+    filtro_manual: true                           # las lecturas del yate del arriendo, desde la entrega (a mano)
+    orden: [hora de la lectura]
+    lista: recorrido                              # supuesto: la última posición es el último elemento del recorrido
+    salida:                                       # "última posición, nivel de combustible, hora y recorrido"
+      latitud: decimal
+      longitud: decimal
+      nivel de combustible: decimal
+      hora de la lectura: DateTime
+
+# Eventos entre dominios de la V6 que este contexto recibe. Datos con los nombres que publica Gestión del arriendo (D2).
+eventos_de_otros_contextos:
+
+  Reserva confirmada:                             # CIE-01 (SB-22) y el fin acordado (SB-24); se recuerda
+    de: Contexto Gestión del arriendo
+    identidad: número del arriendo
+    datos:                                        # solo lo que Operación usa: el yate lo dice el acta de la marina
+      inicio: DateOnly
+      fin: DateOnly
+
+servicios_sa:
+
+  Avisos y actas de las marinas:                  # contrato SA-05; aquí solo entra: las actas que envía la marina
+    recibe:                                       # supuesto: la marina ya envía las actas con los datos del arriendo (MOT-04)
+      Acta de entrega recibida:
+        dispara: Registrar el acta de entrega
+        datos:
+          número del arriendo: string
+          identificador del yate: string
+          fotos: List<string>
+          nivel de combustible: decimal
+          hora de entrega: DateTime
+          observaciones: string?
+      Acta de inspección recibida:
+        dispara: Registrar la inspección de devolución
+        datos:
+          número del arriendo: string
+          fotos: List<string>
+          nivel de combustible: decimal
+          hora de regreso: DateTime
+          daños encontrados: List<Daño encontrado>
+
+  Ubicación y combustible del proveedor:          # contrato SA-07; solo entra (INT-GPS)
+    recibe:                                       # supuesto: el proveedor ya envía el yate; la asociación dispositivo-yate queda para cuando exista el inventario de dispositivos
+      Lectura del proveedor:
+        dispara: Registrar lecturas de ubicación y combustible
+        datos:
+          identificador del yate: string
+          latitud: decimal
+          longitud: decimal
+          nivel de combustible: decimal
+          hora de la lectura: DateTime
+
+escenarios:
+
+  Entrega, seguimiento y devolución:
+    - Reserva confirmada:                         # llega de Gestión del arriendo y se recuerda
+        con: {número del arriendo: ARR-0001, inicio: "2026-03-10", fin: "2026-03-12"}
+    - Acta de entrega recibida:
+        con: {número del arriendo: ARR-0001, identificador del yate: YATE-0001, fotos: [entrega-1.jpg], nivel de combustible: 100, hora de entrega: "2026-03-10T09:00:00"}
+        espera: Yate entregado al cliente
+    - Lectura del proveedor:
+        con: {identificador del yate: YATE-0001, nivel de combustible: 90, hora de la lectura: "2026-03-10T10:00:00"}
+        espera: Lectura registrada
+    - Lectura del proveedor:
+        con: {identificador del yate: YATE-0001, nivel de combustible: 80, hora de la lectura: "2026-03-10T11:00:00"}
+        espera: Lectura registrada
+    - Consultar ubicación y combustible del yate:
+        con: {número del arriendo: ARR-0001}
+        espera: {recorrido: 2}
+    - Detectar la pérdida de señal:               # 20 minutos sin lecturas: todavía no
+        con: {minutos sin lecturas: 30, ahora: "2026-03-10T11:20:00"}
+    - Detectar la pérdida de señal:               # una hora sin lecturas: se avisa
+        con: {minutos sin lecturas: 30, ahora: "2026-03-10T12:00:00"}
+        espera: Pérdida de señal del yate
+    - Acta de inspección recibida:                # la política dispara SB-24
+        con: {número del arriendo: ARR-0001, fotos: [regreso-1.jpg], nivel de combustible: 60, hora de regreso: "2026-03-13T15:00:00", daños encontrados: [{descripción: Rayón en el casco, valor: 200}]}
+        espera: Diferencias determinadas
+    - Consultar ubicación y combustible del yate:   # rechazo a propósito: el arriendo ya no está en curso
+        con: {número del arriendo: ARR-0001}
+        espera: {código: 422, regla: V8}
+
+  Actas rechazadas:
+    - Acta de entrega recibida:                   # rechazo a propósito: CIE-01, no llegó la reserva confirmada
+        con: {número del arriendo: ARR-0099, identificador del yate: YATE-0001, fotos: [x.jpg], hora de entrega: "2026-03-10T09:00:00"}
+        espera: {código: 409, requiere: Reserva confirmada}
+    - Acta de entrega recibida:                   # rechazo a propósito: ya existe el acta de ARR-0001
+        con: {número del arriendo: ARR-0001, identificador del yate: YATE-0001, fotos: [x.jpg], hora de entrega: "2026-03-10T09:00:00"}
+        espera: {código: 409, identidad: ARR-0001}
+    - Reserva confirmada:
+        con: {número del arriendo: ARR-0002, inicio: "2026-04-01", fin: "2026-04-02"}
+    - Acta de entrega recibida:                   # rechazo a propósito: H-13, el acta no trae fotos
+        con: {número del arriendo: ARR-0002, identificador del yate: YATE-0002, fotos: [], hora de entrega: "2026-04-01T09:00:00"}
+        espera: {código: 422, regla: H-13}
+    - Reserva confirmada:
+        con: {número del arriendo: ARR-0003, inicio: "2026-05-01", fin: "2026-05-02"}
+    - Acta de inspección recibida:                # sin acta de entrega: la política no puede comparar (queda en la bitácora)
+        con: {número del arriendo: ARR-0003, fotos: [y.jpg], hora de regreso: "2026-05-02T18:00:00", daños encontrados: []}
+        espera: Inspección de devolución registrada
+    - Determinar las diferencias entre entrega y devolución:   # rechazo a propósito: H-13, falta el acta de entrega (G6)
+        con: {número del arriendo: ARR-0003}
+        espera: 404

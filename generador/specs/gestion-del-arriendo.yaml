@@ -272,7 +272,7 @@ servicios_sa:
   Contratos con propietarios y clientes:          # contrato SA-02
     entrada:
       número del arriendo: string                 # supuesto: el contrato del cliente se consulta por su arriendo
-    salida:                                       # estado del contrato, fecha de firma y condiciones de cancelación; la referencia: V8-SUP-03
+    salida:                                       # estado del contrato, fecha de firma, condiciones de cancelación y la referencia del contrato firmado
       referencia del contrato firmado: string
       estado del contrato: enum Estado del contrato(enviado, firmado)   # supuesto: nombre del enum
       fecha de firma: DateOnly?
@@ -347,9 +347,9 @@ escenarios:
         espera: Reserva cancelada
     - Registrar el avance del arriendo:           # rechazo a propósito: un arriendo cancelado no empieza
         con: {nuevo estado: en curso}
-        espera: 409
+        espera: {código: 409, estado actual: cancelado}
 
   Confirmar sin riesgo evaluado:                  # ARR-0004
     - Registrar la solicitud de reserva
     - Confirmar la reserva:                       # REG-01 (escrita a mano en ConfirmarLaReserva.cs): falta el riesgo aceptable
-        espera: 422
+        espera: {código: 422, regla: REG-01}

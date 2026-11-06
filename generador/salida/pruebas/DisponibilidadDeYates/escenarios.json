@@ -1,0 +1,396 @@
+{
+  "generado_desde": "Generado desde ArchiMate: ApplicationComponent \"Contexto Disponibilidad de yates\" (id-0d93d731f6fd4b21acbf20d3cb28cf6f).",
+  "ruta_base": "/disponibilidad-de-yates",
+  "escenarios": [
+    {
+      "nombre": "Registro y ocupación",
+      "identidad": "YATE-0001",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar yate en el inventario",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-yate-en-el-inventario",
+          "cuerpo": {
+            "propietario": "PROP-0001",
+            "identificadorDeLaMarina": "MAR-01",
+            "nombre": "nombre",
+            "matricula": "matrícula",
+            "capacidad": 1,
+            "precioPorDia": 100,
+            "documentosAlDiaAnteLaDIMAR": true
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Yate registrado",
+            "texto": "HTTP 2xx y el evento \"Yate registrado\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Definir las fechas bloqueadas del yate",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/comandos/definir-las-fechas-bloqueadas-del-yate",
+          "cuerpo": {
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-03-01",
+            "fin": "2026-03-05",
+            "accion": "Bloquear"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Fechas bloqueadas",
+            "texto": "HTTP 2xx y el evento \"Fechas bloqueadas\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Reserva solicitada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-solicitada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-03-10",
+            "fin": "2026-03-12"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Fechas apartadas",
+            "texto": "HTTP 2xx y el evento \"Fechas apartadas\""
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Consultar yates disponibles",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-11&fin=2026-03-15",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "yatesDisponibles": 0
+            },
+            "texto": "HTTP 2xx y yates disponibles = 0"
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Consultar yates disponibles",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-20&fin=2026-03-22",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "yatesDisponibles": 1
+            },
+            "texto": "HTTP 2xx y yates disponibles = 1"
+          }
+        },
+        {
+          "numero": 6,
+          "nombre": "Reserva confirmada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-confirmada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-03-10",
+            "fin": "2026-03-12"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Fechas ocupadas",
+            "texto": "HTTP 2xx y el evento \"Fechas ocupadas\""
+          }
+        },
+        {
+          "numero": 7,
+          "nombre": "Definir las fechas bloqueadas del yate",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/comandos/definir-las-fechas-bloqueadas-del-yate",
+          "cuerpo": {
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-03-11",
+            "fin": "2026-03-11",
+            "accion": "Bloquear"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "REG-02"
+            },
+            "texto": "HTTP 422 y regla = REG-02"
+          }
+        },
+        {
+          "numero": 8,
+          "nombre": "Reserva solicitada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-solicitada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-03-12",
+            "fin": "2026-03-14"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "REG-01"
+            },
+            "texto": "HTTP 422 y regla = REG-01"
+          }
+        },
+        {
+          "numero": 9,
+          "nombre": "Reserva cancelada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-cancelada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-03-10",
+            "fin": "2026-03-12"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Fechas liberadas",
+            "texto": "HTTP 2xx y el evento \"Fechas liberadas\""
+          }
+        },
+        {
+          "numero": 10,
+          "nombre": "Consultar yates disponibles",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-11&fin=2026-03-15",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "yatesDisponibles": 1
+            },
+            "texto": "HTTP 2xx y yates disponibles = 1"
+          }
+        },
+        {
+          "numero": 11,
+          "nombre": "Definir las fechas bloqueadas del yate",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/comandos/definir-las-fechas-bloqueadas-del-yate",
+          "cuerpo": {
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-03-01",
+            "fin": "2026-03-05",
+            "accion": "Desbloquear"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Fechas desbloqueadas",
+            "texto": "HTTP 2xx y el evento \"Fechas desbloqueadas\""
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Registro rechazado",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar yate en el inventario",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-yate-en-el-inventario",
+          "cuerpo": {
+            "propietario": "PROP-SIN-CONTRATO",
+            "identificadorDeLaMarina": "identificador de la marina",
+            "nombre": "nombre",
+            "matricula": "matrícula",
+            "capacidad": 1,
+            "precioPorDia": 100,
+            "documentosAlDiaAnteLaDIMAR": true
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "INT-CON"
+            },
+            "texto": "HTTP 422 y regla = INT-CON"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Registrar yate en el inventario",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-yate-en-el-inventario",
+          "cuerpo": {
+            "propietario": "PROP-0002",
+            "identificadorDeLaMarina": "identificador de la marina",
+            "nombre": "nombre",
+            "matricula": "matrícula",
+            "capacidad": 1,
+            "precioPorDia": 100,
+            "documentosAlDiaAnteLaDIMAR": false
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "NOR-01"
+            },
+            "texto": "HTTP 422 y regla = NOR-01"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Otra marina",
+      "identidad": "YATE-0002",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar yate en el inventario",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "YATE-0002",
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-yate-en-el-inventario",
+          "cuerpo": {
+            "propietario": "PROP-0003",
+            "identificadorDeLaMarina": "MAR-02",
+            "nombre": "nombre",
+            "matricula": "matrícula",
+            "capacidad": 1,
+            "precioPorDia": 100,
+            "documentosAlDiaAnteLaDIMAR": true
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Yate registrado",
+            "texto": "HTTP 2xx y el evento \"Yate registrado\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Consultar yates disponibles",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-02&inicio=2026-03-11&fin=2026-03-15",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "yatesDisponibles": 1
+            },
+            "texto": "HTTP 2xx y yates disponibles = 1"
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Reserva confirmada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "YATE-0002",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-confirmada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003",
+            "identificadorDelYate": "YATE-0002",
+            "inicio": "2026-04-01",
+            "fin": "2026-04-02"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 404,
+            "texto": "HTTP 404"
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Reserva solicitada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "YATE-0002",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-solicitada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0004",
+            "identificadorDelYate": "YATE-0002",
+            "inicio": "2026-04-10",
+            "fin": "2026-04-12"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Fechas apartadas",
+            "texto": "HTTP 2xx y el evento \"Fechas apartadas\""
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Arriendo no realizado por riesgo alto",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "YATE-0002",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/arriendo-no-realizado-por-riesgo-alto",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0004",
+            "identificadorDelYate": "YATE-0002",
+            "inicio": "2026-04-10",
+            "fin": "2026-04-12"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Fechas liberadas",
+            "texto": "HTTP 2xx y el evento \"Fechas liberadas\""
+          }
+        }
+      ]
+    }
+  ]
+}

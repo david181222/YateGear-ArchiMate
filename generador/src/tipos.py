@@ -6,7 +6,8 @@ Tipos permitidos (V6-DEC-17):
   sufijo ?              campo opcional, por ejemplo string? o List<string>?
   enum <Nombre>(a, b)   lista cerrada de valores; nombre y valores pueden tener espacios
 
-El YAML de especificaciones usa estas mismas reglas.
+El YAML de especificaciones usa estas mismas reglas, y además List<objeto de valor>: una lista de un objeto
+de valor del contexto que se revisa (usar_objetos), por ejemplo List<Daño encontrado> en la entrada de un comando.
 """
 from __future__ import annotations
 
@@ -19,6 +20,16 @@ _LISTA = re.compile(r"^List<(?P<interno>[^<>]+)>$")
 
 class TipoInvalido(ValueError):
     pass
+
+
+# Objetos de valor del contexto que se revisa o se genera: nombre -> {campo: tipo}. Lo fija usar_objetos.
+OBJETOS: dict[str, dict[str, dict]] = {}
+
+
+def usar_objetos(objetos: dict[str, dict[str, dict]]):
+    """Fija los objetos de valor que se pueden usar en List<objeto de valor> (los del contexto actual)."""
+    OBJETOS.clear()
+    OBJETOS.update(objetos)
 
 
 def interpretar(texto: str) -> dict:
@@ -43,8 +54,10 @@ def interpretar(texto: str) -> dict:
 
     m = _LISTA.match(t)
     if m:
+        if m["interno"] in OBJETOS:
+            return {"tipo": texto, "base": "objeto", "objeto": m["interno"], "lista": True, "opcional": opcional, "enum": None}
         if m["interno"] not in BASICOS:
-            raise TipoInvalido(f'List<> solo admite {", ".join(BASICOS)}: "{texto}"')
+            raise TipoInvalido(f'List<> solo admite {", ".join(BASICOS)} o un objeto de valor del contexto: "{texto}"')
         return {"tipo": texto, "base": m["interno"], "lista": True, "opcional": opcional, "enum": None}
 
     if t in BASICOS:

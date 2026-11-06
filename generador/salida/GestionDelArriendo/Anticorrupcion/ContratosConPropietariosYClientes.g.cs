@@ -22,7 +22,7 @@ public sealed record ContratosConPropietariosYClientesSalida(
 /// Contraparte: BusinessFunction "Gestión de contratos" (id-03be3f82b87240b1bbabf2bfd90332eb).</para>
 /// <para>Flujos: entra "Contrato firmado" (id-92ca9accc62149968734d75dbc72b362); sale "Datos para el contrato" (id-bcd7145d93fb45e2b611264f8d602286).</para>
 /// <para>Contrato de servicio: Contratos con propietarios y clientes (id-3f0f0a61815d4247bbb2d2cf80f1ad6e). Entrada: Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.
-/// Salida: Estado del contrato (enviado o firmado), fecha de firma y condiciones de cancelación. Reglas: El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON).</para>
+/// Salida: Estado del contrato (enviado o firmado), fecha de firma, condiciones de cancelación y, si está firmado, la referencia del contrato firmado. Reglas: El contrato del cliente no se envía antes de que el riesgo salga aceptable (INT-CON).</para>
 /// </remarks>
 public interface IContratosConPropietariosYClientes
 {

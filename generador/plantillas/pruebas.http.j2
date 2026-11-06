@@ -1,13 +1,13 @@
 # {{ cabecera }}
 {% if con_escenarios %}
-# Escenarios del YAML (sección escenarios): cada uno tiene su propio arriendo y se ejecuta en orden.
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
 # "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
 # y revisa solo; aquí se pueden ejecutar uno por uno.
 {% else %}
 # Una llamada por comando y por consulta, y los caminos alternativos de las respuestas simuladas.
 {% endif %}
 # Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
-# de empezar para que el primer arriendo sea {{ primero }}. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+# de empezar{% if primero %} para que la primera raíz sea {{ primero }}{% endif %}. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
 
 @base = http://localhost:{{ puerto }}{{ ruta_base }}
 {% for p in pruebas %}

@@ -1,0 +1,355 @@
+{
+  "generado_desde": "Generado desde ArchiMate: ApplicationComponent \"Contexto Operación del arriendo\" (id-909c52d6cdf845e6927af4c62d2847fb).",
+  "ruta_base": "/operacion-del-arriendo",
+  "escenarios": [
+    {
+      "nombre": "Entrega, seguimiento y devolución",
+      "identidad": "ARR-0001",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Reserva confirmada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-confirmada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "inicio": "2026-03-10",
+            "fin": "2026-03-12"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Acta de entrega recibida",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "fotos": [
+              "entrega-1.jpg"
+            ],
+            "nivelDeCombustible": 100,
+            "horaDeEntrega": "2026-03-10T09:00:00",
+            "observaciones": "observaciones"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Yate entregado al cliente",
+            "texto": "HTTP 2xx y el evento \"Yate entregado al cliente\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Lectura del proveedor",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "YATE-0001/2026-03-10T10:00:00",
+          "metodo": "POST",
+          "ruta": "/sa/ubicacion-y-combustible-del-proveedor/lectura-del-proveedor",
+          "cuerpo": {
+            "identificadorDelYate": "YATE-0001",
+            "latitud": 100,
+            "longitud": 100,
+            "nivelDeCombustible": 90,
+            "horaDeLaLectura": "2026-03-10T10:00:00"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Lectura registrada",
+            "texto": "HTTP 2xx y el evento \"Lectura registrada\""
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Lectura del proveedor",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "YATE-0001/2026-03-10T11:00:00",
+          "metodo": "POST",
+          "ruta": "/sa/ubicacion-y-combustible-del-proveedor/lectura-del-proveedor",
+          "cuerpo": {
+            "identificadorDelYate": "YATE-0001",
+            "latitud": 100,
+            "longitud": 100,
+            "nivelDeCombustible": 80,
+            "horaDeLaLectura": "2026-03-10T11:00:00"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Lectura registrada",
+            "texto": "HTTP 2xx y el evento \"Lectura registrada\""
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Consultar ubicación y combustible del yate",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "recorrido": 2
+            },
+            "texto": "HTTP 2xx y recorrido = 2"
+          }
+        },
+        {
+          "numero": 6,
+          "nombre": "Detectar la pérdida de señal",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/comandos/detectar-la-perdida-de-senal",
+          "cuerpo": {
+            "minutosSinLecturas": 30,
+            "ahora": "2026-03-10T11:20:00"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 7,
+          "nombre": "Detectar la pérdida de señal",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/comandos/detectar-la-perdida-de-senal",
+          "cuerpo": {
+            "minutosSinLecturas": 30,
+            "ahora": "2026-03-10T12:00:00"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Pérdida de señal del yate",
+            "texto": "HTTP 2xx y el evento \"Pérdida de señal del yate\""
+          }
+        },
+        {
+          "numero": 8,
+          "nombre": "Acta de inspección recibida",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "fotos": [
+              "regreso-1.jpg"
+            ],
+            "nivelDeCombustible": 60,
+            "horaDeRegreso": "2026-03-13T15:00:00",
+            "danosEncontrados": [
+              {
+                "descripcion": "Rayón en el casco",
+                "valor": 200
+              }
+            ]
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Diferencias determinadas",
+            "texto": "HTTP 2xx y el evento \"Diferencias determinadas\""
+          }
+        },
+        {
+          "numero": 9,
+          "nombre": "Consultar ubicación y combustible del yate",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "V8"
+            },
+            "texto": "HTTP 422 y regla = V8"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Actas rechazadas",
+      "identidad": "ARR-0003",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Acta de entrega recibida",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0099",
+          "metodo": "POST",
+          "ruta": "/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0099",
+            "identificadorDelYate": "YATE-0001",
+            "fotos": [
+              "x.jpg"
+            ],
+            "nivelDeCombustible": 100,
+            "horaDeEntrega": "2026-03-10T09:00:00",
+            "observaciones": "observaciones"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "campos": {
+              "requiere": "Reserva confirmada"
+            },
+            "texto": "HTTP 409 y requiere = Reserva confirmada"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Acta de entrega recibida",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "fotos": [
+              "x.jpg"
+            ],
+            "nivelDeCombustible": 100,
+            "horaDeEntrega": "2026-03-10T09:00:00",
+            "observaciones": "observaciones"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "campos": {
+              "identidad": "ARR-0001"
+            },
+            "texto": "HTTP 409 y identidad = ARR-0001"
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Reserva confirmada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-confirmada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "inicio": "2026-04-01",
+            "fin": "2026-04-02"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Acta de entrega recibida",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0002",
+          "metodo": "POST",
+          "ruta": "/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "identificadorDelYate": "YATE-0002",
+            "fotos": [],
+            "nivelDeCombustible": 100,
+            "horaDeEntrega": "2026-04-01T09:00:00",
+            "observaciones": "observaciones"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "H-13"
+            },
+            "texto": "HTTP 422 y regla = H-13"
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Reserva confirmada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-confirmada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003",
+            "inicio": "2026-05-01",
+            "fin": "2026-05-02"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 6,
+          "nombre": "Acta de inspección recibida",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0003",
+          "metodo": "POST",
+          "ruta": "/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003",
+            "fotos": [
+              "y.jpg"
+            ],
+            "nivelDeCombustible": 100,
+            "horaDeRegreso": "2026-05-02T18:00:00",
+            "danosEncontrados": []
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Inspección de devolución registrada",
+            "texto": "HTTP 2xx y el evento \"Inspección de devolución registrada\""
+          }
+        },
+        {
+          "numero": 7,
+          "nombre": "Determinar las diferencias entre entrega y devolución",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "ARR-0003",
+          "metodo": "POST",
+          "ruta": "/comandos/determinar-las-diferencias-entre-entrega-y-devolucion",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 404,
+            "texto": "HTTP 404"
+          }
+        }
+      ]
+    }
+  ]
+}

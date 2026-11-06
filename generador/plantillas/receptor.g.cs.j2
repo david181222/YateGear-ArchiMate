@@ -2,13 +2,20 @@
 // Capa 3: recibe los eventos de otros contextos y dispara el comando de este contexto
 // (eventos_de_otros_contextos del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
+using System.Text.Json;
+
 namespace {{ ns }};
 
 /// <summary>Recibe los eventos de otros contextos. Si un evento tiene junto_con, espera a que lleguen todos
 /// los de su grupo (en memoria, por identidad) y entonces dispara el comando con los datos de todos.</summary>
 public sealed class ReceptorDeEventosExternos(
+{% if externos | selectattr("grupo") | list %}
     EsperaDeEventos espera,
-    Bitacora bitacora,
+{% endif %}
+{% if memoria %}
+    MemoriaDeEventos memoria,
+{% endif %}
+    Bitacora bitacora{{ "," if manejadores }}
 {% for d in manejadores %}
     {{ d.cs }} {{ d.var }}{{ "," if not loop.last }}
 {% endfor %}
@@ -18,10 +25,20 @@ public sealed class ReceptorDeEventosExternos(
 {% if not loop.first %}
 
 {% endif %}
+{% if x.comando %}
     /// <summary>"{{ x.nombre | xml }}" de "{{ x.de | xml }}" ({{ x.id }}). Dispara "{{ x.comando | xml }}"{% if x.junto_con %} junto con {{ x.junto_con | join(", ") | xml }}{% endif %}.</summary>
+{% else %}
+    /// <summary>"{{ x.nombre | xml }}" de "{{ x.de | xml }}" ({{ x.id }}). Se recuerda para los comandos que lo requieren.</summary>
+{% endif %}
     public RespuestaDeEventoExterno Recibir({{ x.clase }} evento)
     {
         bitacora.Anotar("evento recibido", evento.NombreEnElModelo, evento);
+{% if x.recordar %}
+        memoria.Anotar(evento);
+{% endif %}
+{% if not x.comando %}
+        return RespuestaDeEventoExterno.Recordado();
+{% else %}
 {% if x.grupo %}
         var juntos = espera.Anotar({{ x.grupo_nombre }}, [{{ x.grupo | join(", ") }}], evento, out var faltan);
         if (juntos is null)
@@ -33,6 +50,11 @@ public sealed class ReceptorDeEventosExternos(
 {% endfor %}
 {% endif %}
         return RespuestaDeEventoExterno.Ejecutado({{ x.manejador_var }}.Manejar(new {{ x.comando_clase }}({{ x.args | join(", ") }})));
+{% endif %}
     }
+
+    /// <summary>Lee "{{ x.nombre | xml }}" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
+    public RespuestaDeEventoExterno Recibir{{ x.clase }}(JsonElement json) =>
+        Recibir(LectorDeEventos.Leer<{{ x.clase }}>(json, {{ x.obligatorios }}));
 {% endfor %}
 }

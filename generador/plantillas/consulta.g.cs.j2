@@ -7,11 +7,27 @@ namespace {{ ns }};
 /// <summary>Entrada de la consulta "{{ q.nombre | xml }}" ({{ q.codigo }}).</summary>
 {{ m.record(q.clase, q.parametros, ";") }}
 
+{% if q.lista %}
+/// <summary>Un elemento de la lista que devuelve la consulta "{{ q.nombre | xml }}": una raíz "{{ raiz.nombre | xml }}".</summary>
+{{ m.record(q.elemento, q.elemento_campos, ";") }}
+
+{% endif %}
 /// <summary>Salida de la consulta "{{ q.nombre | xml }}".</summary>
 {{ m.record(q.salida, q.salida_campos, ";") }}
 
+{% if q.todas %}
+{% if q.otras %}
+/// <summary>Lo que reciben ValidarReglas{{ ", el filtro manual" if q.filtro_manual }} y los datos calculados: la consulta, las raíces
+/// que cumplen el filtro y las demás raíces que lee la consulta.</summary>
+{% else %}
+/// <summary>Lo que reciben ValidarReglas{{ ", el filtro manual" if q.filtro_manual }} y los datos calculados: la consulta y las raíces
+/// que cumplen el filtro.</summary>
+{% endif %}
+public sealed record {{ q.datos }}({{ q.clase }} Consulta, IReadOnlyList<{{ raiz.clase }}> Raices{% for o in q.otras %}, IReadOnlyList<{{ o.clase }}> {{ o.clase }}{% endfor %});
+{% else %}
 /// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y la raíz.</summary>
 public sealed record {{ q.datos }}({{ q.clase }} Consulta, {{ raiz.clase }} {{ raiz.clase }});
+{% endif %}
 
 /// <summary>Manejador de la consulta "{{ q.nombre | xml }}" ({{ q.codigo }}). No cambia la raíz.</summary>
 /// <remarks>
@@ -21,10 +37,16 @@ public sealed record {{ q.datos }}({{ q.clase }} Consulta, {{ raiz.clase }} {{ r
 /// <para>Salida: {{ q.contrato.salida | xml }}</para>
 /// <para>Reglas: {{ (q.contrato.reglas or "el contrato no tiene reglas.") | xml }} Van como comentario en ValidarReglas.</para>
 /// </remarks>
-public sealed partial class {{ q.manejador }}(Repositorio<{{ raiz.clase }}> repositorio)
+public sealed partial class {{ q.manejador }}(Repositorio<{{ raiz.clase }}> repositorio{% for o in q.otras %}, Repositorio<{{ o.clase }}> {{ o.repositorio }}{% endfor %})
 {
     /// <summary>Reglas del contrato. Se escribe en el archivo manual.</summary>
     partial void ValidarReglas({{ q.datos }} datos);
+{% if q.filtro_manual %}
+
+    /// <summary>Filtro que no es una igualdad (filtro_manual del YAML): true si la raíz va en la lista. Se escribe
+    /// en el archivo manual.</summary>
+    private partial bool Incluir({{ q.datos }} datos, {{ raiz.clase }} {{ raiz.var }});
+{% endif %}
 {% for k in q.calculados %}
 
     /// <summary>Dato calculado "{{ k.nombre | xml }}". Se escribe en el archivo manual.</summary>
@@ -34,10 +56,25 @@ public sealed partial class {{ q.manejador }}(Repositorio<{{ raiz.clase }}> repo
     /// <summary>Ejecuta la consulta.</summary>
     public {{ q.salida }} Manejar({{ q.clase }} consulta)
     {
+{% if q.todas %}
+        // Sobre todas las raíces que cumplen el filtro (filtro del YAML).
+        var raices = repositorio.Todas().Where({{ raiz.var }} => {{ q.filtro }}).ToList();
+        var datos = new {{ q.datos }}(consulta, raices{% for o in q.otras %}, {{ o.repositorio }}.Todas(){% endfor %});
+{% else %}
         var {{ raiz.var }} = repositorio.Obtener(consulta.{{ raiz.id_prop }})
             ?? throw new NoEncontrado($"No existe {{ raiz.nombre | lower }} {consulta.{{ raiz.id_prop }}}.");
         var datos = new {{ q.datos }}(consulta, {{ raiz.var }});
+{% endif %}
         ValidarReglas(datos);
+{% if q.lista %}
+        var elementos = raices{% if q.filtro_manual %}.Where({{ raiz.var }} => Incluir(datos, {{ raiz.var }})){% endif %}
+{% for o in q.orden %}
+
+            .{{ "OrderBy" if loop.first else "ThenBy" }}({{ raiz.var }} => {{ o }}){% endfor %}
+
+            .Select({{ raiz.var }} => new {{ q.elemento }}({% for c in q.elemento_campos %}{{ c.expr }}{{ ", " if not loop.last }}{% endfor %}))
+            .ToList();
+{% endif %}
         return new {{ q.salida }}(
 {% for s in q.salida_campos %}
             {{ s.expr }}{{ "," if not loop.last }}

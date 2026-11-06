@@ -1,0 +1,148 @@
+// {{ cabecera }}
+// Registro del contexto en el programa (host): servicios, políticas y endpoints. No editar: el generador
+// reescribe este archivo. El host llama a AgregarServicios y a MapearEndpoints.
+#nullable enable
+using System.Text.Json;
+using {{ ns_integracion }};
+
+namespace {{ ns }};
+
+/// <summary>Registra el contexto "{{ contexto | xml }}" en el programa.</summary>
+public static class Registro
+{
+    /// <summary>Servicios del contexto.</summary>
+    public static void AgregarServicios(IServiceCollection servicios)
+    {
+        // Infraestructura (no sale del modelo): bitácora, bus de eventos y repositorio en memoria.
+        // El bus del contexto publica también en el bus entre contextos, por nombre y en JSON (D1).
+        servicios.AddSingleton<Bitacora>();
+        servicios.AddSingleton(s => new BusDeEventos(s.GetRequiredService<Bitacora>(),
+            s.GetRequiredService<BusEntreContextos>(), {{ contexto | cadena }}));
+{% for raiz in raices %}
+{% if raiz.consecutivo %}
+        servicios.AddSingleton(new Repositorio<{{ raiz.clase }}>({{ raiz.prefijo | cadena }}, {{ raiz.digitos }}));
+{% else %}
+        servicios.AddSingleton(new Repositorio<{{ raiz.clase }}>());
+{% endif %}
+{% endfor %}
+{% if memoria %}
+        servicios.AddSingleton<MemoriaDeEventos>();
+{% endif %}
+
+        // Servicios de la capa anticorrupción, simulados.
+{% for s in sas %}
+        servicios.AddSingleton<{{ s.interfaz }}, {{ s.simulado }}>();
+{% endfor %}
+
+        // Manejadores de comandos y consultas.
+{% for c in comandos %}
+        servicios.AddSingleton<{{ c.manejador }}>();
+{% endfor %}
+{% for q in consultas %}
+        servicios.AddSingleton<{{ q.manejador }}>();
+{% endfor %}
+{% if receptores_sa %}
+
+        // Lo que reciben los servicios SA (G7): un receptor por SA.
+{% for x in receptores_sa %}
+        servicios.AddSingleton<{{ x.clase }}>();
+{% endfor %}
+{% endif %}
+{% if temporizadores %}
+
+        // Comandos que corren solos cada cierto tiempo (temporizador del YAML, G8).
+{% for x in temporizadores %}
+        servicios.AddHostedService<{{ x.clase }}>();
+{% endfor %}
+{% endif %}
+{% if externos %}
+
+        // Eventos de otros contextos (capa 3): receptor y espera de los que deben llegar juntos.
+        servicios.AddSingleton<EsperaDeEventos>();
+        servicios.AddSingleton<ReceptorDeEventosExternos>();
+{% endif %}
+    }
+
+    /// <summary>Políticas y endpoints del contexto.</summary>
+    public static void MapearEndpoints(WebApplication app)
+    {
+        Politicas.Registrar(app.Services);
+
+        // Comandos: POST con el comando en JSON.
+{% for c in comandos %}
+        app.MapPost("{{ c.ruta }}",
+            ({{ c.clase }} comando, {{ c.manejador }} manejador) => Ejecutar(() => manejador.Manejar(comando)));
+{% endfor %}
+
+        // Consultas: GET con la identidad en la ruta.
+{% for q in consultas %}
+        app.MapGet("{{ q.ruta }}",
+            ({{ q.lambda_params }}, {{ q.manejador }} manejador) => Ejecutar(() => manejador.Manejar(new {{ q.clase }}({{ q.args }}))));
+{% endfor %}
+{% if externos %}
+
+        // Eventos de otros contextos (capa 3): POST con el evento en JSON. Si falta un dato obligatorio
+        // responde 422; si faltan eventos de su grupo (junto_con), 202.
+{% for x in externos %}
+        app.MapPost("{{ x.ruta }}",
+            (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.Recibir{{ x.clase }}(evento), Recibido));
+{% endfor %}
+{% endif %}
+
+{% if receptores_sa %}
+
+        // Lo que reciben los servicios SA (G7): POST con el mensaje en JSON. Si falta un dato obligatorio responde 422.
+{% for x in receptores_sa %}
+{% for msj in x.mensajes %}
+        app.MapPost("{{ msj.ruta }}",
+            (JsonElement mensaje, {{ x.clase }} receptor) => Ejecutar(() => receptor.{{ msj.metodo }}(mensaje)));
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+        // Bitácora (infraestructura, no sale del modelo): eventos y llamadas a los servicios SA simulados, en orden.
+        app.MapGet("{{ ruta_base }}/bitacora", (Bitacora bitacora) => bitacora.Todo());
+    }
+
+    private static IResult Ejecutar<T>(Func<T> accion, Func<T, IResult>? exito = null)
+    {
+        try
+        {
+            var resultado = accion();
+            return exito is null ? Results.Ok(resultado) : exito(resultado);
+        }
+        catch (NoEncontrado e)
+        {
+            return Results.NotFound(new { error = e.Message });
+        }
+        catch (TransicionInvalida e)
+        {
+            return Results.Conflict(new { operacion = e.Operacion, estadoActual = e.EstadoActual, permitidos = e.Permitidos });
+        }
+        catch (ReglaIncumplida e)
+        {
+            return Results.UnprocessableEntity(new { regla = e.Regla, motivo = e.Motivo });
+        }
+        catch (IdentidadRepetida e)
+        {
+            return Results.Conflict(new { identidad = e.Identidad, motivo = e.Message });
+        }
+        catch (FaltaEventoRequerido e)
+        {
+            return Results.Conflict(new { operacion = e.Operacion, requiere = e.Evento, identidad = e.Identidad });
+        }
+        catch (DatoFaltante e)
+        {
+            return Results.UnprocessableEntity(new { regla = "dato faltante", motivo = e.Message });
+        }
+        catch (JsonException e)
+        {
+            return Results.BadRequest(new { error = e.Message });
+        }
+    }
+{% if externos %}
+
+    private static IResult Recibido(RespuestaDeEventoExterno respuesta) =>
+        respuesta.Estado == "esperando" ? Results.Accepted(null, respuesta) : Results.Ok(respuesta);
+{% endif %}
+}

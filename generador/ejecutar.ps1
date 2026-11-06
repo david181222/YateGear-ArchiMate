@@ -1,12 +1,13 @@
-﻿# Levanta la aplicación generada desde salida\, con el SDK 8 que fija salida\global.json.
-# Se detiene con Ctrl+C.
+﻿# Levanta la aplicación generada (el host, con todos los contextos) desde salida/, con el SDK 8 que fija
+# salida/global.json. Lee el proyecto y el puerto de salida/contextos.json. Se detiene con Ctrl+C.
 #
 # Uso (desde la carpeta generador):
-#   powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1
-#   powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1 -Puerto 5090    (si el puerto está ocupado)
+#   powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1                (Windows)
+#   pwsh ./ejecutar.ps1                                                     (Linux)
+#   ... -Puerto 5090    (si el puerto está ocupado)
 #
-# Con -Puerto el cambio es solo para esta vez: cambia también @base en salida\pruebas.http.
-# Para cambiarlo siempre, cambia PUERTO en src\generar.py y vuelve a generar.
+# Con -Puerto el cambio es solo para esta vez: cambia también @base en salida/pruebas/<Proyecto>/pruebas.http.
+# Para cambiarlo siempre, cambia PUERTO en src/generar.py y vuelve a generar.
 #
 # Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
 param(
@@ -15,18 +16,19 @@ param(
 
 Set-Location $PSScriptRoot
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$proyecto = "GestionDelArriendo"
-$csproj = "salida\$proyecto\$proyecto.csproj"
-$config = "salida\$proyecto\Properties\launchSettings.json"
+# Windows: el dotnet del PATH. Linux: si existe, el SDK de ~/.dotnet, para no cambiar el dotnet del sistema.
+$enWindows = [System.Environment]::OSVersion.Platform -eq "Win32NT"
+$dotnet = "dotnet"
+if (-not $enWindows -and (Test-Path "$HOME/.dotnet/dotnet")) { $dotnet = "$HOME/.dotnet/dotnet"; $env:DOTNET_ROOT = "$HOME/.dotnet" }
+$manifiesto = "salida/contextos.json"
 
-if (-not (Test-Path $csproj)) {
-    Write-Host "ERROR: no existe $csproj. Ejecuta primero generar.ps1." -ForegroundColor Red
+if (-not (Test-Path $manifiesto)) {
+    Write-Host "ERROR: no existe $manifiesto. Ejecuta primero generar.ps1." -ForegroundColor Red
     exit 1
 }
-if ($Puerto -eq 0) {
-    $url = (Get-Content $config -Raw -Encoding UTF8 | ConvertFrom-Json).profiles.$proyecto.applicationUrl
-    $Puerto = ([Uri]$url).Port
-}
+$solucion = Get-Content $manifiesto -Raw -Encoding UTF8 | ConvertFrom-Json
+$proyecto = $solucion.host
+if ($Puerto -eq 0) { $Puerto = $solucion.puerto }
 # El puerto está libre si se puede abrir aquí mismo.
 $libre = $true
 try {
@@ -41,8 +43,9 @@ if (-not $libre) {
     exit 1
 }
 
-Write-Host "Aplicación en http://localhost:$Puerto/gestion-del-arriendo  (Ctrl+C para detener)" -ForegroundColor Green
+Write-Host "Aplicación en http://localhost:$Puerto  (Ctrl+C para detener). Contextos:" -ForegroundColor Green
+foreach ($c in $solucion.contextos) { Write-Host "  http://localhost:$Puerto$($c.ruta_base)  $($c.nombre)" -ForegroundColor Green }
 # Desde salida, para que dotnet use el global.json (SDK 8).
 Set-Location salida
-dotnet run --project $proyecto -- --urls "http://localhost:$Puerto"
+& $dotnet run --project $proyecto -- --urls "http://localhost:$Puerto"
 exit $LASTEXITCODE

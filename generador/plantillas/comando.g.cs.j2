@@ -37,6 +37,11 @@ public sealed partial class {{ c.manejador }}(
 {
     /// <summary>Reglas del contrato que no son transiciones de estado. Se escribe en el archivo manual.</summary>
     partial void ValidarReglas({{ c.datos }} datos);
+{% if c.todas %}
+
+    /// <summary>Elige las raíces por las que se publica un evento (comando sobre todas, G8). Se escribe en el archivo manual.</summary>
+    private partial IEnumerable<{{ raiz.clase }}> Seleccionar({{ c.datos }} datos);
+{% endif %}
 {% for k in c.calculados %}
 
     /// <summary>Dato calculado "{{ k.nombre | xml }}" del evento "{{ k.evento | xml }}". Se escribe en el archivo manual.</summary>
@@ -46,7 +51,33 @@ public sealed partial class {{ c.manejador }}(
     /// <summary>Ejecuta el comando.</summary>
     public RespuestaDeComando Manejar({{ c.clase }} comando)
     {
+{% if c.todas %}
+        // Sobre todas las raíces (G8): el archivo manual elige cuáles; se publica un evento por cada una.
+        var raices = repositorio.Todas();
+        var datos = new {{ c.datos }}({{ c.datos_args | join(", ") }});
+        ValidarReglas(datos);
+        var eventos = new List<string>();
+        var elegidas = Seleccionar(datos).ToList();
+        foreach (var {{ raiz.var }} in elegidas)
+        {
+{% for e in c.eventos %}
+            Publicar(new {{ e.clase }}({{ e.args | join(", ") }}), eventos);
+{% endfor %}
+        }
+        return new RespuestaDeComando(elegidas.Count == 1 ? elegidas[0].{{ raiz.id_prop }} : "", eventos);
+{% else %}
 {% if not c.crea %}
+        if (string.IsNullOrEmpty(comando.{{ raiz.id_prop }})) throw new DatoFaltante({{ c.id_cadena }});
+{% endif %}
+{% for p in c.partes_obligatorias %}
+        if (string.IsNullOrEmpty({{ p.expr }})) throw new DatoFaltante({{ p.nombre }});
+{% endfor %}
+{% if c.si_no_existe %}
+        // 1. Cargar la raíz; si no existe, se crea vacía con la identidad del comando (crea: si_no_existe).
+        //    Se guarda en el paso 6, así que una solicitud rechazada no la deja creada.
+        var {{ raiz.var }} = repositorio.Obtener(comando.{{ raiz.id_prop }})
+            ?? Repositorio<{{ raiz.clase }}>.ConIdentidad(new {{ raiz.clase }} { Estado = {{ c.estado_inicial }} }, comando.{{ raiz.id_prop }});
+{% elif not c.crea %}
         // 1. Cargar la raíz.
         var {{ raiz.var }} = repositorio.Obtener(comando.{{ raiz.id_prop }})
             ?? throw new NoEncontrado($"No existe {{ raiz.nombre | lower }} {comando.{{ raiz.id_prop }}}.");
@@ -57,6 +88,22 @@ public sealed partial class {{ c.manejador }}(
 
         // 1b. Estados desde los que se permite el comando (capa 2), antes de llamar a los SA.
         Estados.Exigir({{ c.operacion }}, {{ raiz.var }}.Estado, {{ c.desde | join(", ") }});
+{% endif %}
+{% if c.requeridos %}
+
+        // 1c. Eventos de otros contextos que el comando requiere (D5): si no han llegado para su identidad, 409.
+{% for q in c.requeridos %}
+        var {{ q.var }} = memoria.Buscar<{{ q.clase }}>({{ q.nombre }}, {{ q.identidad }})
+            ?? throw new FaltaEventoRequerido({{ c.operacion }}, {{ q.nombre }}, {{ q.identidad }});
+{% endfor %}
+{% endif %}
+{% if c.leidas %}
+
+        // 1d. Otras raíces que el comando lee (G6), por el dato con el nombre de su identidad; 404 si no existen.
+{% for l in c.leidas %}
+        var {{ l.var }} = {{ l.repositorio }}.Obtener({{ l.identidad }})
+            ?? throw new NoEncontrado($"No existe {{ l.nombre }} {{ "{" }}{{ l.identidad }}{{ "}" }}.");
+{% endfor %}
 {% endif %}
 {% if c.llamadas %}
 
@@ -92,20 +139,50 @@ public sealed partial class {{ c.manejador }}(
         ValidarReglas(datos);
 {% if c.crea %}
 
+{% if c.identidad_expr %}
+        // 6. Crear la raíz con su estado inicial y lo que guarda el comando. Su identidad se forma con datos;
+        //    si ya existe una raíz con esa identidad, 409.
+{% else %}
         // 6. Crear la raíz con su estado inicial y lo que guarda el comando. Al guardarla recibe su identidad.
+{% endif %}
         var {{ raiz.var }} = new {{ raiz.clase }}
         {
 {% for a in c.asignaciones %}
             {{ a.prop }} = {{ a.expr }},
 {% endfor %}
         };
+{% for o in c.operaciones %}
+        {{ o }}
+{% endfor %}
+{% if c.identidad_expr %}
+        repositorio.Agregar({{ raiz.var }}, {{ c.identidad_expr }});
+{% else %}
         repositorio.Guardar({{ raiz.var }});
+{% endif %}
 {% elif c.escribe %}
 
         // 6. Guardar en la raíz lo que escribe el comando y su nuevo estado (capa 2).
 {% for a in c.asignaciones %}
         {{ raiz.var }}.{{ a.prop }} = {{ a.expr }};
 {% endfor %}
+{% for o in c.operaciones %}
+        {{ o }}
+{% endfor %}
+{% if c.resultados_con_guarda %}
+        switch (resultado)
+        {
+{% for x in c.resultados_con_guarda %}
+            case {{ c.enum_resultado }}.{{ x.miembro }}:
+{% for a in x.asignaciones %}
+                {{ raiz.var }}.{{ a.prop }} = {{ a.expr }};
+{% endfor %}
+{% for o in x.operaciones %}
+                {{ o }}
+{% endfor %}
+                break;
+{% endfor %}
+        }
+{% endif %}
 {% if c.a %}
         {{ raiz.var }}.Estado = {{ c.a }};
 {% endif %}
@@ -144,6 +221,7 @@ public sealed partial class {{ c.manejador }}(
 {% endfor %}
 {% endif %}
         return new RespuestaDeComando({{ raiz.var }}.{{ raiz.id_prop }}, eventos);
+{% endif %}
     }
 
     private void Publicar(IEvento evento, List<string> eventos)
@@ -152,3 +230,27 @@ public sealed partial class {{ c.manejador }}(
         eventos.Add(evento.NombreEnElModelo);
     }
 }
+{% if c.temporizador %}
+
+/// <summary>Corre "{{ c.nombre | xml }}" cada {{ c.temporizador.minutos }} minutos (temporizador del YAML, G8). Si falla,
+/// el error queda en la bitácora y la próxima revisión corre igual.</summary>
+public sealed class {{ c.temporizador.clase }}({{ c.manejador }} manejador, Bitacora bitacora) : BackgroundService
+{
+    /// <summary>Revisa cada {{ c.temporizador.minutos }} minutos hasta que la aplicación se detiene.</summary>
+    protected override async Task ExecuteAsync(CancellationToken detener)
+    {
+        using var reloj = new PeriodicTimer(TimeSpan.FromMinutes({{ c.temporizador.minutos }}));
+        while (await reloj.WaitForNextTickAsync(detener))
+        {
+            try
+            {
+                manejador.Manejar(new {{ c.clase }}({{ c.temporizador.args | join(", ") }}));
+            }
+            catch (Exception e)
+            {
+                bitacora.Anotar("error del temporizador", {{ c.operacion }}, e.Message);
+            }
+        }
+    }
+}
+{% endif %}
