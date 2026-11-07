@@ -1,0 +1,503 @@
+# Especificaciones del Contexto Cobros y depósito
+#
+# Qué es este archivo, sus secciones y sus tipos: ver la sección "Formato del YAML" del README del generador.
+# Este contexto tiene tres agregados (G2). Usa además:
+#   raices > entidades           la Cuenta del arriendo guarda sus Cobros, cada uno con su comprobante (G9).
+#   comandos > calculados        datos que salen de una regla y se escriben a mano; cada uno dice de qué datos sale.
+#   usa con opciones             la pasarela se llama varias veces en un comando: con fija el tipo de orden, entrada y
+#                                salida renombran datos y si/salvo hacen la llamada solo si se cumple la condición.
+#   guarda {Cobro: {agregar: ..., valores: ..., si: ...}}   un cobro con datos de otro nombre y su concepto fijo.
+#   politicas                    SB-17 corre con los cargos del cierre y uno de los dos resultados del depósito
+#                                (junto_con y uno_de, G10 y D7); SB-16, solo si el daño supera el depósito (salvo).
+#   servicios_sa > envia         SA-08 solo sale: envía el arriendo cerrado a Finanzas con "Cuenta del arriendo
+#                                cerrada" (G11).
+#   recibe y eventos de otros contextos que disparan varios comandos, en orden (dispara con una lista o un mapa).
+#   consulta por identidad que lee dos raíces: el estado de cuenta lee la cuenta y el depósito (G5).
+#
+# Fuentes: los contratos de SB-13 a SB-21 y de SA-02, SA-03, SA-06 y SA-08 de la V4, la V6.2 (agregados de Cobros y
+# depósito), la tabla de eventos entre dominios de la V6 y la V8. Todo dato que no sale del README lleva "# supuesto".
+
+contexto: Contexto Cobros y depósito
+
+raices:
+
+  Cuenta del arriendo:
+    identidad:                                    # V6.2: "Identidad: la misma del arriendo" (V6-DEC-05)
+      nombre: número del arriendo
+      tipo: string
+      de:
+        número del arriendo: string               # recibida: la trae el contrato del cliente firmado
+    # supuesto: el nombre del enum; los estados son los de la V6.2.
+    estado: enum Estado de la cuenta(abierta, cerrada)
+    entidades:
+      Cobro:
+        identidad: comprobante                    # V6.2: "Identidad: su comprobante de la pasarela"
+
+  Depósito para daños:
+    identidad:                                    # V6.2: "Identidad: la del arriendo"
+      nombre: número del arriendo
+      tipo: string
+      de:
+        número del arriendo: string
+    # supuesto: el nombre del enum; los estados son los de la V6.2.
+    estado: enum Estado del depósito(bloqueado, liberado, descontado)
+
+  Reclamo a la aseguradora:
+    identidad:                                    # V6.2: "Identidad: número de reclamo"
+      nombre: número de reclamo
+      tipo: string
+      prefijo: REC-                               # supuesto: un consecutivo, como el arriendo
+      digitos: 4                                  # supuesto
+    # supuesto: la aplicación no sigue el reclamo después de enviarlo; tiene un solo estado.
+    estado: enum Estado del reclamo(enviado)
+
+comandos:
+
+  Bloquear el depósito:                           # contrato SB-19; lo dispara el contrato del cliente firmado (SA-02, V6)
+    crea: true
+    a: bloqueado
+    entrada:
+      número del arriendo: string
+      valor del depósito: decimal
+      medio de pago: string                       # "tarjeta de crédito del cliente"
+      fin: DateOnly                               # la regla: el bloqueo no puede vencer antes del cierre (V4-SUP-07)
+    usa:
+      - Cobros por la pasarela de pagos:
+          con: {tipo de orden: bloqueo del depósito}
+          entrada: {valor: valor del depósito}
+          salida: {comprobante: código de autorización de la pasarela, vencimiento del bloqueo: fecha de vencimiento del bloqueo}
+    guarda: [valor del depósito, código de autorización de la pasarela, fecha de vencimiento del bloqueo]
+    eventos: [Depósito bloqueado]
+
+  Cobrar alquiler y seguro:                       # contrato SB-13; lo dispara el contrato del cliente firmado (SA-02, V6)
+    crea: true
+    a: abierta
+    entrada:
+      número del arriendo: string
+      identificador del yate: string              # se guarda para el envío a Finanzas (SA-08, discrepancia 10)
+      propietario: string                         # igual
+      referencia al CRM: string                   # el cliente, para la póliza (SA-03)
+      inicio: DateOnly
+      fin: DateOnly
+      días: int
+      precio por día: decimal
+      valor del seguro: decimal
+      medio de pago: string
+    calculados:
+      valor del alquiler: {tipo: decimal, de: [días, precio por día]}
+    usa:
+      - Pólizas y reclamos de la aseguradora:     # "Al reservar: yate, cliente y fechas del arriendo" (SA-03)
+          con: {solicitud: póliza}
+      - Cobros por la pasarela de pagos:
+          con: {tipo de orden: alquiler}
+          entrada: {valor: valor del alquiler}
+          salida: {comprobante: comprobante del alquiler, aprobada: alquiler aprobado}
+      - Cobros por la pasarela de pagos:
+          con: {tipo de orden: seguro}
+          entrada: {valor: valor del seguro}
+          salida: {comprobante: comprobante del seguro, aprobada: seguro aprobado}
+    guarda:                                       # V6.2: "SB-13 escribe en una sola operación el cobro del alquiler, el del seguro y la póliza"
+      - identificador del yate
+      - propietario
+      - Póliza del arriendo
+      - Cobro: {agregar: {valor: valor del alquiler, comprobante: comprobante del alquiler}, valores: {concepto: alquiler}}
+      - Cobro: {agregar: {valor: valor del seguro, comprobante: comprobante del seguro}, valores: {concepto: seguro}}
+    eventos: [Alquiler y seguro cobrados]
+
+  Liquidar y cobrar los cargos del cierre:        # contrato SB-14; lo dispara "Diferencias determinadas" (Operación)
+    desde: [abierta]
+    entrada:
+      combustible consumido: decimal
+      horas adicionales: decimal
+      evidencia: List<string>                     # "actas y fotos de entrega e inspección"
+      hora de regreso: DateTime                   # pasa a "Cargos del cierre cobrados": con ella se cierra la cuenta
+    calculados:
+      valor del combustible: {tipo: decimal, de: [combustible consumido]}       # supuesto: tarifa fija por punto de nivel
+      valor del tiempo adicional: {tipo: decimal, de: [horas adicionales]}      # supuesto: tarifa fija por hora
+      hay tiempo adicional: {tipo: bool, de: [horas adicionales]}               # H-14: solo si el yate se devolvió tarde
+    usa:
+      - Cobros por la pasarela de pagos:
+          con: {tipo de orden: combustible consumido}
+          entrada: {valor: valor del combustible}
+          salida: {comprobante: comprobante del combustible, aprobada: combustible aprobado}
+      - Cobros por la pasarela de pagos:
+          si: {hay tiempo adicional: [true]}
+          con: {tipo de orden: tiempo adicional}
+          entrada: {valor: valor del tiempo adicional}
+          salida: {comprobante: comprobante del tiempo adicional, aprobada: tiempo adicional aprobado}
+    guarda:
+      - Cobro: {agregar: {valor: valor del combustible, comprobante: comprobante del combustible}, valores: {concepto: combustible consumido}}
+      - Cobro:
+          agregar: {valor: valor del tiempo adicional, comprobante: comprobante del tiempo adicional}
+          valores: {concepto: tiempo adicional}
+          si: {hay tiempo adicional: [true]}
+    eventos: [Cargos del cierre cobrados]
+
+  Reembolsar una cancelación:                     # contrato SB-15; lo dispara "Reserva cancelada" (Gestión del arriendo)
+    desde: [abierta]
+    entrada:
+      días de anticipación: int
+    calculados:
+      valor del reembolso: {tipo: decimal, de: [Cuenta del arriendo]}         # supuesto: se devuelve el alquiler cobrado
+      reembolsable: {tipo: bool, de: [días de anticipación, días mínimos para el reembolso]}
+    usa:
+      - Contratos con propietarios y clientes     # las condiciones de cancelación del contrato con el cliente (SA-02)
+      - Cobros por la pasarela de pagos:
+          si: {reembolsable: [true]}
+          con: {tipo de orden: reembolso}
+          entrada: {valor: valor del reembolso}
+          salida: {comprobante: comprobante del reembolso, aprobada: reembolso aprobado}
+    resultados:                                   # V6-DEC-08: un evento por resultado
+      Cancelación reembolsada:
+        si: {reembolsable: [true]}
+        a: cerrada                                # supuesto: la cuenta de un arriendo cancelado se cierra con la decisión
+        guarda:
+          - Cobro: {agregar: {valor: valor del reembolso, comprobante: comprobante del reembolso}, valores: {concepto: reembolso}}
+      Cancelación no reembolsada:
+        si: {reembolsable: [false]}
+        a: cerrada                                # supuesto: igual
+
+  Liberar el depósito:                            # contrato SB-20; lo disparan "Reserva cancelada" y "Diferencias determinadas" sin daños
+    desde: [bloqueado]
+    a: liberado
+    entrada:
+      valor de los daños: decimal?                # llega con la inspección; no, si la reserva se canceló
+      hora de regreso: DateTime?
+      fecha de la cancelación: DateOnly?
+    calculados:
+      fecha de la liberación: {tipo: DateOnly, de: [hora de regreso, fecha de la cancelación]}   # supuesto: el mismo día
+    usa:
+      - Cobros por la pasarela de pagos:
+          con: {tipo de orden: liberación del depósito}
+          entrada: {valor: valor del depósito}
+          salida: {comprobante: comprobante de la liberación, aprobada: liberación aprobada}
+    eventos: [Depósito liberado]
+
+  Descontar daños del depósito:                   # contrato SB-21; lo dispara "Diferencias determinadas" con daños
+    desde: [bloqueado]
+    a: descontado
+    entrada:
+      valor de los daños: decimal
+      evidencia: List<string>
+    calculados:                                   # "valor descontado, saldo liberado y valor que excede el depósito"
+      valor descontado del depósito: {tipo: decimal, de: [valor de los daños, valor del depósito]}
+      saldo liberado: {tipo: decimal, de: [valor de los daños, valor del depósito]}
+      valor que excede el depósito: {tipo: decimal, de: [valor de los daños, valor del depósito]}
+    usa:
+      - Cobros por la pasarela de pagos:
+          con: {tipo de orden: descuento del depósito}
+          entrada: {valor: valor descontado del depósito}
+          salida: {comprobante: comprobante del descuento, aprobada: descuento aprobado}
+    guarda:
+      - evidencia del descuento: evidencia        # H-13: el descuento exige evidencia
+    eventos: [Daños descontados del depósito]
+
+  Reclamar el excedente de daños a la aseguradora:   # contrato SB-16; lo dispara "Daños descontados del depósito" (política)
+    crea: true
+    a: enviado
+    entrada:
+      número del arriendo: string
+      valor de los daños: decimal
+      valor descontado del depósito: decimal
+      valor que excede el depósito: decimal
+      evidencia: List<string>
+    calculados:
+      número de póliza: {tipo: string, de: [Cuenta del arriendo]}    # la póliza que emitió la aseguradora al reservar (discrepancia 11)
+    usa:
+      - Pólizas y reclamos de la aseguradora:     # "reclamo con la evidencia de la entrega y de la inspección" (SA-03)
+          con: {solicitud: reclamo}
+    guarda:
+      - identificador del arriendo: número del arriendo
+      - número de póliza
+      - valor de los daños
+      - valor descontado del depósito
+      - evidencia
+    eventos: [Reclamo enviado a la aseguradora]
+
+  Cerrar las cuentas del arriendo:                # contrato SB-17; lo disparan los cargos del cierre y la decisión sobre el depósito (D7)
+    desde: [abierta]
+    a: cerrada
+    entrada:
+      hora del cierre: DateTime                   # supuesto: la hora de regreso, porque todo el cierre ocurre con la inspección
+      decisión sobre el depósito: enum Decisión sobre el depósito(liberado, descontado)?   # supuesto: nombre del enum
+    calculados:
+      valor del alquiler: {tipo: decimal, de: [Cuenta del arriendo]}       # lo cobrado por el alquiler
+      comisión: {tipo: decimal, de: [valor del alquiler]}                    # supuesto: un porcentaje fijo del alquiler
+      valor del propietario: {tipo: decimal, de: [valor del alquiler, comisión]}
+    guarda: [comisión, valor del propietario]
+    eventos: [Cuenta del arriendo cerrada]
+
+eventos:
+
+  Depósito bloqueado:                             # lo escucha Gestión del arriendo: SB-07, junto con "Alquiler y seguro cobrados"
+    datos:
+      código de autorización de la pasarela: string
+      fecha de vencimiento del bloqueo: DateOnly
+
+  Alquiler y seguro cobrados:                     # lo escucha Gestión del arriendo: SB-07 recibe los comprobantes
+    datos:
+      comprobante del alquiler: string
+      comprobante del seguro: string
+
+  Cargos del cierre cobrados:                     # dispara SB-17 junto con la decisión sobre el depósito
+    datos:
+      hora de regreso: DateTime
+      valor del combustible: decimal
+      valor del tiempo adicional: decimal
+
+  Cancelación reembolsada:
+    datos:
+      valor del reembolso: decimal
+      comprobante del reembolso: string
+
+  Cancelación no reembolsada:                     # "o la razón por la que no hay devolución" (SB-15)
+    datos:
+      días de anticipación: int
+      días mínimos para el reembolso: int
+
+  Depósito liberado:                              # "depósito liberado y fecha de la liberación" (SB-20); dispara SB-17
+    datos:
+      valor del depósito: decimal
+      fecha de la liberación: DateOnly
+
+  Daños descontados del depósito:                 # dispara SB-16 (si el daño supera el depósito) y SB-17
+    datos:
+      valor de los daños: decimal
+      valor descontado del depósito: decimal
+      saldo liberado: decimal
+      valor que excede el depósito: decimal
+      evidencia: List<string>
+
+  Reclamo enviado a la aseguradora:               # "reclamo enviado con su número y la respuesta de la aseguradora" (SB-16)
+    datos:
+      identificador del arriendo: string
+      valor que excede el depósito: decimal
+      número: string                              # el del reclamo en la aseguradora (SA-03)
+      estado del reclamo: enum Estado del reclamo en la aseguradora(recibido, rechazado)?
+
+  Cuenta del arriendo cerrada:                    # lo escucha Gestión del arriendo (SB-09: "Arriendo cerrado"); sale a Finanzas (SA-08)
+    datos:
+      hora del cierre: DateTime
+      identificador del yate: string
+      propietario: string
+      valor del alquiler: decimal
+      comisión: decimal
+      valor del propietario: decimal
+
+consultas:
+
+  Consultar el estado de cuenta del arriendo:     # contrato SB-18; lee la cuenta y el depósito (V8-DEC-10)
+    de: Cuenta del arriendo                       # por su identidad; el depósito se busca con la misma
+    entrada: {}                                   # quién consulta no se revisa: la aplicación no autentica (GEN-SUP-46)
+    salida:
+      estado: enum Estado de la cuenta(abierta, cerrada)
+      comisión: decimal?
+      valor del propietario: decimal?
+      valor del depósito: decimal?                # del depósito, si se bloqueó
+      evidencia del descuento: List<string>?
+    calculados:
+      movimientos: List<Cobro>                    # "movimientos con concepto, valor y evidencia" (sin fecha: discrepancia 12)
+      estado del depósito: enum Estado del depósito(bloqueado, liberado, descontado)?
+
+politicas:
+
+  Cerrar las cuentas del arriendo:                # V6-DEC-11 y D7: "Cargos del cierre cobrados" y además uno de los dos del depósito
+    junto_con: [Cargos del cierre cobrados]
+    uno_de:
+      Depósito liberado: {con: {decisión sobre el depósito: liberado}}
+      Daños descontados del depósito: {con: {decisión sobre el depósito: descontado}}
+    correspondencias: {hora del cierre: hora de regreso}
+
+  Reclamar el excedente de daños a la aseguradora:   # "solo si el daño supera el depósito" (H-15)
+    salvo: {valor que excede el depósito: [0]}
+
+# Eventos entre dominios de la V6 que disparan comandos de este contexto. Los datos van con los nombres que publica cada
+# contexto (D2).
+eventos_de_otros_contextos:
+
+  Reserva cancelada:                              # V6: SB-15 (reembolso) y SB-20 (libera el depósito si estaba bloqueado, V4-SUP-09)
+    de: Contexto Gestión del arriendo
+    identidad: número del arriendo
+    datos:
+      fecha de la cancelación: DateOnly
+      días de anticipación: int                   # Gestión del arriendo lo calcula al cancelar (SB-08)
+    dispara: [Liberar el depósito, Reembolsar una cancelación]
+
+  Diferencias determinadas:                       # V6: SB-14, y SB-20 o SB-21
+    de: Contexto Operación del arriendo
+    identidad: número del arriendo
+    datos:
+      hora de regreso: DateTime
+      combustible consumido: decimal
+      horas adicionales: decimal
+      valor de los daños: decimal
+      evidencia: List<string>
+    dispara:
+      Liquidar y cobrar los cargos del cierre: {}
+      Liberar el depósito: {si: {valor de los daños: [0]}}            # sin daños se libera (REG-01)
+      Descontar daños del depósito: {salvo: {valor de los daños: [0]}}
+
+servicios_sa:
+
+  Contratos con propietarios y clientes:          # contrato SA-02
+    entrada:
+      número del arriendo: string                 # el contrato del cliente se busca por su arriendo (GEN-SUP-27)
+    salida:
+      días mínimos para el reembolso: int         # supuesto: las condiciones de cancelación, traducidas a un plazo (EXC-02, D-03)
+    respuesta_por_defecto:
+      días mínimos para el reembolso: 7           # supuesto: valor de prueba
+    recibe:
+      Contrato del cliente firmado:               # V6: "El contrato del cliente firmado, que llega por SA-02, dispara SB-13 y SB-19"
+        dispara: [Bloquear el depósito, Cobrar alquiler y seguro]   # primero el depósito: si no se bloquea, no se cobra
+        datos:                                    # supuesto: el contrato firmado trae el arriendo con sus valores (SA-02)
+          número del arriendo: string
+          identificador del yate: string
+          propietario: string
+          referencia al CRM: string
+          inicio: DateOnly
+          fin: DateOnly
+          días: int
+          precio por día: decimal
+          valor del seguro: decimal
+          valor del depósito: decimal
+          medio de pago: string
+
+  Pólizas y reclamos de la aseguradora:           # contrato SA-03: la póliza al reservar y el reclamo al cerrar
+    entrada:
+      solicitud: enum Solicitud a la aseguradora(póliza, reclamo)   # supuesto: una entrada para las dos solicitudes
+      número del arriendo: string
+      identificador del yate: string?
+      referencia al CRM: string?
+      inicio: DateOnly?
+      fin: DateOnly?
+      número de póliza: string?
+      valor de los daños: decimal?
+      valor descontado del depósito: decimal?
+      evidencia: List<string>?
+    salida:                                       # "número y valor de la póliza, o número y estado del reclamo"
+      número: string
+      valor: decimal?
+      estado del reclamo: enum Estado del reclamo en la aseguradora(recibido, rechazado)?
+    respuesta_por_defecto:                        # supuesto: valores de prueba
+      número: POL-0001
+      valor: 120
+      estado del reclamo: null
+    casos:
+      - si: {solicitud: [reclamo]}
+        respuesta:
+          número: SIN-0001
+          valor: null
+          estado del reclamo: recibido
+
+  Cobros por la pasarela de pagos:                # contrato SA-06
+    entrada:
+      tipo de orden: enum Tipo de orden(alquiler, seguro, combustible consumido, tiempo adicional, reembolso, bloqueo del depósito, liberación del depósito, descuento del depósito)   # supuesto: nombre del enum
+      número del arriendo: string
+      valor: decimal
+      medio de pago: string?                      # supuesto: en el cierre se usa el medio de pago que el cliente dio al reservar
+    salida:                                       # "orden aprobada o rechazada, con su comprobante o código de autorización"
+      aprobada: bool
+      comprobante: string
+      vencimiento del bloqueo: DateOnly?
+    respuesta_por_defecto:                        # supuesto: valores de prueba
+      aprobada: true
+      comprobante: PAG-0001
+      vencimiento del bloqueo: null
+    casos:                                        # supuesto: un comprobante de prueba por tipo de orden
+      - si: {medio de pago: [TARJETA-RECHAZADA]}  # supuesto: medio de pago de prueba que la pasarela rechaza
+        respuesta: {aprobada: false, comprobante: RECHAZADA, vencimiento del bloqueo: null}
+      - si: {tipo de orden: [bloqueo del depósito]}
+        respuesta: {aprobada: true, comprobante: AUT-0001, vencimiento del bloqueo: "2026-03-29"}   # 28 días (V4-SUP-07)
+      - si: {tipo de orden: [alquiler]}
+        respuesta: {aprobada: true, comprobante: PAG-ALQ-0001, vencimiento del bloqueo: null}
+      - si: {tipo de orden: [seguro]}
+        respuesta: {aprobada: true, comprobante: PAG-SEG-0001, vencimiento del bloqueo: null}
+      - si: {tipo de orden: [combustible consumido]}
+        respuesta: {aprobada: true, comprobante: PAG-COM-0001, vencimiento del bloqueo: null}
+      - si: {tipo de orden: [tiempo adicional]}
+        respuesta: {aprobada: true, comprobante: PAG-TAD-0001, vencimiento del bloqueo: null}
+      - si: {tipo de orden: [reembolso]}
+        respuesta: {aprobada: true, comprobante: REE-0001, vencimiento del bloqueo: null}
+      - si: {tipo de orden: [liberación del depósito]}
+        respuesta: {aprobada: true, comprobante: LIB-0001, vencimiento del bloqueo: null}
+      - si: {tipo de orden: [descuento del depósito]}
+        respuesta: {aprobada: true, comprobante: DES-0001, vencimiento del bloqueo: null}
+
+  Envío de arriendos cerrados a Finanzas:         # contrato SA-08; solo sale (lenguaje publicado, V8)
+    envia:
+      Arriendo cerrado para Finanzas:             # "por cada arriendo cerrado: propietario, yate, valor del alquiler, comisión y valor del propietario"
+        cuando: Cuenta del arriendo cerrada
+        datos:
+          número del arriendo: string
+          propietario: string
+          identificador del yate: string
+          valor del alquiler: decimal
+          comisión: decimal
+          valor del propietario: decimal
+
+escenarios:
+
+  Reserva pagada y cierre sin daños:              # ARR-0001
+    - Contrato del cliente firmado:               # bloquea el depósito y cobra el alquiler (3 días x 500) y el seguro
+        con: {número del arriendo: ARR-0001, identificador del yate: YATE-0001, propietario: PROP-0001, referencia al CRM: CRM-0001, inicio: "2026-03-10", fin: "2026-03-12", días: 3, precio por día: 500, valor del seguro: 120, valor del depósito: 1000, medio de pago: TARJETA-0001}
+        espera: Alquiler y seguro cobrados
+    - Consultar el estado de cuenta del arriendo:
+        con: {número del arriendo: ARR-0001}
+        espera: {estado: abierta, movimientos: 2, valor del depósito: 1000, estado del depósito: bloqueado}
+    - Diferencias determinadas:                   # cobra el combustible y 15 horas adicionales, libera el depósito y cierra la cuenta
+        con: {número del arriendo: ARR-0001, hora de regreso: "2026-03-13T15:00:00", combustible consumido: 40, horas adicionales: 15, valor de los daños: 0, evidencia: [entrega-1.jpg, regreso-1.jpg]}
+        espera: Cuenta del arriendo cerrada
+    - Consultar el estado de cuenta del arriendo:   # comisión del 20 % sobre 1500
+        con: {número del arriendo: ARR-0001}
+        espera: {estado: cerrada, movimientos: 4, comisión: 300, valor del propietario: 1200, estado del depósito: liberado}
+
+  Daños mayores que el depósito:                  # ARR-0002
+    - Contrato del cliente firmado:
+        con: {número del arriendo: ARR-0002, inicio: "2026-03-14", fin: "2026-03-15", días: 2, precio por día: 500, valor del seguro: 120, valor del depósito: 1000, medio de pago: TARJETA-0001}
+        espera: Depósito bloqueado
+    - Diferencias determinadas:                   # descuenta los 1000 del depósito; los 500 que exceden se reclaman a la aseguradora
+        con: {número del arriendo: ARR-0002, hora de regreso: "2026-03-15T20:00:00", combustible consumido: 10, horas adicionales: 0, valor de los daños: 1500, evidencia: [regreso-2.jpg]}
+        espera: Daños descontados del depósito
+    - Consultar el estado de cuenta del arriendo:   # sin tiempo adicional: alquiler, seguro y combustible
+        con: {número del arriendo: ARR-0002}
+        espera: {estado: cerrada, movimientos: 3, estado del depósito: descontado, evidencia del descuento: [regreso-2.jpg]}
+
+  Cancelación con anticipación:                   # ARR-0003
+    - Contrato del cliente firmado:
+        con: {número del arriendo: ARR-0003, inicio: "2026-03-20", fin: "2026-03-21", días: 2, valor del depósito: 1000, medio de pago: TARJETA-0001}
+    - Reserva cancelada:                          # 9 días antes: se reembolsa el alquiler y se libera el depósito
+        con: {número del arriendo: ARR-0003, fecha de la cancelación: "2026-03-11", días de anticipación: 9}
+        espera: Cancelación reembolsada
+    - Consultar el estado de cuenta del arriendo:
+        con: {número del arriendo: ARR-0003}
+        espera: {estado: cerrada, movimientos: 3, estado del depósito: liberado}
+
+  Cancelación tardía:                             # ARR-0004
+    - Contrato del cliente firmado:
+        con: {número del arriendo: ARR-0004, inicio: "2026-03-22", fin: "2026-03-23", días: 2, valor del depósito: 1000, medio de pago: TARJETA-0001}
+    - Reserva cancelada:                          # 2 días antes: no se reembolsa (el plazo del contrato es de 7)
+        con: {número del arriendo: ARR-0004, fecha de la cancelación: "2026-03-20", días de anticipación: 2}
+        espera: Cancelación no reembolsada
+
+  Cobros rechazados:
+    - Contrato del cliente firmado:               # rechazo a propósito: INT-PAG, la pasarela rechaza la tarjeta
+        con: {número del arriendo: ARR-0005, fin: "2026-03-12", valor del depósito: 1000, medio de pago: TARJETA-RECHAZADA}
+        espera: {código: 422, regla: INT-PAG}
+    - Contrato del cliente firmado:               # rechazo a propósito: V4-SUP-07, el bloqueo vence antes del cierre
+        con: {número del arriendo: ARR-0006, fin: "2026-03-28", valor del depósito: 1000, medio de pago: TARJETA-0001}
+        espera: {código: 422, regla: V4-SUP-07}
+    - Contrato del cliente firmado:               # rechazo a propósito: el depósito de ARR-0001 ya existe
+        con: {número del arriendo: ARR-0001, fin: "2026-03-12", valor del depósito: 1000, medio de pago: TARJETA-0001}
+        espera: {código: 409, identidad: ARR-0001}
+    - Contrato del cliente firmado:
+        con: {número del arriendo: ARR-0007, fin: "2026-03-26", valor del depósito: 1000, medio de pago: TARJETA-0001}
+        espera: Alquiler y seguro cobrados
+    - Cerrar las cuentas del arriendo:            # rechazo a propósito: E2E-01, todavía no hay cargos del cierre
+        con: {número del arriendo: ARR-0007, hora del cierre: "2026-03-27T10:00:00", decisión sobre el depósito: liberado}
+        espera: {código: 422, regla: E2E-01}
+    - Diferencias determinadas:                   # rechazo a propósito: "todo cobro va con evidencia" (V1)
+        con: {número del arriendo: ARR-0007, hora de regreso: "2026-03-27T10:00:00", combustible consumido: 5, horas adicionales: 0, valor de los daños: 0, evidencia: []}
+        espera: {código: 422, regla: V1}
+    - Diferencias determinadas:                   # rechazo a propósito: no hay cuenta de ARR-0099
+        con: {número del arriendo: ARR-0099, hora de regreso: "2026-03-27T10:00:00", combustible consumido: 5, horas adicionales: 0, valor de los daños: 0, evidencia: [x.jpg]}
+        espera: 404

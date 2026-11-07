@@ -94,7 +94,7 @@
           "ruta": "/eventos-externos/deposito-bloqueado",
           "cuerpo": {
             "numeroDelArriendo": "ARR-0001",
-            "autorizacionDelBloqueoDelDeposito": "autorización del bloqueo del depósito"
+            "codigoDeAutorizacionDeLaPasarela": "código de autorización de la pasarela"
           },
           "espera": {
             "tipo": "evento",
@@ -145,7 +145,7 @@
           "ruta": "/eventos-externos/yate-entregado-al-cliente",
           "cuerpo": {
             "numeroDelArriendo": "ARR-0001",
-            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+            "horaDeEntrega": "2026-02-01T09:00:00"
           },
           "espera": {
             "tipo": "evento",
@@ -163,7 +163,7 @@
           "ruta": "/eventos-externos/inspeccion-de-devolucion-registrada",
           "cuerpo": {
             "numeroDelArriendo": "ARR-0001",
-            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+            "horaDeRegreso": "2026-02-01T09:00:00"
           },
           "espera": {
             "tipo": "evento",
@@ -181,7 +181,7 @@
           "ruta": "/eventos-externos/cuenta-del-arriendo-cerrada",
           "cuerpo": {
             "numeroDelArriendo": "ARR-0001",
-            "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+            "horaDelCierre": "2026-02-01T09:00:00"
           },
           "espera": {
             "tipo": "evento",

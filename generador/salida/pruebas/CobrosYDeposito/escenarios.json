@@ -1,0 +1,499 @@
+{
+  "generado_desde": "Generado desde ArchiMate: ApplicationComponent \"Contexto Cobros y depósito\" (id-859686865fd4465397859188d62c971c).",
+  "ruta_base": "/cobros-y-deposito",
+  "escenarios": [
+    {
+      "nombre": "Reserva pagada y cierre sin daños",
+      "identidad": "ARR-0001",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "propietario": "PROP-0001",
+            "referenciaAlCRM": "CRM-0001",
+            "inicio": "2026-03-10",
+            "fin": "2026-03-12",
+            "dias": 3,
+            "precioPorDia": 500,
+            "valorDelSeguro": 120,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Alquiler y seguro cobrados",
+            "texto": "HTTP 2xx y el evento \"Alquiler y seguro cobrados\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Consultar el estado de cuenta del arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0001",
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Abierta",
+              "movimientos": 2,
+              "valorDelDeposito": 1000,
+              "estadoDelDeposito": "Bloqueado"
+            },
+            "texto": "HTTP 2xx y estado = abierta, movimientos = 2, valor del depósito = 1000, estado del depósito = bloqueado"
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Diferencias determinadas",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/diferencias-determinadas",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "horaDeRegreso": "2026-03-13T15:00:00",
+            "combustibleConsumido": 40,
+            "horasAdicionales": 15,
+            "valorDeLosDanos": 0,
+            "evidencia": [
+              "entrega-1.jpg",
+              "regreso-1.jpg"
+            ]
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Cuenta del arriendo cerrada",
+            "texto": "HTTP 2xx y el evento \"Cuenta del arriendo cerrada\""
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Consultar el estado de cuenta del arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0001",
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Cerrada",
+              "movimientos": 4,
+              "comision": 300,
+              "valorDelPropietario": 1200,
+              "estadoDelDeposito": "Liberado"
+            },
+            "texto": "HTTP 2xx y estado = cerrada, movimientos = 4, comisión = 300, valor del propietario = 1200, estado del depósito = liberado"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Daños mayores que el depósito",
+      "identidad": "ARR-0002",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0002",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-03-14",
+            "fin": "2026-03-15",
+            "dias": 2,
+            "precioPorDia": 500,
+            "valorDelSeguro": 120,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Depósito bloqueado",
+            "texto": "HTTP 2xx y el evento \"Depósito bloqueado\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Diferencias determinadas",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "ARR-0002",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/diferencias-determinadas",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "horaDeRegreso": "2026-03-15T20:00:00",
+            "combustibleConsumido": 10,
+            "horasAdicionales": 0,
+            "valorDeLosDanos": 1500,
+            "evidencia": [
+              "regreso-2.jpg"
+            ]
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Daños descontados del depósito",
+            "texto": "HTTP 2xx y el evento \"Daños descontados del depósito\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Consultar el estado de cuenta del arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0002",
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0002",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Cerrada",
+              "movimientos": 3,
+              "estadoDelDeposito": "Descontado",
+              "evidenciaDelDescuento": [
+                "regreso-2.jpg"
+              ]
+            },
+            "texto": "HTTP 2xx y estado = cerrada, movimientos = 3, estado del depósito = descontado, evidencia del descuento = ['regreso-2.jpg']"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Cancelación con anticipación",
+      "identidad": "ARR-0003",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0003",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-03-20",
+            "fin": "2026-03-21",
+            "dias": 2,
+            "precioPorDia": 100,
+            "valorDelSeguro": 100,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Reserva cancelada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "ARR-0003",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-cancelada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003",
+            "fechaDeLaCancelacion": "2026-03-11",
+            "diasDeAnticipacion": 9
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Cancelación reembolsada",
+            "texto": "HTTP 2xx y el evento \"Cancelación reembolsada\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Consultar el estado de cuenta del arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0003",
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0003",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Cerrada",
+              "movimientos": 3,
+              "estadoDelDeposito": "Liberado"
+            },
+            "texto": "HTTP 2xx y estado = cerrada, movimientos = 3, estado del depósito = liberado"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Cancelación tardía",
+      "identidad": "ARR-0004",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0004",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0004",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-03-22",
+            "fin": "2026-03-23",
+            "dias": 2,
+            "precioPorDia": 100,
+            "valorDelSeguro": 100,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Reserva cancelada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "ARR-0004",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-cancelada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0004",
+            "fechaDeLaCancelacion": "2026-03-20",
+            "diasDeAnticipacion": 2
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Cancelación no reembolsada",
+            "texto": "HTTP 2xx y el evento \"Cancelación no reembolsada\""
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Cobros rechazados",
+      "identidad": "ARR-0007",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0005",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0005",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-02-01",
+            "fin": "2026-03-12",
+            "dias": 1,
+            "precioPorDia": 100,
+            "valorDelSeguro": 100,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-RECHAZADA"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "INT-PAG"
+            },
+            "texto": "HTTP 422 y regla = INT-PAG"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0006",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0006",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-02-01",
+            "fin": "2026-03-28",
+            "dias": 1,
+            "precioPorDia": 100,
+            "valorDelSeguro": 100,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "V4-SUP-07"
+            },
+            "texto": "HTTP 422 y regla = V4-SUP-07"
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-02-01",
+            "fin": "2026-03-12",
+            "dias": 1,
+            "precioPorDia": 100,
+            "valorDelSeguro": 100,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "campos": {
+              "identidad": "ARR-0001"
+            },
+            "texto": "HTTP 409 y identidad = ARR-0001"
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Contrato del cliente firmado",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0007",
+          "metodo": "POST",
+          "ruta": "/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0007",
+            "identificadorDelYate": "identificador del yate",
+            "propietario": "propietario",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-02-01",
+            "fin": "2026-03-26",
+            "dias": 1,
+            "precioPorDia": 100,
+            "valorDelSeguro": 100,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Alquiler y seguro cobrados",
+            "texto": "HTTP 2xx y el evento \"Alquiler y seguro cobrados\""
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Cerrar las cuentas del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "ARR-0007",
+          "metodo": "POST",
+          "ruta": "/comandos/cerrar-las-cuentas-del-arriendo",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0007",
+            "horaDelCierre": "2026-03-27T10:00:00",
+            "decisionSobreElDeposito": "Liberado"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "E2E-01"
+            },
+            "texto": "HTTP 422 y regla = E2E-01"
+          }
+        },
+        {
+          "numero": 6,
+          "nombre": "Diferencias determinadas",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "ARR-0007",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/diferencias-determinadas",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0007",
+            "horaDeRegreso": "2026-03-27T10:00:00",
+            "combustibleConsumido": 5,
+            "horasAdicionales": 0,
+            "valorDeLosDanos": 0,
+            "evidencia": []
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "V1"
+            },
+            "texto": "HTTP 422 y regla = V1"
+          }
+        },
+        {
+          "numero": 7,
+          "nombre": "Diferencias determinadas",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "ARR-0099",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/diferencias-determinadas",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0099",
+            "horaDeRegreso": "2026-03-27T10:00:00",
+            "combustibleConsumido": 5,
+            "horasAdicionales": 0,
+            "valorDeLosDanos": 0,
+            "evidencia": [
+              "x.jpg"
+            ]
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 404,
+            "texto": "HTTP 404"
+          }
+        }
+      ]
+    }
+  ]
+}

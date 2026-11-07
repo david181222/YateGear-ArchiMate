@@ -6,9 +6,11 @@ namespace YateGear.OperacionDelArriendo;
 /// <summary>Evento "Diferencias determinadas". Lo publica "Determinar las diferencias entre entrega y devolución" (SB-24).</summary>
 public sealed record DiferenciasDeterminadas(
     string NumeroDelArriendo,
+    DateTime HoraDeRegreso,
     decimal CombustibleConsumido,
     decimal HorasAdicionales,
-    decimal ValorDeLosDanos
+    decimal ValorDeLosDanos,
+    List<string> Evidencia
 ) : IEvento
 {
     /// <summary>Nombre del evento en el modelo.</summary>

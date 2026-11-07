@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace {{ ns }};
 {% for x in mensajes %}
 
-/// <summary>Mensaje "{{ x.nombre | xml }}" que "{{ sa.nombre | xml }}" recibe del sistema externo. Dispara "{{ x.comando | xml }}".</summary>
+/// <summary>Mensaje "{{ x.nombre | xml }}" que "{{ sa.nombre | xml }}" recibe del sistema externo. Dispara "{{ x.comandos | join('", "') | xml }}".</summary>
 {{ m.record(x.clase, x.datos, ";") }}
 {% endfor %}
 
@@ -29,6 +29,27 @@ public sealed class {{ receptor }}(
 {% if not loop.first %}
 
 {% endif %}
+{% if x.disparos %}
+    /// <summary>Lee "{{ x.nombre | xml }}" desde JSON (si falta un dato obligatorio, DatoFaltante: 422) y dispara, en orden,
+    /// {% for d in x.disparos %}"{{ d.comando | xml }}"{{ ", " if not loop.last }}{% endfor %}. Si uno falla, los siguientes no corren.</summary>
+    public RespuestaDeComando {{ x.metodo }}(JsonElement json)
+    {
+        var mensaje = LectorDeEventos.Leer<{{ x.clase }}>(json{% if x.obligatorios %}, {{ x.obligatorios }}{% endif %});
+        bitacora.Anotar("mensaje recibido", {{ x.titulo | cadena }}, mensaje);
+        var respuestas = new List<RespuestaDeComando>();
+{% for d in x.disparos %}
+{% if d.condicion %}
+        if ({{ d.condicion }})
+        {
+            respuestas.Add({{ d.manejador_var }}.Manejar(new {{ d.comando_clase }}({{ d.args | join(", ") }})));
+        }
+{% else %}
+        respuestas.Add({{ d.manejador_var }}.Manejar(new {{ d.comando_clase }}({{ d.args | join(", ") }})));
+{% endif %}
+{% endfor %}
+        return RespuestaDeComando.Juntar("", respuestas);
+    }
+{% else %}
     /// <summary>Lee "{{ x.nombre | xml }}" desde JSON (si falta un dato obligatorio, DatoFaltante: 422) y dispara "{{ x.comando | xml }}".</summary>
     public RespuestaDeComando {{ x.metodo }}(JsonElement json)
     {
@@ -36,5 +57,6 @@ public sealed class {{ receptor }}(
         bitacora.Anotar("mensaje recibido", {{ x.titulo | cadena }}, mensaje);
         return {{ x.manejador_var }}.Manejar(new {{ x.comando_clase }}({{ x.args | join(", ") }}));
     }
+{% endif %}
 {% endfor %}
 }

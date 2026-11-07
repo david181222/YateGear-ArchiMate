@@ -1,0 +1,292 @@
+# Generado desde ArchiMate: ApplicationComponent "Contexto Cobros y depósito" (id-859686865fd4465397859188d62c971c).
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
+# "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
+# y revisa solo; aquí se pueden ejecutar uno por uno.
+# Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
+# de empezar para que la primera raíz sea REC-0001. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+
+@base = http://localhost:5080/cobros-y-deposito
+
+# ==============================================================================
+# Escenario 1: Reserva pagada y cierre sin daños (ARR-0001)
+# ==============================================================================
+
+### Reserva pagada y cierre sin daños · paso 1: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Alquiler y seguro cobrados".
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "propietario": "PROP-0001",
+  "referenciaAlCRM": "CRM-0001",
+  "inicio": "2026-03-10",
+  "fin": "2026-03-12",
+  "dias": 3,
+  "precioPorDia": 500,
+  "valorDelSeguro": 120,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Reserva pagada y cierre sin daños · paso 2: Consultar el estado de cuenta del arriendo
+# Consulta. Espera: HTTP 2xx y estado = abierta, movimientos = 2, valor del depósito = 1000, estado del depósito = bloqueado.
+GET {{base}}/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0001
+
+### Reserva pagada y cierre sin daños · paso 3: Diferencias determinadas
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Cuenta del arriendo cerrada".
+POST {{base}}/eventos-externos/diferencias-determinadas
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "horaDeRegreso": "2026-03-13T15:00:00",
+  "combustibleConsumido": 40,
+  "horasAdicionales": 15,
+  "valorDeLosDanos": 0,
+  "evidencia": [
+    "entrega-1.jpg",
+    "regreso-1.jpg"
+  ]
+}
+
+### Reserva pagada y cierre sin daños · paso 4: Consultar el estado de cuenta del arriendo
+# Consulta. Espera: HTTP 2xx y estado = cerrada, movimientos = 4, comisión = 300, valor del propietario = 1200, estado del depósito = liberado.
+GET {{base}}/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0001
+
+# ==============================================================================
+# Escenario 2: Daños mayores que el depósito (ARR-0002)
+# ==============================================================================
+
+### Daños mayores que el depósito · paso 1: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Depósito bloqueado".
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "identificadorDelYate": "identificador del yate",
+  "propietario": "propietario",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-03-14",
+  "fin": "2026-03-15",
+  "dias": 2,
+  "precioPorDia": 500,
+  "valorDelSeguro": 120,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Daños mayores que el depósito · paso 2: Diferencias determinadas
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Daños descontados del depósito".
+POST {{base}}/eventos-externos/diferencias-determinadas
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "horaDeRegreso": "2026-03-15T20:00:00",
+  "combustibleConsumido": 10,
+  "horasAdicionales": 0,
+  "valorDeLosDanos": 1500,
+  "evidencia": [
+    "regreso-2.jpg"
+  ]
+}
+
+### Daños mayores que el depósito · paso 3: Consultar el estado de cuenta del arriendo
+# Consulta. Espera: HTTP 2xx y estado = cerrada, movimientos = 3, estado del depósito = descontado, evidencia del descuento = ['regreso-2.jpg'].
+GET {{base}}/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0002
+
+# ==============================================================================
+# Escenario 3: Cancelación con anticipación (ARR-0003)
+# ==============================================================================
+
+### Cancelación con anticipación · paso 1: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 2xx.
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0003",
+  "identificadorDelYate": "identificador del yate",
+  "propietario": "propietario",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-03-20",
+  "fin": "2026-03-21",
+  "dias": 2,
+  "precioPorDia": 100,
+  "valorDelSeguro": 100,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Cancelación con anticipación · paso 2: Reserva cancelada
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Cancelación reembolsada".
+POST {{base}}/eventos-externos/reserva-cancelada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0003",
+  "fechaDeLaCancelacion": "2026-03-11",
+  "diasDeAnticipacion": 9
+}
+
+### Cancelación con anticipación · paso 3: Consultar el estado de cuenta del arriendo
+# Consulta. Espera: HTTP 2xx y estado = cerrada, movimientos = 3, estado del depósito = liberado.
+GET {{base}}/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0003
+
+# ==============================================================================
+# Escenario 4: Cancelación tardía (ARR-0004)
+# ==============================================================================
+
+### Cancelación tardía · paso 1: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 2xx.
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0004",
+  "identificadorDelYate": "identificador del yate",
+  "propietario": "propietario",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-03-22",
+  "fin": "2026-03-23",
+  "dias": 2,
+  "precioPorDia": 100,
+  "valorDelSeguro": 100,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Cancelación tardía · paso 2: Reserva cancelada
+# Evento de otro contexto. Espera: HTTP 2xx y el evento "Cancelación no reembolsada".
+POST {{base}}/eventos-externos/reserva-cancelada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0004",
+  "fechaDeLaCancelacion": "2026-03-20",
+  "diasDeAnticipacion": 2
+}
+
+# ==============================================================================
+# Escenario 5: Cobros rechazados (ARR-0007)
+# ==============================================================================
+
+### Cobros rechazados · paso 1: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 422 y regla = INT-PAG.
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0005",
+  "identificadorDelYate": "identificador del yate",
+  "propietario": "propietario",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-02-01",
+  "fin": "2026-03-12",
+  "dias": 1,
+  "precioPorDia": 100,
+  "valorDelSeguro": 100,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-RECHAZADA"
+}
+
+### Cobros rechazados · paso 2: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 422 y regla = V4-SUP-07.
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0006",
+  "identificadorDelYate": "identificador del yate",
+  "propietario": "propietario",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-02-01",
+  "fin": "2026-03-28",
+  "dias": 1,
+  "precioPorDia": 100,
+  "valorDelSeguro": 100,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Cobros rechazados · paso 3: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 409 y identidad = ARR-0001.
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "identificador del yate",
+  "propietario": "propietario",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-02-01",
+  "fin": "2026-03-12",
+  "dias": 1,
+  "precioPorDia": 100,
+  "valorDelSeguro": 100,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Cobros rechazados · paso 4: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 2xx y el evento "Alquiler y seguro cobrados".
+POST {{base}}/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0007",
+  "identificadorDelYate": "identificador del yate",
+  "propietario": "propietario",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-02-01",
+  "fin": "2026-03-26",
+  "dias": 1,
+  "precioPorDia": 100,
+  "valorDelSeguro": 100,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Cobros rechazados · paso 5: Cerrar las cuentas del arriendo
+# Comando. Espera: HTTP 422 y regla = E2E-01.
+POST {{base}}/comandos/cerrar-las-cuentas-del-arriendo
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0007",
+  "horaDelCierre": "2026-03-27T10:00:00",
+  "decisionSobreElDeposito": "Liberado"
+}
+
+### Cobros rechazados · paso 6: Diferencias determinadas
+# Evento de otro contexto. Espera: HTTP 422 y regla = V1.
+POST {{base}}/eventos-externos/diferencias-determinadas
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0007",
+  "horaDeRegreso": "2026-03-27T10:00:00",
+  "combustibleConsumido": 5,
+  "horasAdicionales": 0,
+  "valorDeLosDanos": 0,
+  "evidencia": []
+}
+
+### Cobros rechazados · paso 7: Diferencias determinadas
+# Evento de otro contexto. Espera: HTTP 404.
+POST {{base}}/eventos-externos/diferencias-determinadas
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0099",
+  "horaDeRegreso": "2026-03-27T10:00:00",
+  "combustibleConsumido": 5,
+  "horasAdicionales": 0,
+  "valorDeLosDanos": 0,
+  "evidencia": [
+    "x.jpg"
+  ]
+}

@@ -6,6 +6,9 @@ Cómo se juzga cada paso (lo esperado sale de "espera" en el YAML):
   - un evento: la respuesta es 2xx y la bitácora registró ese evento para la raíz del escenario
     durante ese paso (así se ven también los eventos que publica una política);
   - {dato: valor, ...}: la respuesta es 2xx y la consulta devuelve esos valores.
+  - en los escenarios entre contextos (S4), una lista de eventos y de envíos de los SA: la respuesta es 2xx, y
+    durante el paso pasaron por el bus entre contextos todos esos eventos (de cualquier contexto) y la bitácora
+    del contexto que envía registró esos envíos.
 En cada paso que crea una raíz y debe responder con éxito se revisa además que reciba la identidad esperada.
 
 Termina con código 1 si algún paso falla. Lo usa probar.ps1, que levanta y detiene la aplicación.
@@ -51,22 +54,38 @@ def main():
         sys.exit(__doc__)
     with open(sys.argv[1], encoding="utf-8") as f:
         esc = json.load(f)
-    base = sys.argv[2].rstrip("/") + esc["ruta_base"]
+    raiz_url = sys.argv[2].rstrip("/")
+    base = raiz_url + esc["ruta_base"]
+    entre = bool(esc.get("entre_contextos"))           # escenarios de punta a punta entre contextos (S4)
 
-    def bitacora():
-        return llamar("GET", f"{base}/bitacora", None)[1]
+    def bitacora(ruta_base=esc["ruta_base"]):
+        return llamar("GET", f"{raiz_url}{ruta_base}/bitacora", None)[1]
+
+    def bus():                                         # los eventos que pasaron por el bus entre contextos
+        return llamar("GET", f"{raiz_url}/eventos-entre-contextos", None)[1]["eventos"]
 
     total = fallas = 0
     for e in esc["escenarios"]:
         print(f'\nEscenario "{e["nombre"]}"' + (f' ({e["identidad"]})' if e["identidad"] else ""))
         for p in e["pasos"]:
             total += 1
-            antes = len(bitacora())
+            if entre:
+                antes_bus = len(bus())
+                antes_ctx = {r: len(bitacora(r)) for r in esc["contextos"]}
+            else:
+                antes = len(bitacora())
             codigo, cuerpo = llamar(p["metodo"], base + p["ruta"], p["cuerpo"])
-            nuevos = bitacora()[antes:]
             ident = p.get("identidad")
-            # Los eventos de la raíz del paso; un paso sin identidad (un comando sobre todas las raíces) acepta los de cualquiera.
-            eventos = [n["nombre"] for n in nuevos if n["tipo"] == "evento" and (ident is None or (n["datos"] or {}).get("identidad") == ident)]
+            if entre:
+                # Entre contextos, los eventos de cualquier contexto (los publica el bus) y los envíos de los SA (G11).
+                eventos = [x["evento"] for x in bus()[antes_bus:]]
+                enviados = {(r, n["nombre"]) for r in esc["contextos"] for n in bitacora(r)[antes_ctx[r]:]
+                            if n["tipo"] == "envío por servicio SA"}
+            else:
+                nuevos = bitacora()[antes:]
+                # Los eventos de la raíz del paso; un paso sin identidad (un comando sobre todas las raíces) acepta los de cualquiera.
+                eventos = [n["nombre"] for n in nuevos if n["tipo"] == "evento" and (ident is None or (n["datos"] or {}).get("identidad") == ident)]
+                enviados = set()
             esp, exito = p["espera"], 200 <= codigo < 300
             if esp["tipo"] == "exito":
                 ok = exito
@@ -75,6 +94,9 @@ def main():
                                                     for k, v in (esp.get("campos") or {}).items())
             elif esp["tipo"] == "evento":
                 ok = exito and esp["valor"] in eventos
+            elif esp["tipo"] == "eventos":             # entre contextos: todos los eventos y envíos de la lista
+                ok = exito and all(x in eventos for x in esp["eventos"]) and \
+                    all((x["ruta_base"], x["nombre"]) in enviados for x in esp["envios"])
             else:
                 ok = exito and isinstance(cuerpo, dict) and all(igual(cuerpo.get(k), v) for k, v in esp["valores"].items())
             detalle = f"HTTP {codigo}"
@@ -88,6 +110,8 @@ def main():
                 detalle += "".join(f" {k} {cuerpo.get(k)}" for k in mostrar)
             if eventos:
                 detalle += " eventos: " + ", ".join(eventos)
+            if enviados:
+                detalle += " envíos: " + ", ".join(sorted(n for _, n in enviados))
             if not exito and isinstance(cuerpo, dict):
                 detalle += " " + json.dumps(cuerpo, ensure_ascii=False)
             if not ok:

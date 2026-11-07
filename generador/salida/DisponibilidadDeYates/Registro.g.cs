@@ -40,6 +40,19 @@ public static class Registro
     {
         Politicas.Registrar(app.Services);
 
+        // Eventos de otros contextos que llegan por el bus entre contextos (G12, D1): cada uno va a su receptor, por el
+        // nombre del contexto que lo publica y su nombre en el modelo. Si el receptor falla, el error queda en el bus.
+        var entreContextos = app.Services.GetRequiredService<BusEntreContextos>();
+        var receptorEntreContextos = app.Services.GetRequiredService<ReceptorDeEventosExternos>();
+        entreContextos.Suscribir("Contexto Gestión del arriendo", "Arriendo no realizado por riesgo alto",
+            m => receptorEntreContextos.RecibirArriendoNoRealizadoPorRiesgoAlto(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Gestión del arriendo", "Reserva cancelada",
+            m => receptorEntreContextos.RecibirReservaCancelada(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Gestión del arriendo", "Reserva confirmada",
+            m => receptorEntreContextos.RecibirReservaConfirmada(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Gestión del arriendo", "Reserva solicitada",
+            m => receptorEntreContextos.RecibirReservaSolicitada(m.DatosConIdentidad("numeroDelArriendo")));
+
         // Comandos: POST con el comando en JSON.
         app.MapPost("/disponibilidad-de-yates/comandos/definir-las-fechas-bloqueadas-del-yate",
             (DefinirLasFechasBloqueadasDelYate comando, DefinirLasFechasBloqueadasDelYateManejador manejador) => Ejecutar(() => manejador.Manejar(comando)));

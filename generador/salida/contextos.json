@@ -11,6 +11,13 @@
       "trazabilidad": "trazabilidad/Calificaciones.csv"
     },
     {
+      "nombre": "Contexto Cobros y depósito",
+      "proyecto": "CobrosYDeposito",
+      "ruta_base": "/cobros-y-deposito",
+      "escenarios": "pruebas/CobrosYDeposito/escenarios.json",
+      "trazabilidad": "trazabilidad/CobrosYDeposito.csv"
+    },
+    {
       "nombre": "Contexto Disponibilidad de yates",
       "proyecto": "DisponibilidadDeYates",
       "ruta_base": "/disponibilidad-de-yates",
@@ -31,5 +38,6 @@
       "escenarios": "pruebas/OperacionDelArriendo/escenarios.json",
       "trazabilidad": "trazabilidad/OperacionDelArriendo.csv"
     }
-  ]
+  ],
+  "entre_contextos": "pruebas/EntreContextos/escenarios.json"
 }

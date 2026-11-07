@@ -70,7 +70,8 @@ La columna "Dónde se resuelve" sale de las relaciones del modelo. En la V1 est�
 
 ## Contenido del repositorio
 
-- [modelo/YateGear.archimate](modelo/YateGear.archimate): el modelo ArchiMate fuente. Es un único modelo con 425 elementos, 908 relaciones y 27 vistas, y se abre con Archi.
+- [modelo/YateGear.archimate](modelo/YateGear.archimate): el modelo ArchiMate fuente. Es un único modelo con 425 elementos, 913 relaciones y 27 vistas, y se abre con Archi.
+- [generador/](generador/): el generador de código. Lee el modelo y un YAML por contexto y genera la primera versión de la aplicación en C# (.NET 8): los cinco contextos en un solo programa, comunicados por un bus de eventos, con sus escenarios de prueba y su trazabilidad hasta el modelo. Cómo se usa: [generador/README.md](generador/README.md); qué falta y quién hizo qué: [generador/PENDIENTES.md](generador/PENDIENTES.md).
 - [vistas/](vistas/): las 27 vistas exportadas como imagen. Cada archivo lleva el código de su vista, por ejemplo `V4.01.png`.
 - [entrevista/](entrevista/): la evidencia de la Fase 0.
   - [01-instruccion-rol-experto.md](entrevista/01-instruccion-rol-experto.md): la instrucción de rol del experto.
@@ -1292,6 +1293,7 @@ Fuente: H-10, H-13; E2E-04, E2E-06; contratos de SB-19, SB-20 y SB-21; V4-SUP-07
 | Entidad | Cobro | Cada cargo o devolución de dinero del arriendo (alquiler, seguro, combustible consumido, tiempo adicional o reembolso). Identidad: su comprobante de la pasarela. Estado: orden aprobada o rechazada por la pasarela. Realiza "Cobro" (V4). |
 | Objeto de valor | Póliza del arriendo | Número y valor que emite la aseguradora. Fuente: SB-13, SA-03. Realiza "Póliza del arriendo" (V4). |
 | Campo | Concepto, valor, comprobante y evidencia de cada cobro | Van dentro de la entidad Cobro. La evidencia aplica a los cargos del cierre. Fuente: SB-13, SB-14, SB-15, SA-06. |
+| Campo | Identificador del yate y propietario | Llegan con el contrato del cliente firmado (SB-13) y se envían a Finanzas con el arriendo cerrado (SA-08). Fuente: SA-08, H-11; discrepancia 10 del generador. |
 | Campo | Comisión y valor del propietario | Los calcula SB-17 al cerrar la cuenta y se envían a Finanzas (SA-08). Fuente: SB-17, H-11, CTX-01. |
 
 Invariantes del agregado:
@@ -1330,7 +1332,7 @@ Invariante del agregado: solo se envía si el daño supera el depósito, y con l
 | Cuenta del arriendo | Liquidar y cobrar los cargos del cierre | SB-14 | Escritura | Cargos del cierre cobrados |
 | Cuenta del arriendo | Cobrar alquiler y seguro | SB-13 | Escritura | Alquiler y seguro cobrados |
 | Cuenta del arriendo | Reembolsar una cancelación | SB-15 | Escritura | Cancelación reembolsada; Cancelación no reembolsada |
-| Reclamo a la aseguradora | Reclamar el excedente de daños a la aseguradora | SB-16 | Escritura | Reclamo enviado a la aseguradora |
+| Reclamo a la aseguradora | Reclamar el excedente de daños a la aseguradora | SB-16 | Escritura; lee también la raíz de la Cuenta del arriendo, que guarda el número de la póliza | Reclamo enviado a la aseguradora |
 
 Ningún evento de este dominio realiza un evento de la V3.
 
@@ -1513,7 +1515,7 @@ De los 30 servicios básicos de la V4, 24 son comandos y 6 no lo son (V6-DEC-03)
 | V6-DEC-06 | Evaluación de riesgo, Ficha del cliente y Póliza del arriendo son objetos de valor; cada uno es un objeto de datos que realiza su objeto de negocio de la V4. | Nadie les cambia el estado después de crearlos y no tienen identidad propia. Como son objetos de datos (V6-DEC-16), cada uno realiza su objeto de negocio, y la traza con la V4 se mantiene sin excepción a V6-DEC-02. |
 | V6-DEC-07 | "Ficha de la marina" no es parte de ningún agregado. | Ningún servicio básico la escribe: es un dato de referencia que el Yate cita por su identificador. Es el único objeto de negocio de la V4 que no se realiza en la V6. |
 | V6-DEC-08 | Un evento por cada resultado distinto del contrato del comando. | Así lo muestran SB-12, con "Riesgo aceptable obtenido" y "Arriendo no realizado por riesgo alto", y SB-15, con "Cancelación reembolsada" y "Cancelación no reembolsada". |
-| V6-DEC-09 | Cada comando escribe solo en la raíz de su agregado y solo accede a raíces. | La raíz es el único punto de acceso al agregado. Hay 21 accesos de escritura y 3 de lectura (SB-31, SB-24 y SB-27). SB-24 lee además la raíz del Acta de entrega, porque su regla exige las dos actas; leer no cambia el otro agregado. |
+| V6-DEC-09 | Cada comando escribe solo en la raíz de su agregado y solo accede a raíces. | La raíz es el único punto de acceso al agregado. Hay 21 accesos de escritura y 3 de lectura (SB-31, SB-24 y SB-27). SB-24 lee además la raíz del Acta de entrega, porque su regla exige las dos actas; SB-27, las dos actas, para saber qué arriendos están en curso; y SB-16, la Cuenta del arriendo, porque el reclamo lleva el número de la póliza. Leer no cambia el otro agregado. |
 | V6-DEC-10 | "Arriendo no realizado por riesgo alto" lo dispara SB-12. | La decisión está en la respuesta de riesgo, no en el avance del arriendo (SB-09). |
 | V6-DEC-11 | SB-17 recibe varios disparos. | Lo disparan "Cargos del cierre cobrados" y la decisión sobre el depósito. Su invariante y su regla lo rechazan mientras falte algo, así que el orden en que lleguen no importa. |
 | V6-DEC-12 | "Pérdida de señal del yate" conserva su nombre de la V3. | No es un participio, pero el evento de aplicación realiza el evento de negocio de la V3 y por V6-DEC-02 lleva su mismo nombre. |
@@ -1959,7 +1961,7 @@ Las agregaciones de pertenencia (área --> capacidad en la V2, clasificación --
 
 ### Totales del modelo
 
-El modelo tiene 425 elementos, 908 relaciones y 27 vistas.
+El modelo tiene 425 elementos, 913 relaciones y 27 vistas.
 
 | Capa | Elementos | Detalle |
 |---|---|---|
@@ -1976,7 +1978,7 @@ El modelo tiene 425 elementos, 908 relaciones y 27 vistas.
 | Asociación | 102 |
 | Asignación | 72 |
 | Servicio | 72 |
-| Acceso | 68 |
+| Acceso | 73 |
 | Disparo | 55 |
 | Flujo | 36 |
 | Composición | 18 |
@@ -1988,6 +1990,6 @@ Las 27 vistas son V1, V2, V3, V4 y sus diez vistas de apoyo V4.01 a V4.10, V5, V
 
 | Integrante | Usuario de GitHub | Qué construyó |
 |---|---|---|
-| Edwin Vélez | david181222 | Fase 1: V1 y V2. Fase 3: V5. Fase 4: V6. Fase 5: V9 |
-| José Díaz | jeliasdiaz | Fase 0: análisis de hallazgos y entrevista simulada. Fase 1: V3. Fase 3: V7. Trazabilidad: V10 |
-| Santiago Martínez | spectuu | Fase 0: instrucción de rol y guion de la entrevista. Fase 2: V4. Fase 5: V8. Fase 6: V11 |
+| Edwin Vélez | david181222 | Fase 1: V1 y V2. Fase 3: V5. Fase 4: V6. Fase 5: V9. Generador: el piloto, Contexto Gestión del arriendo |
+| José Díaz | jeliasdiaz | Fase 0: análisis de hallazgos y entrevista simulada. Fase 1: V3. Fase 3: V7. Trazabilidad: V10. Generador: varios contextos en una solución y los contextos Calificaciones, Disponibilidad de yates y Operación del arriendo (J1 a J8) |
+| Santiago Martínez | spectuu | Fase 0: instrucción de rol y guion de la entrevista. Fase 2: V4. Fase 5: V8. Fase 6: V11. Generador: el Contexto Cobros y depósito, la integración entre contextos y los escenarios de punta a punta (S1 a S5) |

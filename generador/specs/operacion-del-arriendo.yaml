@@ -120,11 +120,13 @@ eventos:
       hora de regreso: DateTime
 
   Diferencias determinadas:                       # lo escucha Cobros y depósito (SB-14 y SB-20 o SB-21)
-    datos: {}
-    calculados:                                   # "combustible consumido, horas adicionales y daños" (SB-24)
+    datos:
+      hora de regreso: DateTime                   # con ella Cobros y depósito cierra la cuenta (G12)
+    calculados:                                   # "combustible consumido, horas adicionales y daños, con la evidencia de cada uno" (SB-24)
       combustible consumido: decimal
       horas adicionales: decimal
       valor de los daños: decimal
+      evidencia: List<string>                     # supuesto: las fotos de las dos actas (G12)
 
   Lectura registrada:
     datos:

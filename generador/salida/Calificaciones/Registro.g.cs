@@ -38,6 +38,13 @@ public static class Registro
     {
         Politicas.Registrar(app.Services);
 
+        // Eventos de otros contextos que llegan por el bus entre contextos (G12, D1): cada uno va a su receptor, por el
+        // nombre del contexto que lo publica y su nombre en el modelo. Si el receptor falla, el error queda en el bus.
+        var entreContextos = app.Services.GetRequiredService<BusEntreContextos>();
+        var receptorEntreContextos = app.Services.GetRequiredService<ReceptorDeEventosExternos>();
+        entreContextos.Suscribir("Contexto Gestión del arriendo", "Arriendo cerrado",
+            m => receptorEntreContextos.RecibirArriendoCerrado(m.DatosConIdentidad("numeroDelArriendo")));
+
         // Comandos: POST con el comando en JSON.
         app.MapPost("/calificaciones/comandos/calificar-al-cliente",
             (CalificarAlCliente comando, CalificarAlClienteManejador manejador) => Ejecutar(() => manejador.Manejar(comando)));

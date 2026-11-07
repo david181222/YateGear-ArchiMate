@@ -1,0 +1,265 @@
+# Generado desde ArchiMate: Model "YateGear" (id-98e02fd4df1c4f21a8610d291649a7af).
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
+# "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
+# y revisa solo; aquí se pueden ejecutar uno por uno.
+# Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
+# de empezar. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+
+@base = http://localhost:5080
+
+# ==============================================================================
+# Escenario 1: Del inventario al envío a Finanzas
+# ==============================================================================
+
+### Del inventario al envío a Finanzas · paso 1: Registrar yate en el inventario
+# Comando. Espera: HTTP 2xx y "Yate registrado".
+POST {{base}}/disponibilidad-de-yates/comandos/registrar-yate-en-el-inventario
+Content-Type: application/json
+
+{
+  "propietario": "PROP-0001",
+  "identificadorDeLaMarina": "MAR-01",
+  "nombre": "nombre",
+  "matricula": "matrícula",
+  "capacidad": 1,
+  "precioPorDia": 500,
+  "documentosAlDiaAnteLaDIMAR": true
+}
+
+### Del inventario al envío a Finanzas · paso 2: Consultar yates disponibles
+# Consulta. Espera: HTTP 2xx y yates disponibles = 1.
+GET {{base}}/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-10&fin=2026-03-12
+
+### Del inventario al envío a Finanzas · paso 3: Registrar la solicitud de reserva
+# Comando. Espera: HTTP 2xx y "Reserva solicitada", "Fechas apartadas".
+POST {{base}}/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva
+Content-Type: application/json
+
+{
+  "cliente": "CLI-0001",
+  "identificadorDelYate": "YATE-0001",
+  "propietario": "PROP-0001",
+  "precioPorDia": 500,
+  "marina": "MAR-01",
+  "inicio": "2026-03-10",
+  "fin": "2026-03-12",
+  "numeroDeLaLicencia": "número de la licencia",
+  "vigenciaDeLaLicencia": "2026-02-01",
+  "fechaDeLaAutorizacion": "2026-02-01",
+  "tercerosAutorizados": [
+    "terceros autorizados"
+  ]
+}
+
+### Del inventario al envío a Finanzas · paso 4: Obtener el nivel de riesgo del cliente
+# Comando. Espera: HTTP 2xx y "Riesgo aceptable obtenido", "Datos para el contrato del cliente".
+POST {{base}}/gestion-del-arriendo/comandos/obtener-el-nivel-de-riesgo-del-cliente
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001"
+}
+
+### Del inventario al envío a Finanzas · paso 5: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 2xx y "Depósito bloqueado", "Alquiler y seguro cobrados", "Reserva confirmada", "Fechas ocupadas", "Aviso de reserva enviado".
+POST {{base}}/cobros-y-deposito/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "propietario": "PROP-0001",
+  "referenciaAlCRM": "CRM-0001",
+  "inicio": "2026-03-10",
+  "fin": "2026-03-12",
+  "dias": 3,
+  "precioPorDia": 500,
+  "valorDelSeguro": 120,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Del inventario al envío a Finanzas · paso 6: Consultar yates disponibles
+# Consulta. Espera: HTTP 2xx y yates disponibles = 0.
+GET {{base}}/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-10&fin=2026-03-12
+
+### Del inventario al envío a Finanzas · paso 7: Acta de entrega recibida
+# Mensaje de un servicio sa. Espera: HTTP 2xx y "Yate entregado al cliente", "Arriendo iniciado".
+POST {{base}}/operacion-del-arriendo/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "identificadorDelYate": "YATE-0001",
+  "fotos": [
+    "entrega-1.jpg"
+  ],
+  "nivelDeCombustible": 100,
+  "horaDeEntrega": "2026-03-10T09:00:00",
+  "observaciones": "observaciones"
+}
+
+### Del inventario al envío a Finanzas · paso 8: Lectura del proveedor
+# Mensaje de un servicio sa. Espera: HTTP 2xx y "Lectura registrada".
+POST {{base}}/operacion-del-arriendo/sa/ubicacion-y-combustible-del-proveedor/lectura-del-proveedor
+Content-Type: application/json
+
+{
+  "identificadorDelYate": "YATE-0001",
+  "latitud": 100,
+  "longitud": 100,
+  "nivelDeCombustible": 90,
+  "horaDeLaLectura": "2026-03-10T10:00:00"
+}
+
+### Del inventario al envío a Finanzas · paso 9: Consultar ubicación y combustible del yate
+# Consulta. Espera: HTTP 2xx y recorrido = 1.
+GET {{base}}/operacion-del-arriendo/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=ARR-0001
+
+### Del inventario al envío a Finanzas · paso 10: Acta de inspección recibida
+# Mensaje de un servicio sa. Espera: HTTP 2xx y "Inspección de devolución registrada", "Yate devuelto", "Diferencias determinadas", "Cargos del cierre cobrados", "Daños descontados del depósito", "Reclamo enviado a la aseguradora", "Cuenta del arriendo cerrada", "Arriendo cerrado", "Arriendo cerrado para Finanzas".
+POST {{base}}/operacion-del-arriendo/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "fotos": [
+    "regreso-1.jpg"
+  ],
+  "nivelDeCombustible": 60,
+  "horaDeRegreso": "2026-03-13T15:00:00",
+  "danosEncontrados": [
+    {
+      "descripcion": "Rayón en el casco",
+      "valor": 1500
+    }
+  ]
+}
+
+### Del inventario al envío a Finanzas · paso 11: Consultar el arriendo
+# Consulta. Espera: HTTP 2xx y estado = cerrado.
+GET {{base}}/gestion-del-arriendo/consultas/consultar-el-arriendo/ARR-0001
+
+### Del inventario al envío a Finanzas · paso 12: Consultar el estado de cuenta del arriendo
+# Consulta. Espera: HTTP 2xx y estado = cerrada, movimientos = 4, comisión = 300, valor del propietario = 1200, estado del depósito = descontado.
+GET {{base}}/cobros-y-deposito/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0001
+
+### Del inventario al envío a Finanzas · paso 13: Calificar al propietario
+# Comando. Espera: HTTP 2xx y "Propietario calificado".
+POST {{base}}/calificaciones/comandos/calificar-al-propietario
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0001",
+  "calificacionDada": 5
+}
+
+### Del inventario al envío a Finanzas · paso 14: Consultar calificaciones promedio
+# Consulta. Espera: HTTP 2xx y calificación promedio = 5, número de calificaciones = 1.
+GET {{base}}/calificaciones/consultas/consultar-calificaciones-promedio?calificado=PROP-0001
+
+# ==============================================================================
+# Escenario 2: Cancelación con reembolso
+# ==============================================================================
+
+### Cancelación con reembolso · paso 1: Registrar la solicitud de reserva
+# Comando. Espera: HTTP 2xx y "Reserva solicitada", "Fechas apartadas".
+POST {{base}}/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva
+Content-Type: application/json
+
+{
+  "cliente": "CLI-0002",
+  "identificadorDelYate": "YATE-0001",
+  "propietario": "PROP-0001",
+  "precioPorDia": 500,
+  "marina": "MAR-01",
+  "inicio": "2026-03-20",
+  "fin": "2026-03-22",
+  "numeroDeLaLicencia": "número de la licencia",
+  "vigenciaDeLaLicencia": "2026-02-01",
+  "fechaDeLaAutorizacion": "2026-02-01",
+  "tercerosAutorizados": [
+    "terceros autorizados"
+  ]
+}
+
+### Cancelación con reembolso · paso 2: Obtener el nivel de riesgo del cliente
+# Comando. Espera: HTTP 2xx y "Riesgo aceptable obtenido".
+POST {{base}}/gestion-del-arriendo/comandos/obtener-el-nivel-de-riesgo-del-cliente
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002"
+}
+
+### Cancelación con reembolso · paso 3: Contrato del cliente firmado
+# Mensaje de un servicio sa. Espera: HTTP 2xx y "Reserva confirmada", "Fechas ocupadas".
+POST {{base}}/cobros-y-deposito/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "identificadorDelYate": "YATE-0001",
+  "propietario": "PROP-0001",
+  "referenciaAlCRM": "referencia al CRM",
+  "inicio": "2026-03-20",
+  "fin": "2026-03-22",
+  "dias": 3,
+  "precioPorDia": 500,
+  "valorDelSeguro": 120,
+  "valorDelDeposito": 1000,
+  "medioDePago": "TARJETA-0001"
+}
+
+### Cancelación con reembolso · paso 4: Cancelar la reserva
+# Comando. Espera: HTTP 2xx y "Reserva cancelada", "Fechas liberadas", "Depósito liberado", "Cancelación reembolsada".
+POST {{base}}/gestion-del-arriendo/comandos/cancelar-la-reserva
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0002",
+  "quienCancela": "quién cancela",
+  "fechaDeLaCancelacion": "2026-03-11"
+}
+
+### Cancelación con reembolso · paso 5: Consultar el estado de cuenta del arriendo
+# Consulta. Espera: HTTP 2xx y estado = cerrada, movimientos = 3, estado del depósito = liberado.
+GET {{base}}/cobros-y-deposito/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0002
+
+# ==============================================================================
+# Escenario 3: Riesgo alto
+# ==============================================================================
+
+### Riesgo alto · paso 1: Registrar la solicitud de reserva
+# Comando. Espera: HTTP 2xx y "Reserva solicitada", "Fechas apartadas".
+POST {{base}}/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva
+Content-Type: application/json
+
+{
+  "cliente": "CLI-RIESGO-ALTO",
+  "identificadorDelYate": "YATE-0001",
+  "propietario": "PROP-0001",
+  "precioPorDia": 100,
+  "marina": "MAR-01",
+  "inicio": "2026-03-24",
+  "fin": "2026-03-25",
+  "numeroDeLaLicencia": "número de la licencia",
+  "vigenciaDeLaLicencia": "2026-02-01",
+  "fechaDeLaAutorizacion": "2026-02-01",
+  "tercerosAutorizados": [
+    "terceros autorizados"
+  ]
+}
+
+### Riesgo alto · paso 2: Obtener el nivel de riesgo del cliente
+# Comando. Espera: HTTP 2xx y "Arriendo no realizado por riesgo alto", "Fechas liberadas".
+POST {{base}}/gestion-del-arriendo/comandos/obtener-el-nivel-de-riesgo-del-cliente
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0003"
+}
+
+### Riesgo alto · paso 3: Consultar yates disponibles
+# Consulta. Espera: HTTP 2xx y yates disponibles = 1.
+GET {{base}}/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-24&fin=2026-03-25

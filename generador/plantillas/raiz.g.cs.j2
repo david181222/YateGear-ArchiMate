@@ -27,7 +27,7 @@ public sealed partial class {{ r.clase }} : IRaiz
 {% endfor %}
 {% for v in r.vos %}
 
-    /// <summary>Objeto de valor "{{ v.nombre | xml }}", Cardinalidad {{ v.card }} (composición {{ v.comp_id }}).</summary>
+    /// <summary>{{ "Entidad" if v.entidad else "Objeto de valor" }} "{{ v.nombre | xml }}", Cardinalidad {{ v.card }} (composición {{ v.comp_id }}).</summary>
     public {{ v.decl }}
 {% endfor %}
 

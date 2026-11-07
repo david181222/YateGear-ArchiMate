@@ -1,0 +1,594 @@
+{
+  "generado_desde": "Generado desde ArchiMate: Model \"YateGear\" (id-98e02fd4df1c4f21a8610d291649a7af).",
+  "ruta_base": "",
+  "entre_contextos": true,
+  "contextos": [
+    "/calificaciones",
+    "/cobros-y-deposito",
+    "/disponibilidad-de-yates",
+    "/gestion-del-arriendo",
+    "/operacion-del-arriendo"
+  ],
+  "escenarios": [
+    {
+      "nombre": "Del inventario al envío a Finanzas",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar yate en el inventario",
+          "contexto": "Contexto Disponibilidad de yates",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "YATE-0001",
+          "metodo": "POST",
+          "ruta": "/disponibilidad-de-yates/comandos/registrar-yate-en-el-inventario",
+          "cuerpo": {
+            "propietario": "PROP-0001",
+            "identificadorDeLaMarina": "MAR-01",
+            "nombre": "nombre",
+            "matricula": "matrícula",
+            "capacidad": 1,
+            "precioPorDia": 500,
+            "documentosAlDiaAnteLaDIMAR": true
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Yate registrado"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Yate registrado\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Consultar yates disponibles",
+          "contexto": "Contexto Disponibilidad de yates",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-10&fin=2026-03-12",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "yatesDisponibles": 1
+            },
+            "texto": "HTTP 2xx y yates disponibles = 1"
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Registrar la solicitud de reserva",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "CLI-0001",
+            "identificadorDelYate": "YATE-0001",
+            "propietario": "PROP-0001",
+            "precioPorDia": 500,
+            "marina": "MAR-01",
+            "inicio": "2026-03-10",
+            "fin": "2026-03-12",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Reserva solicitada",
+              "Fechas apartadas"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Reserva solicitada\", \"Fechas apartadas\""
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Obtener el nivel de riesgo del cliente",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/obtener-el-nivel-de-riesgo-del-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Riesgo aceptable obtenido"
+            ],
+            "envios": [
+              {
+                "ruta_base": "/gestion-del-arriendo",
+                "nombre": "Contratos con propietarios y clientes: Datos para el contrato del cliente"
+              }
+            ],
+            "texto": "HTTP 2xx y \"Riesgo aceptable obtenido\", \"Datos para el contrato del cliente\""
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Contrato del cliente firmado",
+          "contexto": "Contexto Cobros y depósito",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/cobros-y-deposito/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "propietario": "PROP-0001",
+            "referenciaAlCRM": "CRM-0001",
+            "inicio": "2026-03-10",
+            "fin": "2026-03-12",
+            "dias": 3,
+            "precioPorDia": 500,
+            "valorDelSeguro": 120,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Depósito bloqueado",
+              "Alquiler y seguro cobrados",
+              "Reserva confirmada",
+              "Fechas ocupadas",
+              "Aviso de reserva enviado"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Depósito bloqueado\", \"Alquiler y seguro cobrados\", \"Reserva confirmada\", \"Fechas ocupadas\", \"Aviso de reserva enviado\""
+          }
+        },
+        {
+          "numero": 6,
+          "nombre": "Consultar yates disponibles",
+          "contexto": "Contexto Disponibilidad de yates",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-10&fin=2026-03-12",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "yatesDisponibles": 0
+            },
+            "texto": "HTTP 2xx y yates disponibles = 0"
+          }
+        },
+        {
+          "numero": 7,
+          "nombre": "Acta de entrega recibida",
+          "contexto": "Contexto Operación del arriendo",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/operacion-del-arriendo/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "identificadorDelYate": "YATE-0001",
+            "fotos": [
+              "entrega-1.jpg"
+            ],
+            "nivelDeCombustible": 100,
+            "horaDeEntrega": "2026-03-10T09:00:00",
+            "observaciones": "observaciones"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Yate entregado al cliente",
+              "Arriendo iniciado"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Yate entregado al cliente\", \"Arriendo iniciado\""
+          }
+        },
+        {
+          "numero": 8,
+          "nombre": "Lectura del proveedor",
+          "contexto": "Contexto Operación del arriendo",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "YATE-0001/2026-03-10T10:00:00",
+          "metodo": "POST",
+          "ruta": "/operacion-del-arriendo/sa/ubicacion-y-combustible-del-proveedor/lectura-del-proveedor",
+          "cuerpo": {
+            "identificadorDelYate": "YATE-0001",
+            "latitud": 100,
+            "longitud": 100,
+            "nivelDeCombustible": 90,
+            "horaDeLaLectura": "2026-03-10T10:00:00"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Lectura registrada"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Lectura registrada\""
+          }
+        },
+        {
+          "numero": 9,
+          "nombre": "Consultar ubicación y combustible del yate",
+          "contexto": "Contexto Operación del arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/operacion-del-arriendo/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "recorrido": 1
+            },
+            "texto": "HTTP 2xx y recorrido = 1"
+          }
+        },
+        {
+          "numero": 10,
+          "nombre": "Acta de inspección recibida",
+          "contexto": "Contexto Operación del arriendo",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0001",
+          "metodo": "POST",
+          "ruta": "/operacion-del-arriendo/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "fotos": [
+              "regreso-1.jpg"
+            ],
+            "nivelDeCombustible": 60,
+            "horaDeRegreso": "2026-03-13T15:00:00",
+            "danosEncontrados": [
+              {
+                "descripcion": "Rayón en el casco",
+                "valor": 1500
+              }
+            ]
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Inspección de devolución registrada",
+              "Yate devuelto",
+              "Diferencias determinadas",
+              "Cargos del cierre cobrados",
+              "Daños descontados del depósito",
+              "Reclamo enviado a la aseguradora",
+              "Cuenta del arriendo cerrada",
+              "Arriendo cerrado"
+            ],
+            "envios": [
+              {
+                "ruta_base": "/cobros-y-deposito",
+                "nombre": "Envío de arriendos cerrados a Finanzas: Arriendo cerrado para Finanzas"
+              }
+            ],
+            "texto": "HTTP 2xx y \"Inspección de devolución registrada\", \"Yate devuelto\", \"Diferencias determinadas\", \"Cargos del cierre cobrados\", \"Daños descontados del depósito\", \"Reclamo enviado a la aseguradora\", \"Cuenta del arriendo cerrada\", \"Arriendo cerrado\", \"Arriendo cerrado para Finanzas\""
+          }
+        },
+        {
+          "numero": 11,
+          "nombre": "Consultar el arriendo",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0001",
+          "metodo": "GET",
+          "ruta": "/gestion-del-arriendo/consultas/consultar-el-arriendo/ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Cerrado"
+            },
+            "texto": "HTTP 2xx y estado = cerrado"
+          }
+        },
+        {
+          "numero": 12,
+          "nombre": "Consultar el estado de cuenta del arriendo",
+          "contexto": "Contexto Cobros y depósito",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0001",
+          "metodo": "GET",
+          "ruta": "/cobros-y-deposito/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Cerrada",
+              "movimientos": 4,
+              "comision": 300,
+              "valorDelPropietario": 1200,
+              "estadoDelDeposito": "Descontado"
+            },
+            "texto": "HTTP 2xx y estado = cerrada, movimientos = 4, comisión = 300, valor del propietario = 1200, estado del depósito = descontado"
+          }
+        },
+        {
+          "numero": 13,
+          "nombre": "Calificar al propietario",
+          "contexto": "Contexto Calificaciones",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0001/Cliente",
+          "metodo": "POST",
+          "ruta": "/calificaciones/comandos/calificar-al-propietario",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0001",
+            "calificacionDada": 5
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Propietario calificado"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Propietario calificado\""
+          }
+        },
+        {
+          "numero": 14,
+          "nombre": "Consultar calificaciones promedio",
+          "contexto": "Contexto Calificaciones",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/calificaciones/consultas/consultar-calificaciones-promedio?calificado=PROP-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "calificacionPromedio": 5,
+              "numeroDeCalificaciones": 1
+            },
+            "texto": "HTTP 2xx y calificación promedio = 5, número de calificaciones = 1"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Cancelación con reembolso",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0002",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "CLI-0002",
+            "identificadorDelYate": "YATE-0001",
+            "propietario": "PROP-0001",
+            "precioPorDia": 500,
+            "marina": "MAR-01",
+            "inicio": "2026-03-20",
+            "fin": "2026-03-22",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Reserva solicitada",
+              "Fechas apartadas"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Reserva solicitada\", \"Fechas apartadas\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Obtener el nivel de riesgo del cliente",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "ARR-0002",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/obtener-el-nivel-de-riesgo-del-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Riesgo aceptable obtenido"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Riesgo aceptable obtenido\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Contrato del cliente firmado",
+          "contexto": "Contexto Cobros y depósito",
+          "tipo": "mensaje de un servicio SA",
+          "crea": true,
+          "identidad": "ARR-0002",
+          "metodo": "POST",
+          "ruta": "/cobros-y-deposito/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "identificadorDelYate": "YATE-0001",
+            "propietario": "PROP-0001",
+            "referenciaAlCRM": "referencia al CRM",
+            "inicio": "2026-03-20",
+            "fin": "2026-03-22",
+            "dias": 3,
+            "precioPorDia": 500,
+            "valorDelSeguro": 120,
+            "valorDelDeposito": 1000,
+            "medioDePago": "TARJETA-0001"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Reserva confirmada",
+              "Fechas ocupadas"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Reserva confirmada\", \"Fechas ocupadas\""
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Cancelar la reserva",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "ARR-0002",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/cancelar-la-reserva",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0002",
+            "quienCancela": "quién cancela",
+            "fechaDeLaCancelacion": "2026-03-11"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Reserva cancelada",
+              "Fechas liberadas",
+              "Depósito liberado",
+              "Cancelación reembolsada"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Reserva cancelada\", \"Fechas liberadas\", \"Depósito liberado\", \"Cancelación reembolsada\""
+          }
+        },
+        {
+          "numero": 5,
+          "nombre": "Consultar el estado de cuenta del arriendo",
+          "contexto": "Contexto Cobros y depósito",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0002",
+          "metodo": "GET",
+          "ruta": "/cobros-y-deposito/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0002",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Cerrada",
+              "movimientos": 3,
+              "estadoDelDeposito": "Liberado"
+            },
+            "texto": "HTTP 2xx y estado = cerrada, movimientos = 3, estado del depósito = liberado"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Riesgo alto",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0003",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "CLI-RIESGO-ALTO",
+            "identificadorDelYate": "YATE-0001",
+            "propietario": "PROP-0001",
+            "precioPorDia": 100,
+            "marina": "MAR-01",
+            "inicio": "2026-03-24",
+            "fin": "2026-03-25",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Reserva solicitada",
+              "Fechas apartadas"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Reserva solicitada\", \"Fechas apartadas\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Obtener el nivel de riesgo del cliente",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "ARR-0003",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/obtener-el-nivel-de-riesgo-del-cliente",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0003"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Arriendo no realizado por riesgo alto",
+              "Fechas liberadas"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Arriendo no realizado por riesgo alto\", \"Fechas liberadas\""
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Consultar yates disponibles",
+          "contexto": "Contexto Disponibilidad de yates",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": null,
+          "metodo": "GET",
+          "ruta": "/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-24&fin=2026-03-25",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "yatesDisponibles": 1
+            },
+            "texto": "HTTP 2xx y yates disponibles = 1"
+          }
+        }
+      ]
+    }
+  ]
+}

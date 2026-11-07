@@ -1639,10 +1639,12 @@ Fuente: H-10; conversación E2E-04, VOC-01.</documentation>
       </element>
       <element xsi:type="archimate:DataObject" name="Cuenta del arriendo" id="id-cc25b8b2503f4df286f2f28f1c7ab12b">
         <documentation>Raíz del agregado Cuenta del arriendo: los cobros de un arriendo, desde el alquiler y el seguro al reservar hasta los cargos del cierre y el reembolso. Identidad: la misma del arriendo (diapositiva 26). Estados: abierta y cerrada.
-Objeto de valor: póliza del arriendo (número y valor que emite la aseguradora). Campos de la raíz: comisión y valor del propietario, que calcula SB-17 al cerrar la cuenta y se envían a Finanzas (SA-08).
+Objeto de valor: póliza del arriendo (número y valor que emite la aseguradora). Campos de la raíz: el yate y su propietario, que llegan con el contrato del cliente firmado (SB-13); y la comisión y el valor del propietario, que calcula SB-17 al cerrar la cuenta. Los cuatro se envían a Finanzas (SA-08, discrepancia 10 del generador).
 No tiene objeto de negocio propio en la V4: el término viene de SB-17 y SB-18 y está en el glosario de la V7 (V6-DEC-05). El objeto de negocio &quot;Póliza del arriendo&quot; lo realiza su objeto de valor (V6-DEC-06).
 Fuente: H-11; contratos de SB-13, SB-17, SA-03 y SA-08 (V4); conversación CTX-01, INT-PAG.</documentation>
         <property key="Tipo DDD" value="Raíz"/>
+        <property key="Campo: identificador del yate" value="string"/>
+        <property key="Campo: propietario" value="string"/>
         <property key="Campo: comisión" value="decimal?"/>
         <property key="Campo: valor del propietario" value="decimal?"/>
       </element>
@@ -3291,6 +3293,9 @@ Fuente: EXC-02, D-03; V6, sección 9; V4-SUP-02.</documentation>
         <documentation>El objeto de datos realiza su objeto de negocio de la V4.</documentation>
       </element>
       <element xsi:type="archimate:AccessRelationship" id="id-d7053c02c4b44be0aa367bbe1323af82" source="id-afb038030e754dd490f69fcbf6a446e0" target="id-97138119487d4fa1aa1837e907129ad1"/>
+      <element xsi:type="archimate:AccessRelationship" id="id-5c0b6f3e2a8d4e71b9f04c6d2e8a13f7" source="id-afb038030e754dd490f69fcbf6a446e0" target="id-cc25b8b2503f4df286f2f28f1c7ab12b" accessType="1">
+        <documentation>Lee la cuenta para tomar el número de la póliza del arriendo, que el reclamo a la aseguradora lleva (contrato SB-16). Leer no cambia el otro agregado (V6-DEC-09). Fuente: discrepancia 11 del generador.</documentation>
+      </element>
       <element xsi:type="archimate:RealizationRelationship" id="id-5f1f43ff945847758e611163787ff401" source="id-afb038030e754dd490f69fcbf6a446e0" target="id-575ab794c65743f590489b86ba736dcb">
         <documentation>El comando realiza el servicio básico SB-16 de la V4 (V6-DEC-02).</documentation>
       </element>

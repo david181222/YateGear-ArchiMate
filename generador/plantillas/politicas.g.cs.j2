@@ -13,9 +13,53 @@ public static class Politicas
         var bus = servicios.GetRequiredService<BusDeEventos>();
 {% for p in politicas %}
 
-        // "{{ p.evento }}" dispara "{{ p.comando }}" (relación {{ p.relacion_id }}).
+        // "{{ p.evento }}" dispara "{{ p.comando }}" (relación {{ p.relacion_id }}){{ ", solo si se cumple su condición" if p.condicion }}.
+{% if p.condicion %}
+        bus.Suscribir<{{ p.evento_clase }}>(e =>
+        {
+            if ({{ p.condicion }})
+            {
+                servicios.GetRequiredService<{{ p.manejador }}>().Manejar(new {{ p.comando_clase }}({{ p.args | join(", ") }}));
+            }
+        });
+{% else %}
         bus.Suscribir<{{ p.evento_clase }}>(e => servicios.GetRequiredService<{{ p.manejador }}>()
             .Manejar(new {{ p.comando_clase }}({{ p.args | join(", ") }})));
+{% endif %}
+{% endfor %}
+{% for g in grupos %}
+
+        // Varios eventos disparan "{{ g.comando }}" (G10, D7): {{ g.relaciones | map(attribute="evento") | join(", ") }}.
+{% for r in g.relaciones %}
+        bus.Suscribir<{{ r.evento_clase }}>(e => {{ g.metodo }}(servicios, e));          // relación {{ r.relacion_id }}
+{% endfor %}
+{% endfor %}
+{% for x in envios %}
+
+        // "{{ x.evento }}": "{{ x.sa }}" envía "{{ x.nombre }}" (lenguaje publicado, G11).
+        bus.Suscribir<{{ x.evento_clase }}>(e => servicios.GetRequiredService<{{ x.interfaz }}>()
+            .Enviar(new {{ x.clase }}({{ x.args | join(", ") }})));
 {% endfor %}
     }
+{% for g in grupos %}
+
+    /// <summary>"{{ g.comando | xml }}" corre cuando llegaron, para la misma identidad,{% if g.junto %} todos estos eventos: {{ g.junto | join(", ") | xml }}{% endif %}{% if g.junto and g.uno %} y{% endif %}{% if g.uno %} uno de estos: {{ g.uno | join(", ") | xml }}{% endif %}.</summary>
+    private static void {{ g.metodo }}(IServiceProvider servicios, IEvento e)
+    {
+        var juntos = servicios.GetRequiredService<EsperaDeEventos>().Anotar({{ g.grupo }}, [{{ g.junto | join(", ") }}], e, out _,
+            [{{ g.uno | join(", ") }}]);
+        if (juntos is null)
+        {
+            return;
+        }
+{% for v in g.variables %}
+{% if v.seguro %}
+        var {{ v.var }} = ({{ v.clase }})juntos[{{ v.nombre }}];
+{% else %}
+        var {{ v.var }} = juntos.GetValueOrDefault({{ v.nombre }}) as {{ v.clase }};
+{% endif %}
+{% endfor %}
+        servicios.GetRequiredService<{{ g.manejador }}>().Manejar(new {{ g.comando_clase }}({{ g.args | join(", ") }}));
+    }
+{% endfor %}
 }

@@ -26,7 +26,7 @@ public sealed class ReceptorDeEventosExternos(
         }
         var alquilerYSeguroCobrados = (AlquilerYSeguroCobrados)juntos["Alquiler y seguro cobrados"];
         var depositoBloqueado = (DepositoBloqueado)juntos["Depósito bloqueado"];
-        return RespuestaDeEventoExterno.Ejecutado(confirmarLaReserva.Manejar(new ConfirmarLaReserva(evento.NumeroDelArriendo, alquilerYSeguroCobrados.ComprobanteDelAlquiler, alquilerYSeguroCobrados.ComprobanteDelSeguro, depositoBloqueado.AutorizacionDelBloqueoDelDeposito)));
+        return RespuestaDeEventoExterno.Ejecutado(confirmarLaReserva.Manejar(new ConfirmarLaReserva(evento.NumeroDelArriendo, alquilerYSeguroCobrados.ComprobanteDelAlquiler, alquilerYSeguroCobrados.ComprobanteDelSeguro, depositoBloqueado.CodigoDeAutorizacionDeLaPasarela)));
     }
 
     /// <summary>Lee "Alquiler y seguro cobrados" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
@@ -37,12 +37,12 @@ public sealed class ReceptorDeEventosExternos(
     public RespuestaDeEventoExterno Recibir(CuentaDelArriendoCerrada evento)
     {
         bitacora.Anotar("evento recibido", evento.NombreEnElModelo, evento);
-        return RespuestaDeEventoExterno.Ejecutado(registrarElAvanceDelArriendo.Manejar(new RegistrarElAvanceDelArriendo(evento.NumeroDelArriendo, AvanceDelArriendo.Cerrado, evento.FechaYHoraDelCambio)));
+        return RespuestaDeEventoExterno.Ejecutado(registrarElAvanceDelArriendo.Manejar(new RegistrarElAvanceDelArriendo(evento.NumeroDelArriendo, AvanceDelArriendo.Cerrado, evento.HoraDelCierre)));
     }
 
     /// <summary>Lee "Cuenta del arriendo cerrada" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
     public RespuestaDeEventoExterno RecibirCuentaDelArriendoCerrada(JsonElement json) =>
-        Recibir(LectorDeEventos.Leer<CuentaDelArriendoCerrada>(json, ("numeroDelArriendo", "número del arriendo"), ("fechaYHoraDelCambio", "fecha y hora del cambio")));
+        Recibir(LectorDeEventos.Leer<CuentaDelArriendoCerrada>(json, ("numeroDelArriendo", "número del arriendo"), ("horaDelCierre", "hora del cierre")));
 
     /// <summary>"Depósito bloqueado" de "Contexto Cobros y depósito" (id-41585106baae43ab90ca920de78dc737). Dispara "Confirmar la reserva" junto con Alquiler y seguro cobrados.</summary>
     public RespuestaDeEventoExterno Recibir(DepositoBloqueado evento)
@@ -55,32 +55,32 @@ public sealed class ReceptorDeEventosExternos(
         }
         var alquilerYSeguroCobrados = (AlquilerYSeguroCobrados)juntos["Alquiler y seguro cobrados"];
         var depositoBloqueado = (DepositoBloqueado)juntos["Depósito bloqueado"];
-        return RespuestaDeEventoExterno.Ejecutado(confirmarLaReserva.Manejar(new ConfirmarLaReserva(evento.NumeroDelArriendo, alquilerYSeguroCobrados.ComprobanteDelAlquiler, alquilerYSeguroCobrados.ComprobanteDelSeguro, depositoBloqueado.AutorizacionDelBloqueoDelDeposito)));
+        return RespuestaDeEventoExterno.Ejecutado(confirmarLaReserva.Manejar(new ConfirmarLaReserva(evento.NumeroDelArriendo, alquilerYSeguroCobrados.ComprobanteDelAlquiler, alquilerYSeguroCobrados.ComprobanteDelSeguro, depositoBloqueado.CodigoDeAutorizacionDeLaPasarela)));
     }
 
     /// <summary>Lee "Depósito bloqueado" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
     public RespuestaDeEventoExterno RecibirDepositoBloqueado(JsonElement json) =>
-        Recibir(LectorDeEventos.Leer<DepositoBloqueado>(json, ("numeroDelArriendo", "número del arriendo"), ("autorizacionDelBloqueoDelDeposito", "autorización del bloqueo del depósito")));
+        Recibir(LectorDeEventos.Leer<DepositoBloqueado>(json, ("numeroDelArriendo", "número del arriendo"), ("codigoDeAutorizacionDeLaPasarela", "código de autorización de la pasarela")));
 
     /// <summary>"Inspección de devolución registrada" de "Contexto Operación del arriendo" (id-d83f5b5cfb764e7aaac782ffab1b12c4). Dispara "Registrar el avance del arriendo".</summary>
     public RespuestaDeEventoExterno Recibir(InspeccionDeDevolucionRegistrada evento)
     {
         bitacora.Anotar("evento recibido", evento.NombreEnElModelo, evento);
-        return RespuestaDeEventoExterno.Ejecutado(registrarElAvanceDelArriendo.Manejar(new RegistrarElAvanceDelArriendo(evento.NumeroDelArriendo, AvanceDelArriendo.Devuelto, evento.FechaYHoraDelCambio)));
+        return RespuestaDeEventoExterno.Ejecutado(registrarElAvanceDelArriendo.Manejar(new RegistrarElAvanceDelArriendo(evento.NumeroDelArriendo, AvanceDelArriendo.Devuelto, evento.HoraDeRegreso)));
     }
 
     /// <summary>Lee "Inspección de devolución registrada" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
     public RespuestaDeEventoExterno RecibirInspeccionDeDevolucionRegistrada(JsonElement json) =>
-        Recibir(LectorDeEventos.Leer<InspeccionDeDevolucionRegistrada>(json, ("numeroDelArriendo", "número del arriendo"), ("fechaYHoraDelCambio", "fecha y hora del cambio")));
+        Recibir(LectorDeEventos.Leer<InspeccionDeDevolucionRegistrada>(json, ("numeroDelArriendo", "número del arriendo"), ("horaDeRegreso", "hora de regreso")));
 
     /// <summary>"Yate entregado al cliente" de "Contexto Operación del arriendo" (id-275970c646a74ac3ac7c206246d780ab). Dispara "Registrar el avance del arriendo".</summary>
     public RespuestaDeEventoExterno Recibir(YateEntregadoAlCliente evento)
     {
         bitacora.Anotar("evento recibido", evento.NombreEnElModelo, evento);
-        return RespuestaDeEventoExterno.Ejecutado(registrarElAvanceDelArriendo.Manejar(new RegistrarElAvanceDelArriendo(evento.NumeroDelArriendo, AvanceDelArriendo.EnCurso, evento.FechaYHoraDelCambio)));
+        return RespuestaDeEventoExterno.Ejecutado(registrarElAvanceDelArriendo.Manejar(new RegistrarElAvanceDelArriendo(evento.NumeroDelArriendo, AvanceDelArriendo.EnCurso, evento.HoraDeEntrega)));
     }
 
     /// <summary>Lee "Yate entregado al cliente" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
     public RespuestaDeEventoExterno RecibirYateEntregadoAlCliente(JsonElement json) =>
-        Recibir(LectorDeEventos.Leer<YateEntregadoAlCliente>(json, ("numeroDelArriendo", "número del arriendo"), ("fechaYHoraDelCambio", "fecha y hora del cambio")));
+        Recibir(LectorDeEventos.Leer<YateEntregadoAlCliente>(json, ("numeroDelArriendo", "número del arriendo"), ("horaDeEntrega", "hora de entrega")));
 }

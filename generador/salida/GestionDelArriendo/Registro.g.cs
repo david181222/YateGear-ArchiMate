@@ -25,6 +25,7 @@ public static class Registro
         servicios.AddSingleton<IClientesDelCRM, ClientesDelCRMSimulado>();
         servicios.AddSingleton<IContratosConPropietariosYClientes, ContratosConPropietariosYClientesSimulado>();
         servicios.AddSingleton<INivelDeRiesgoDeLaEvaluadora, NivelDeRiesgoDeLaEvaluadoraSimulado>();
+        servicios.AddSingleton<IEmisorDeContratosConPropietariosYClientes, EmisorDeContratosConPropietariosYClientesSimulado>();          // solo envía (G11)
 
         // Manejadores de comandos y consultas.
         servicios.AddSingleton<CancelarLaReservaManejador>();
@@ -45,6 +46,21 @@ public static class Registro
     public static void MapearEndpoints(WebApplication app)
     {
         Politicas.Registrar(app.Services);
+
+        // Eventos de otros contextos que llegan por el bus entre contextos (G12, D1): cada uno va a su receptor, por el
+        // nombre del contexto que lo publica y su nombre en el modelo. Si el receptor falla, el error queda en el bus.
+        var entreContextos = app.Services.GetRequiredService<BusEntreContextos>();
+        var receptorEntreContextos = app.Services.GetRequiredService<ReceptorDeEventosExternos>();
+        entreContextos.Suscribir("Contexto Cobros y depósito", "Alquiler y seguro cobrados",
+            m => receptorEntreContextos.RecibirAlquilerYSeguroCobrados(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Cobros y depósito", "Cuenta del arriendo cerrada",
+            m => receptorEntreContextos.RecibirCuentaDelArriendoCerrada(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Cobros y depósito", "Depósito bloqueado",
+            m => receptorEntreContextos.RecibirDepositoBloqueado(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Operación del arriendo", "Inspección de devolución registrada",
+            m => receptorEntreContextos.RecibirInspeccionDeDevolucionRegistrada(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Operación del arriendo", "Yate entregado al cliente",
+            m => receptorEntreContextos.RecibirYateEntregadoAlCliente(m.DatosConIdentidad("numeroDelArriendo")));
 
         // Comandos: POST con el comando en JSON.
         app.MapPost("/gestion-del-arriendo/comandos/cancelar-la-reserva",

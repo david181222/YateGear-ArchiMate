@@ -9,7 +9,8 @@ Primero revisa cada YAML con specs.py; si hay errores, no genera nada.
 Escribe:
   - los archivos generados (.g.cs, los de proyecto, pruebas y contextos.json), siempre;
   - los archivos manuales (.cs), solo si no existen;
-  - trazabilidad/<Proyecto>.csv, uno por contexto.
+  - trazabilidad/<Proyecto>.csv, uno por contexto;
+  - pruebas/EntreContextos/, si entre los YAML hay escenarios entre contextos (S4).
 Borra los archivos generados que ya no corresponden y avisa de los manuales huérfanos.
 
 uso: python src/generar.py <modelo-ddd.json> <carpeta de salida> <specs.yaml> [<specs.yaml> ...]
@@ -37,7 +38,8 @@ CARPETAS_MANUALES = ("Comandos", "Consultas")
 PUERTO = 5080                       # puerto de la aplicación: launchSettings.json y pruebas.http
 INTEGRACION = "Integracion"         # proyecto con el bus entre contextos (D1)
 ARCHIVOS_GENERADOS = "intermedio/archivos-generados.txt"   # para borrar los que ya no corresponden
-INFRAESTRUCTURA = ("IRaiz", "IEvento", "Repositorio", "Bitacora", "RegistroDeBitacora", "BusDeEventos",
+PRUEBAS_ENTRE_CONTEXTOS = "pruebas/EntreContextos"        # escenarios de punta a punta entre contextos (S4)
+INFRAESTRUCTURA = ("IRaiz", "IEvento", "IEntidad", "Entidades", "Repositorio", "Bitacora", "RegistroDeBitacora", "BusDeEventos",
                    "RespuestaDeComando", "ReglaIncumplida", "NoEncontrado", "DatoFaltante", "Politicas", "Program",
                    "TransicionInvalida", "Estados", "EsperaDeEventos", "RespuestaDeEventoExterno",
                    "ReceptorDeEventosExternos", "Registro", "LectorDeEventos", "IdentidadRepetida",
@@ -111,7 +113,7 @@ def ejemplo(nombre: str, t: dict):
 
 def valor_json(v, t: dict):
     """Un valor del YAML tal como viaja en JSON (los enum, con su nombre de C#; los objetos de valor, en camelCase)."""
-    if v is None:
+    if v is None or (t["lista"] and isinstance(v, int) and not isinstance(v, bool)):   # una lista, por su número
         return v
     if t["base"] == "objeto":
         campos = tipos.OBJETOS[t["objeto"]]
@@ -263,8 +265,6 @@ class Generador:
         return self.raiz
 
     def preparar_una_raiz(self, ag: dict):
-        if ag["entidades"]:
-            raise ErrorDeGeneracion(f'"{ag["nombre"]}" tiene entidades; el generador todavía no las genera (G9)')
         r = ag["raiz"]
         sr = self.s["raices"][r["nombre"]]
         ident = sr["identidad"]
@@ -299,8 +299,13 @@ class Generador:
             raiz["campos"].append({"nombre": c["nombre"], "prop": prop, "tipo_yaml": c["tipo"], "decl": decl})
             fuentes[c["nombre"]] = fuente(f"{var}.{prop}", t)
         vos_raiz = {}
-        for v in ag["objetos_valor"]:
-            vclase = self.tipo_cs_nuevo(nombres.pascal(v["nombre"]), f'objeto de valor "{v["nombre"]}"')
+        # Las entidades (G9) se guardan en la raíz igual que un objeto de valor, pero con su identidad: la raíz no
+        # admite dos con la misma (Entidades.Agregar).
+        entidades_y = sr.get("entidades") or {}
+        for v in ag["entidades"] + ag["objetos_valor"]:
+            es_entidad = v in ag["entidades"]
+            vclase = self.tipo_cs_nuevo(nombres.pascal(v["nombre"]),
+                                        f'{"entidad" if es_entidad else "objeto de valor"} "{v["nombre"]}"')
             campos = []
             for c in v["campos"]:
                 t = self.tipo(c["tipo"], f'campo "{c["nombre"]}" de "{v["nombre"]}" ({v["id"]})')
@@ -316,7 +321,12 @@ class Generador:
             else:
                 decl = f"List<{vclase}> {prop} {{ get; set; }} = [];"
             vo = {"id": v["id"], "nombre": v["nombre"], "clase": vclase, "prop": prop, "card": card,
-                  "comp_id": v["composicion_id"], "campos": campos, "decl": decl}
+                  "comp_id": v["composicion_id"], "campos": campos, "decl": decl, "entidad": es_entidad}
+            if es_entidad:
+                ident_e = entidades_y[v["nombre"]]["identidad"]
+                c_id = next(c for c in campos if c["nombre"] == ident_e)
+                vo.update({"identidad": ident_e, "identidad_expr": c_id["prop"] if c_id["tipo"]["base"] == "string"
+                           else f'{c_id["prop"]}.ToString(System.Globalization.CultureInfo.InvariantCulture)'})
             raiz["vos"].append(vo)
             vos_raiz[v["nombre"]] = vo
             for c in campos:
@@ -342,12 +352,12 @@ class Generador:
         self.traza_de(ag["id"], "Grouping", ag["nombre"], f"{dom}/{clase}.g.cs", clase)
         self.traza_de(r["id"], "DataObject", r["nombre"], f"{dom}/{clase}.g.cs", clase)
         for vo in raiz["vos"]:
-            self.render("objeto_valor.g.cs.j2", f"{dom}/{vo['clase']}.g.cs", v=vo, raiz=raiz,
-                        cabecera=self.cabecera("DataObject", vo["nombre"], vo["id"]))
+            self.render("entidad.g.cs.j2" if vo["entidad"] else "objeto_valor.g.cs.j2", f"{dom}/{vo['clase']}.g.cs", v=vo,
+                        raiz=raiz, cabecera=self.cabecera("DataObject", vo["nombre"], vo["id"]))
             self.traza_de(vo["id"], "DataObject", vo["nombre"], f"{dom}/{vo['clase']}.g.cs", vo["clase"])
             self.traza_de(vo["comp_id"], "Composition", f'{r["nombre"]} -> {vo["nombre"]}',
                           f"{dom}/{clase}.g.cs", f'{clase}.{vo["prop"]}')
-        for obj in [r] + ag["objetos_valor"]:
+        for obj in [r] + ag["entidades"] + ag["objetos_valor"]:
             for c in obj["campos"]:
                 if c["enum"]:
                     self.traza_de(obj["id"], "DataObject", f'{obj["nombre"]} (campo "{c["nombre"]}")',
@@ -500,19 +510,82 @@ class Generador:
                                "identidad": antes.expr(o["id_nombre"], False), "nombre": o["nombre"].lower()})
                 datos_props.append({"cs": o["clase"], "prop": o["clase"]})
                 datos_args.append(o["var"])
-            capas_sa = []
-            for nombre_sa in sc.get("usa") or []:
+            # Servicios SA que usa, en orden, y datos calculados del comando (a mano): cada calculado se calcula en
+            # cuanto están los datos de los que sale (specs.ubicar_calculados), antes de los SA o después del que da el
+            # último. Una llamada puede fijar datos de la entrada (con), tomarlos con otro nombre (entrada), renombrar
+            # su salida (salida) y hacerse solo si se cumple una condición (si, salvo).
+            capas_sa, capa_calc, calc_metodos = [], {}, []
+            calc_y = sc.get("calculados") or {}
+            calc_de = {k: list(x["de"]) for k, x in calc_y.items()}
+            usos = [specs.uso_sa(i) for i in sc.get("usa") or []]
+            veces = {}
+            for nombre_sa, _ in usos:
+                veces[nombre_sa] = veces.get(nombre_sa, 0) + 1
+            salidas = [{(op.get("salida") or {}).get(c["nombre"], c["nombre"]) for c in self.sas[s_]["salida_campos"]}
+                       for s_, op in usos]
+            raices_cmd = {} if crea or todas else {r["nombre"]: r}
+            if not todas:
+                raices_cmd.update({o["nombre"]: o for o in otras})
+            disponibles = set().union(*(set(capa) for capa in antes.capas)) | set(raices_cmd)
+            puntos = specs.ubicar_calculados(calc_de, disponibles, salidas)
+            if None in puntos[-1]:
+                raise ErrorDeGeneracion(f'"{mc["nombre"]}": hay calculados sin sus datos (revisa el YAML con specs.py)')
+
+            def calcular(lista_c):
+                for k in lista_c:
+                    t = self.tipo(calc_y[k]["tipo"], f'calculado "{k}" de "{mc["nombre"]}" (YAML)')
+                    var_c = "calculado" + nombres.pascal(k)
+                    params, args_c = [], []
+                    for x in calc_de[k]:
+                        if x in raices_cmd:               # una raíz entera
+                            params.append(f'{raices_cmd[x]["clase"]} {nombres.camel(x)}')
+                            args_c.append(raices_cmd[x]["var"])
+                        else:
+                            f = antes.buscar(x)
+                            params.append(f'{cs_tipo(f["tipo"])} {nombres.camel(x)}')
+                            args_c.append(antes.expr(x, f["tipo"]["opcional"]))
+                    llamadas.append({"tipo": "calculo", "var": var_c, "metodo": nombres.pascal(k), "args": args_c})
+                    calc_metodos.append({"nombre": k, "metodo": nombres.pascal(k), "cs": cs_tipo(t), "params": params,
+                                         "de": calc_de[k], "tipo_yaml": calc_y[k]["tipo"], "provisional": provisional(t)})
+                    capa = {k: fuente(var_c, t)}
+                    antes.agregar(capa)
+                    capa_calc.update(capa)
+                    datos_props.append({"cs": cs_tipo(t), "prop": nombres.pascal(k)})
+                    datos_args.append(var_c)
+
+            calcular(puntos[0])
+            vez = {}
+            for i, (nombre_sa, op) in enumerate(usos, 1):
                 sa = self.sas[nombre_sa]
-                args = [antes.expr(c["nombre"], c["tipo"]["opcional"]) for c in sa["entrada_campos"]]
-                var_resp = "respuesta" + sa["clase"]
-                llamadas.append({"var": var_resp, "servicio": sa["var"], "entrada": sa["entrada"], "args": args})
+                vez[nombre_sa] = vez.get(nombre_sa, 0) + 1
+                sufijo = str(vez[nombre_sa]) if veces[nombre_sa] > 1 else ""
+                con_sa, corr, sal_map = op.get("con") or {}, op.get("entrada") or {}, op.get("salida") or {}
+                args = []
+                for c in sa["entrada_campos"]:
+                    dato = corr.get(c["nombre"], c["nombre"])
+                    if c["nombre"] in con_sa:
+                        args.append(cs_literal(con_sa[c["nombre"]], c["tipo"]))
+                    elif antes.buscar(dato) is None and c["tipo"]["opcional"]:
+                        args.append("null")               # un dato opcional del SA que el comando no tiene
+                    else:
+                        args.append(antes.expr(dato, c["tipo"]["opcional"]))
+                var_resp = "respuesta" + sa["clase"] + sufijo
+                cond = self.condicion(op, antes)
+                llamadas.append({"tipo": "llamada", "var": var_resp, "servicio": sa["var"], "entrada": sa["entrada"],
+                                 "salida": sa["salida"], "args": args, "condicion": cond})
                 if sa["var"] not in [d["var"] for d in deps]:
                     deps.append({"cs": sa["interfaz"], "var": sa["var"]})
-                capa = {c["nombre"]: fuente(f'{var_resp}.{c["prop"]}', c["tipo"]) for c in sa["salida_campos"]}
+                if cond:                                 # si no se llamó, su salida es null
+                    capa = {sal_map.get(c["nombre"], c["nombre"]): fuente(f'{var_resp}?.{c["prop"]}', specs.opcional(c["tipo"]))
+                            for c in sa["salida_campos"]}
+                else:
+                    capa = {sal_map.get(c["nombre"], c["nombre"]): fuente(f'{var_resp}.{c["prop"]}', c["tipo"])
+                            for c in sa["salida_campos"]}
                 antes.agregar(capa)
                 capas_sa.append(capa)
-                datos_props.append({"cs": sa["salida"], "prop": sa["clase"]})
+                datos_props.append({"cs": sa["salida"] + ("?" if cond else ""), "prop": sa["clase"] + sufijo})
                 datos_args.append(var_resp)
+                calcular(puntos[i])
 
             resultados, enum_res = [], None
             eventos_cmd = []
@@ -577,7 +650,7 @@ class Generador:
             despues.agregar(dict(self.fuentes_raiz))
             despues.agregar(capa_ent)
             despues.agregar(capa_val)
-            for capa in capas_req + capas_sa:
+            for capa in capas_req + capas_sa + [capa_calc]:
                 despues.agregar(capa)
             calculados, vistos = [], set()
             publicar = {}
@@ -596,7 +669,7 @@ class Generador:
                 publicar[nombre_ev] = {"clase": ev["clase"], "args": args}
             for x in resultados:
                 x["publicar"] = [publicar[x["evento"]]]
-            self.revisar_miembros(n["manejador"], [k["metodo"] for k in calculados])
+            self.revisar_miembros(n["manejador"], [k["metodo"] for k in calculados + calc_metodos])
             eventos_modelo = sorted(ev_por_id[i] for i in mc["eventos"])
             if sorted(eventos_cmd) != eventos_modelo:
                 raise ErrorDeGeneracion(f'"{mc["nombre"]}": los eventos del YAML no son los del modelo')
@@ -620,7 +693,9 @@ class Generador:
                    "sin_resultado": cs_cadena(f'Ningún resultado de "{mc["nombre"]}" se cumple con estos datos.'),
                    "escribe": crea or si_no_existe or mc["acceso"] in ("escritura", "lectura y escritura"),
                    "asignaciones": asignaciones, "eventos": [publicar[e] for e in eventos_cmd],
-                   "calculados": calculados, "contrato": k, "servicio_negocio": mc["servicio_negocio"],
+                   "calculados": calculados, "calculados_comando": calc_metodos,
+                   "con_calculos": any(x["tipo"] == "calculo" for x in llamadas),
+                   "contrato": k, "servicio_negocio": mc["servicio_negocio"],
                    "reglas": lineas(k["reglas"]) if k["reglas"] else ["El contrato no tiene reglas."],
                    "salida_contrato": lineas(k["salida"]),
                    "ruta": f'{self.ruta_base}/comandos/{nombres.ruta(mc["nombre"])}',
@@ -654,15 +729,41 @@ class Generador:
                 else "null" for c in ent]
         return {"clase": nombre, "minutos": x["cada minutos"], "args": args, "manejador": n["manejador"], "comando": clase}
 
+    @staticmethod
+    def condicion(x: dict, amb: Ambito) -> str | None:
+        """Expresión de C# de las condiciones si (el dato está entre esos valores) y salvo (no está) de x, o None."""
+        partes = []
+        for clave, negada in (("si", False), ("salvo", True)):
+            for campo, vals in (x.get(clave) or {}).items():
+                f = amb.buscar(campo)
+                if f is None:
+                    raise ErrorDeGeneracion(f'la condición usa "{campo}", que no está disponible')
+                t = {**f["tipo"], "opcional": False}
+                e = amb.expr(campo, True)
+                o = "(" + " || ".join(f"{e} == {cs_literal(val, t)}" for val in vals) + ")"
+                partes.append(f"!{o}" if negada else o)
+        return " && ".join(partes) or None
+
     def guardar(self, guarda, amb: Ambito, r: dict) -> tuple[list[dict], list[str]]:
         """Lo que escribe en la raíz (YAML: guarda). Devuelve las asignaciones (propiedad = expresión) y las
         operaciones sobre listas (sentencias de C#) de los objetos de valor con Cardinalidad Muchos (G4)."""
         asignaciones, operaciones = [], []
         v = r["var"]
 
-        def nuevo(vo):
-            args = [amb.expr(c["nombre"], c["tipo"]["opcional"]) if amb.buscar(c["nombre"]) else "null" for c in vo["campos"]]
+        def nuevo(vo, corr=None, valores=None):
+            args = []
+            for c in vo["campos"]:
+                dato = (corr or {}).get(c["nombre"], c["nombre"])
+                if c["nombre"] in (valores or {}):
+                    args.append(cs_literal(valores[c["nombre"]], c["tipo"]))
+                elif amb.buscar(dato):
+                    args.append(amb.expr(dato, c["tipo"]["opcional"]))
+                else:                                    # una lista que no llega queda vacía; lo opcional, en null
+                    args.append("[]" if c["tipo"]["lista"] and not c["tipo"]["opcional"] else "null")
             return f'new {vo["clase"]}({", ".join(args)})'
+
+        def agregar(vo, lista, elemento):
+            return f"Entidades.Agregar({lista}, {elemento});" if vo["entidad"] else f"{lista}.Add({elemento});"
 
         for g in guarda or []:
             if isinstance(g, dict) and next(iter(g)) in self.vos:      # operación sobre una lista
@@ -670,7 +771,12 @@ class Generador:
                 vo = self.vos[nombre_vo]
                 lista = f'{v}.{vo["prop"]}'
                 if op == "agregar":
-                    operaciones.append(f"{lista}.Add({nuevo(vo)});")
+                    operaciones.append(agregar(vo, lista, nuevo(vo)))
+                    continue
+                if isinstance(op, dict) and "agregar" in op:     # con correspondencias, valores fijos y condición
+                    sentencia = agregar(vo, lista, nuevo(vo, op.get("agregar") or {}, op.get("valores") or {}))
+                    cond = self.condicion(op, amb)
+                    operaciones.append(f"if ({cond}) {sentencia}" if cond else sentencia)
                     continue
                 tipo_op, claves = next(iter(op.items()))
                 if tipo_op == "todos":                   # la lista entera, con un dato List<objeto de valor>
@@ -683,7 +789,7 @@ class Generador:
                 else:                                    # reemplazar: 404 si no hay ninguno con esa clave
                     falta = cs_cadena(f'No hay un "{nombre_vo}" con ese {" y ".join(claves)}.')
                     operaciones.append(f"if ({lista}.RemoveAll(e => {pred}) == 0) throw new NoEncontrado({falta});")
-                    operaciones.append(f"{lista}.Add({nuevo(vo)});")
+                    operaciones.append(agregar(vo, lista, nuevo(vo)))
             elif isinstance(g, dict):                    # {campo de la raíz: dato}
                 campo, dato = next(iter(g.items()))
                 c = next(x for x in r["campos"] if x["nombre"] == campo)
@@ -713,6 +819,14 @@ class Generador:
             params = ([] if todas else [{"cs": "string", "prop": r["id_prop"]}]) + ent
             self.revisar_miembros(clase, [p["prop"] for p in params])
             amb = Ambito()
+            if not todas and otras:                       # G5: las demás raíces que lee, por la misma identidad; pueden no existir
+                capa_otras = {}
+                for o in otras:
+                    for k_, f_ in self.raices[o["nombre"]]["fuentes"].items():
+                        resto = f_["requerido"].removeprefix(o["var"] + ".")
+                        if k_ != "estado" and resto != f_["requerido"] and "(" not in resto:
+                            capa_otras.setdefault(k_, fuente(f'{o["var"]}?.{resto}', specs.opcional(f_["tipo"])))
+                amb.agregar(capa_otras)
             amb.agregar(dict(self.fuentes_raiz))
             amb.agregar({c["nombre"]: fuente(f'consulta.{c["prop"]}', c["tipo"]) for c in ent})
             salida, filtro, elemento = [], [], None
@@ -794,29 +908,138 @@ class Generador:
         return f"raices.Count == 0 ? null : {valor}"
 
     # ------------------------------------------------------------ políticas
+    def capa_evento(self, ev: dict, var: str, nulable: bool = False) -> dict:
+        """Los datos de un evento del contexto por su nombre (con su identidad), leídos de la variable var."""
+        r = self.raices[ev["raiz"]]["raiz"]
+        capa = {r["id_nombre"]: fuente(f'{var}{"?" if nulable else ""}.{r["id_prop"]}', tipos.interpretar("string?" if nulable else "string"))}
+        for d in ev["datos"] + ev["calculados"]:
+            capa[d["nombre"]] = fuente(f'{var}{"?" if nulable else ""}.{d["prop"]}', specs.opcional(d["tipo"]) if nulable else d["tipo"])
+        return capa
+
     def preparar_politicas(self):
+        """Políticas internas (YAML: politicas, G10 y D7). Sin entrada, cada evento dispara el comando por su cuenta; con
+        si o salvo, solo si se cumple; con junto_con y uno_de, el comando corre cuando llegaron todos los de junto_con y
+        uno de los de uno_de para la misma identidad (EsperaDeEventos), con los datos de los que llegaron."""
         ev_por_id = {e["id"]: e["nombre"] for e in self.ctx["eventos"]}
         cmd_por_id = {c["id"]: c for c in self.comandos}
-        self.politicas = []
+        pol_y = self.s.get("politicas") or {}
+        self.politicas, self.grupos = [], []
+        grupos = {}
         for p in self.ctx["politicas"]:
             ev = self.eventos[ev_por_id[p["evento_id"]]]
             r = self.usar_raiz(ev["raiz"])
             cmd = cmd_por_id[p["comando_id"]]
-            props_ev = {d["nombre"]: d for d in ev["datos"] + ev["calculados"]}
-            args = [f'e.{r["id_prop"]}']
-            for c in cmd["entrada_campos"]:
-                d = props_ev.get(c["nombre"])
-                if d is None:
-                    args.append("null")
-                elif d["tipo"]["opcional"] and not c["tipo"]["opcional"]:
-                    args.append(f'(e.{d["prop"]} ?? throw new DatoFaltante({cs_cadena(c["nombre"])}))')
-                else:
-                    args.append(f'e.{d["prop"]}')
-            self.politicas.append({"relacion_id": p["relacion_id"], "evento": ev["nombre"], "evento_clase": ev["clase"],
-                                   "comando": cmd["nombre"], "comando_clase": cmd["clase"],
-                                   "manejador": cmd["manejador"], "args": args})
+            x = pol_y.get(cmd["nombre"]) or {}
             self.traza_de(p["relacion_id"], "Triggering", f'{ev["nombre"]} -> {cmd["nombre"]}',
                           f"{self.proyecto}/Politicas/Politicas.g.cs", "Politicas")
+            if x.get("junto_con") or x.get("uno_de"):
+                grupos.setdefault(cmd["nombre"], []).append((p, ev))
+                continue
+            amb = Ambito()
+            amb.agregar(self.capa_evento(ev, "e"))
+            args = [] if cmd["crea"] else [f'e.{r["id_prop"]}']
+            args += self.argumentos(cmd, amb, x.get("con") or {}, x.get("correspondencias") or {})
+            self.politicas.append({"relacion_id": p["relacion_id"], "evento": ev["nombre"], "evento_clase": ev["clase"],
+                                   "comando": cmd["nombre"], "comando_clase": cmd["clase"],
+                                   "manejador": cmd["manejador"], "args": args, "condicion": self.condicion(x, amb)})
+        for nombre_cmd, rels in sorted(grupos.items()):
+            cmd = next(c for c in self.comandos if c["nombre"] == nombre_cmd)
+            x = pol_y[nombre_cmd]
+            junto = list(x.get("junto_con") or [])
+            uno_y = x.get("uno_de") or {}
+            uno = {k: (v or {}) for k, v in uno_y.items()} if isinstance(uno_y, dict) else {k: {} for k in uno_y}
+            evs = {ev["nombre"]: ev for _, ev in rels}
+            variables = [{"var": nombres.camel(n), "clase": evs[n]["clase"], "nombre": cs_cadena(n), "seguro": n in junto}
+                         for n in junto + list(uno)]
+            amb = Ambito()
+            for n in junto:
+                amb.agregar(self.capa_evento(evs[n], nombres.camel(n)))
+            con, corr = x.get("con") or {}, x.get("correspondencias") or {}
+            args = [] if cmd["crea"] else ["e.Identidad"]
+            for c in cmd["entrada_campos"]:
+                dato = corr.get(c["nombre"], c["nombre"])
+                if c["nombre"] in con:
+                    args.append(cs_literal(con[c["nombre"]], c["tipo"]))
+                elif amb.buscar(dato):                     # lo trae un evento de junto_con
+                    args.append(amb.expr(dato, c["tipo"]["opcional"]))
+                else:                                      # de uno de los de uno_de: el que llegó
+                    expr = "null" if c["tipo"]["opcional"] else f'throw new DatoFaltante({cs_cadena(c["nombre"])})'
+                    alguno = False
+                    for n in reversed(list(uno)):
+                        var = nombres.camel(n)
+                        con_n = (uno[n].get("con") or {})
+                        props = {d["nombre"]: d for d in evs[n]["datos"] + evs[n]["calculados"]}
+                        if c["nombre"] in con_n:
+                            expr, alguno = f'({var} is not null ? {cs_literal(con_n[c["nombre"]], c["tipo"])} : {expr})', True
+                        elif dato in props:
+                            expr, alguno = f'({var}?.{props[dato]["prop"]} ?? {expr})', True
+                    args.append(expr if alguno else "null")
+            self.grupos.append({"comando": cmd["nombre"], "comando_clase": cmd["clase"], "manejador": cmd["manejador"],
+                                "metodo": f'{cmd["clase"]}PorVariosEventos', "grupo": cs_cadena(f'política: {cmd["nombre"]}'),
+                                "junto": [cs_cadena(n) for n in junto], "uno": [cs_cadena(n) for n in uno],
+                                "variables": variables, "args": args,
+                                "relaciones": [{"relacion_id": p["relacion_id"], "evento": ev["nombre"], "evento_clase": ev["clase"]}
+                                               for p, ev in sorted(rels, key=lambda pe: pe[0]["relacion_id"])]})
+
+    def argumentos(self, cmd: dict, amb: Ambito, con: dict, corr: dict) -> list[str]:
+        """Los datos de la entrada de un comando (sin su identidad): un valor fijo de con, o el dato con su nombre (o el
+        de su correspondencia) que da amb; si no está, null."""
+        args = []
+        for c in cmd["entrada_campos"]:
+            dato = corr.get(c["nombre"], c["nombre"])
+            if c["nombre"] in con:
+                args.append(cs_literal(con[c["nombre"]], c["tipo"]))
+            elif amb.buscar(dato) is None:
+                args.append("null")
+            else:
+                f = amb.buscar(dato)
+                e = f["opcional"] if c["tipo"]["opcional"] else f["requerido"]
+                if f["tipo"]["opcional"] and not c["tipo"]["opcional"]:
+                    e = f'({e} ?? throw new DatoFaltante({cs_cadena(c["nombre"])}))'
+                args.append(e)
+        return args
+
+    # ------------------------------------------------------------ mensajes que envían los SA (G11)
+    def preparar_envios(self):
+        """Lo que YateGear envía por un SA que solo sale (YAML: envia): un mensaje por cada evento del contexto que lo
+        dispara, con sus datos por nombre. El sistema externo está simulado: el envío queda en la bitácora."""
+        self.emisores = []
+        for msa in self.ctx["servicios_sa"]:
+            envia = self.s["servicios_sa"][msa["nombre"]].get("envia") or {}
+            if not envia:
+                continue
+            sa_clase = nombres.pascal(msa["nombre"])
+            emisor = {k: self.tipo_cs_nuevo(v, f'servicio SA "{msa["nombre"]}"') for k, v in
+                      {"interfaz": f"IEmisorDe{sa_clase}", "simulado": f"EmisorDe{sa_clase}Simulado"}.items()}
+            mensajes = []
+            for nombre in sorted(envia):
+                x = envia[nombre]
+                ev = self.eventos[x["cuando"]]
+                clase = self.tipo_cs_nuevo(nombres.pascal(nombre), f'mensaje "{nombre}" de "{msa["nombre"]}"')
+                datos = self.campos(x.get("datos"), f'datos de "{nombre}" (YAML)')
+                self.revisar_miembros(clase, [d["prop"] for d in datos])
+                amb = Ambito()
+                amb.agregar(self.capa_evento(ev, "e"))
+                args = [amb.expr(d["nombre"], d["tipo"]["opcional"]) for d in datos]
+                mensajes.append({"nombre": nombre, "clase": clase, "datos": datos, "evento": ev["nombre"],
+                                 "evento_clase": ev["clase"], "args": args, "titulo": f'{msa["nombre"]}: {nombre}'})
+            archivo = f"{self.proyecto}/Anticorrupcion/EmisorDe{sa_clase}.g.cs"
+            e = {**emisor, "sa": msa, "mensajes": mensajes, "var": "emisor" + sa_clase}
+            self.emisores.append(e)
+            self.render("emisor_sa.g.cs.j2", archivo, e=e, sa=msa,
+                        cabecera=self.cabecera("ApplicationService", msa["nombre"], msa["id"], msa["codigo"]))
+            for clase_cs in (emisor["interfaz"], emisor["simulado"]):
+                self.traza_de(msa["id"], "ApplicationService", msa["nombre"], archivo, clase_cs)
+            self.traza_de(msa["interfaz"]["id"], "ApplicationInterface", msa["interfaz"]["nombre"], archivo, emisor["interfaz"])
+            con_m = msa["contraparte"]
+            self.traza_de(con_m["id"], con_m["tipo"], con_m["nombre"], archivo, emisor["simulado"])
+            for f in msa["flujos"]:
+                self.traza_de(f["id"], "Flow", f'{f["nombre"]} ({f["direccion"]})', archivo, emisor["simulado"])
+            self.traza_de(msa["servicio_negocio"]["id"], "BusinessService", msa["servicio_negocio"]["nombre"], archivo, emisor["interfaz"])
+            self.traza_de(msa["contrato"]["id"], "Contract", msa["contrato"]["nombre"], archivo, emisor["interfaz"])
+            for m_ in mensajes:
+                self.traza_de(msa["id"], "ApplicationService", msa["nombre"], f"{self.proyecto}/Politicas/Politicas.g.cs",
+                              f'envía "{m_["nombre"]}" con "{m_["evento"]}"')
 
     # ------------------------------------------------------------ eventos de otros contextos (capa 3)
     def preparar_eventos_externos(self):
@@ -828,8 +1051,9 @@ class Generador:
         self.externos, manejadores = [], {}
         for nombre in sorted(ext):
             se = ext[nombre]
-            # La raíz del evento: la del comando que dispara (G2). Sin dispara, la identidad se escribe en el YAML.
-            r = self.usar_raiz(cmd_por_nombre[se["dispara"]]["raiz_nombre"]) if "dispara" in se else self.raiz
+            # La raíz del evento: la del (primer) comando que dispara (G2). Sin dispara, la identidad se escribe en el YAML.
+            lista = specs.disparos(se)
+            r = self.usar_raiz(cmd_por_nombre[lista[0][0]]["raiz_nombre"]) if lista else self.raiz
             clase = self.tipo_cs_nuevo(clases[nombre], f'evento de otro contexto "{nombre}"')
             datos = self.campos(se.get("datos"), f'datos de "{nombre}" (YAML)')
             # El evento llega con su identidad (YAML: identidad; por defecto, la de la raíz de este contexto).
@@ -841,14 +1065,38 @@ class Generador:
             obligatorios = [(nombres.camel(id_nombre), id_nombre)] + [
                 (nombres.camel(d["nombre"]), d["nombre"]) for d in datos if not d["tipo"]["opcional"]]
             x = {"nombre": nombre, "clase": clase, "id": catalogo[(se["de"], nombre)], "de": se["de"],
-                 "id_nombre": id_nombre, "id_prop": id_prop, "parametros": params,
-                 "recordar": nombre in requeridos, "comando": None, "grupo": [], "junto_con": [],
+                 "id_nombre": id_nombre, "id_prop": id_prop, "id_json": nombres.camel(id_nombre), "parametros": params,
+                 "recordar": nombre in requeridos, "comando": None, "grupo": [], "junto_con": [], "disparos": None,
                  "ruta": f'{self.ruta_base}/eventos-externos/{nombres.ruta(nombre)}', "datos_campos": datos,
                  "obligatorios": ", ".join(f"({cs_cadena(p)}, {cs_cadena(n)})" for p, n in obligatorios)}
             if "dispara" not in se:                    # solo se recuerda, para los comandos que lo requieren
                 self.registrar_externo(x)
                 continue
+            if not isinstance(se["dispara"], str):      # varios comandos, cada uno con sus opciones, en orden
+                capa = {id_nombre: fuente(f"evento.{id_prop}", tipos.interpretar("string"))}
+                capa.update({d["nombre"]: fuente(f'evento.{d["prop"]}', d["tipo"]) for d in datos})
+                amb = Ambito()
+                amb.agregar(capa)
+                disparos_x = []
+                for nombre_cmd, op in lista:
+                    cmd = cmd_por_nombre[nombre_cmd]
+                    rc = self.usar_raiz(cmd["raiz_nombre"])
+                    id_raiz = f"evento.{id_prop}" if id_nombre == rc["id_nombre"] else f'evento.{rc["id_prop"]}'
+                    var_m = nombres.camel(cmd["nombre"])
+                    manejadores[var_m] = {"cs": cmd["manejador"], "var": var_m}
+                    disparos_x.append({"comando": cmd["nombre"], "comando_clase": cmd["clase"], "manejador_var": var_m,
+                                       "args": [id_raiz] + self.argumentos(cmd, amb, op.get("con") or {}, op.get("correspondencias") or {}),
+                                       "condicion": self.condicion(op, amb)})
+                self.usar_raiz(r["nombre"])
+                x.update({"comando": disparos_x[0]["comando"], "disparos": disparos_x})
+                self.registrar_externo(x)
+                continue
             cmd = cmd_por_nombre[se["dispara"]]
+            # Con junto_con, el comando corre con el último que llega: las correspondencias valen para todo el grupo.
+            corr = {}
+            for g in sorted(se.get("junto_con") or []):
+                corr.update(ext[g].get("correspondencias") or {})
+            corr.update(se.get("correspondencias") or {})
             junto = list(se.get("junto_con") or [])
             grupo = sorted([nombre] + junto)
             # De dónde sale cada dato de la entrada del comando: con (fijo) o un evento del grupo, por nombre.
@@ -864,13 +1112,15 @@ class Generador:
                 if c["nombre"] in con:
                     args.append(cs_literal(con[c["nombre"]], c["tipo"]))
                     continue
-                origen = next(((var, d[c["nombre"]]) for var, d in fuentes_ev if c["nombre"] in d), None)
+                dato = corr.get(c["nombre"], c["nombre"])       # el dato del evento con otro nombre (D2)
+                prop = nombres.pascal(dato)
+                origen = next(((var, d[dato]) for var, d in fuentes_ev if dato in d), None)
                 if origen is None:
                     args.append("null")
                 elif origen[1]["opcional"] and not c["tipo"]["opcional"]:
-                    args.append(f'({origen[0]}.{c["prop"]} ?? throw new DatoFaltante({cs_cadena(c["nombre"])}))')
+                    args.append(f'({origen[0]}.{prop} ?? throw new DatoFaltante({cs_cadena(c["nombre"])}))')
                 else:
-                    args.append(f'{origen[0]}.{c["prop"]}')
+                    args.append(f'{origen[0]}.{prop}')
             var_m = nombres.camel(cmd["nombre"])
             manejadores[var_m] = {"cs": cmd["manejador"], "var": var_m}
             x.update({"comando": cmd["nombre"], "comando_clase": cmd["clase"], "manejador_var": var_m,
@@ -909,28 +1159,31 @@ class Generador:
             mensajes, manejadores = [], {}
             for nombre in sorted(recibe):
                 x = recibe[nombre]
-                cmd = cmd_por_nombre[x["dispara"]]
+                lista = specs.disparos(x)                # uno o varios comandos, en orden (si uno falla, los demás no corren)
+                cmd = cmd_por_nombre[lista[0][0]]
                 r = self.usar_raiz(cmd["raiz_nombre"])
                 clase = self.tipo_cs_nuevo(nombres.pascal(nombre), f'mensaje "{nombre}" de "{msa["nombre"]}"')
                 datos = self.campos(x.get("datos"), f'datos de "{nombre}" (YAML)')
                 self.revisar_miembros(clase, [d["prop"] for d in datos])
-                props, con = {d["nombre"]: d for d in datos}, x.get("con") or {}
-                args = [] if cmd["crea"] else [f'mensaje.{r["id_prop"]}']
-                for c in cmd["entrada_campos"]:
-                    d = props.get(c["nombre"])
-                    if c["nombre"] in con:
-                        args.append(cs_literal(con[c["nombre"]], c["tipo"]))
-                    elif d is None:
-                        args.append("null")
-                    elif d["tipo"]["opcional"] and not c["tipo"]["opcional"]:
-                        args.append(f'(mensaje.{d["prop"]} ?? throw new DatoFaltante({cs_cadena(c["nombre"])}))')
-                    else:
-                        args.append(f'mensaje.{d["prop"]}')
-                var_m = nombres.camel(cmd["nombre"])
-                manejadores[var_m] = {"cs": cmd["manejador"], "var": var_m}
+                amb = Ambito()
+                amb.agregar({d["nombre"]: fuente(f'mensaje.{d["prop"]}', d["tipo"]) for d in datos})
+                disparos_m = []
+                for nombre_cmd, op in lista:
+                    c_ = cmd_por_nombre[nombre_cmd]
+                    rc = self.usar_raiz(c_["raiz_nombre"])
+                    var_c = nombres.camel(c_["nombre"])
+                    manejadores[var_c] = {"cs": c_["manejador"], "var": var_c}
+                    disparos_m.append({"comando": c_["nombre"], "comando_clase": c_["clase"], "manejador_var": var_c,
+                                       "args": ([] if c_["crea"] else [f'mensaje.{rc["id_prop"]}'])
+                                       + self.argumentos(c_, amb, op.get("con") or {}, op.get("correspondencias") or {}),
+                                       "condicion": self.condicion(op, amb)})
+                r = self.usar_raiz(cmd["raiz_nombre"])
+                args, var_m = disparos_m[0]["args"], disparos_m[0]["manejador_var"]
                 obligatorios = ", ".join(f"({cs_cadena(nombres.camel(d['nombre']))}, {cs_cadena(d['nombre'])})"
                                          for d in datos if not d["tipo"]["opcional"])
                 m = {"nombre": nombre, "clase": clase, "datos": datos, "datos_campos": datos, "comando": cmd["nombre"],
+                     "comandos": [d_["comando"] for d_ in disparos_m],
+                     "disparos": disparos_m if not isinstance(x.get("dispara"), str) else None,
                      "comando_clase": cmd["clase"], "manejador_var": var_m, "args": args, "obligatorios": obligatorios,
                      "metodo": f"Recibir{clase}", "titulo": f'{msa["nombre"]}: {nombre}', "receptor": receptor,
                      "ruta": f'{self.ruta_base}/sa/{nombres.ruta(msa["nombre"])}/{nombres.ruta(nombre)}'}
@@ -1090,6 +1343,10 @@ class Generador:
                                                       "si se espera que no exista, escribe espera: 404")
                     if not rechazo:
                         creadas.setdefault(clave, donde)
+                        if nombre in msjs:                # un mensaje que dispara varios comandos crea las raíces de todos
+                            for otro in msjs[nombre]["comandos"][1:]:
+                                if cmd[otro]["crea"]:
+                                    creadas.setdefault((cmd[otro]["raiz_nombre"], ident), donde)
                 if r and ident and not rechazo:
                     actual[r["id_nombre"]] = ident
                 if esp is None:
@@ -1111,6 +1368,72 @@ class Generador:
                               "metodo": metodo, "ruta": ruta, "cuerpo": datos, "espera": espera})
             escenarios.append({"nombre": nombre_e, "identidad": primera or "", "pasos": lista})
         return escenarios
+
+    def paso_entre_contextos(self, nombre: str, con: dict, actual: dict, contador: dict, rechazo: bool) -> dict:
+        """Un paso de un escenario entre contextos (S4) en este contexto: la llamada HTTP (con la ruta completa), su
+        cuerpo y su identidad. Un dato de la entrada que no está en con y se llama como una identidad ya creada en el
+        escenario (actual) toma su valor; los demás, un valor de ejemplo."""
+        cmd = {c["nombre"]: c for c in self.comandos}
+        qs = {q["nombre"]: q for q in self.consultas}
+        msjs = {m["nombre"]: m for m in self.mensajes}
+
+        def valor(c):
+            if c["nombre"] in con:
+                return valor_json(con[c["nombre"]], c["tipo"])
+            if c["nombre"] in actual and c["tipo"]["base"] == "string" and not c["tipo"]["lista"]:
+                return actual[c["nombre"]]
+            return ejemplo(c["nombre"], c["tipo"])
+
+        def cuerpo(campos):
+            return {nombres.camel(c["nombre"]): valor(c) for c in campos}
+
+        def creada(c, r, datos):
+            """La identidad que recibe la raíz que crea el comando c (None si el paso es un rechazo a propósito)."""
+            if rechazo:
+                return None
+            if r["consecutivo"]:
+                clave = (self.proyecto, r["nombre"])
+                contador[clave] = contador.get(clave, 0) + 1
+                return r["prefijo"] + str(contador[clave]).zfill(r["digitos"])
+            valores = {k: valor_json(v, self.tipos_raiz[k]) for k, v in (c["spec"].get("valores") or {}).items()}
+            valores.update({e["nombre"]: datos.get(nombres.camel(e["nombre"])) for e in c["entrada_campos"]})
+            faltan = [x for x in r["id_de"] if x not in valores]
+            if faltan:
+                raise ErrorDeGeneracion(f'"{nombre}": la identidad que forma "{c["nombre"]}" usa {", ".join(faltan)}, '
+                                        "que no sale de su entrada ni de sus valores")
+            return "/".join(str(valores[x]) for x in r["id_de"])
+
+        if nombre in msjs:                              # un mensaje de un SA (G7), como el comando que dispara
+            m = msjs[nombre]
+            c = cmd[m["comando"]]
+            r = self.usar_raiz(c["raiz_nombre"])
+            datos = cuerpo(m["datos_campos"])
+            ident = creada(c, r, datos) if c["crea"] else datos.get(nombres.camel(r["id_nombre"]))
+            return {"tipo": "mensaje de un servicio SA", "metodo": "POST", "ruta": m["ruta"], "cuerpo": datos,
+                    "identidad": ident, "crea": c["crea"], "id_nombre": r["id_nombre"]}
+        if nombre in cmd:
+            c = cmd[nombre]
+            r = self.usar_raiz(c["raiz_nombre"])
+            if c["todas"]:
+                return {"tipo": "comando", "metodo": "POST", "ruta": c["ruta"], "cuerpo": cuerpo(c["entrada_campos"]),
+                        "identidad": None, "crea": False, "id_nombre": r["id_nombre"]}
+            if c["crea"]:
+                datos = cuerpo(c["entrada_campos"])
+                ident = creada(c, r, datos)
+            else:
+                ident = con.get(r["id_nombre"]) or actual.get(r["id_nombre"])
+                datos = {nombres.camel(r["id_nombre"]): ident, **cuerpo(c["entrada_campos"])}
+            return {"tipo": "comando", "metodo": "POST", "ruta": c["ruta"], "cuerpo": datos, "identidad": ident,
+                    "crea": c["crea"], "id_nombre": r["id_nombre"]}
+        q = qs[nombre]
+        r = self.usar_raiz(q["raiz_nombre"])
+        ident = None if q["todas"] else (con.get(r["id_nombre"]) or actual.get(r["id_nombre"]))
+        ruta = self.ruta_base + q["ruta_prueba"] + ("" if q["todas"] else f"/{ident}")
+        extra = cuerpo(q["entrada_campos"])
+        if extra:
+            ruta += "?" + "&".join(f"{a}={b}" for a, b in extra.items())
+        return {"tipo": "consulta", "metodo": "GET", "ruta": ruta, "cuerpo": None, "identidad": ident, "crea": False,
+                "id_nombre": r["id_nombre"]}
 
     def pruebas_de_escenarios(self, escenarios: list[dict]) -> list[dict]:
         pruebas = []
@@ -1188,10 +1511,11 @@ class Generador:
         """Prepara en memoria los archivos del contexto. Los escribe Solucion."""
         # Los objetos de valor del contexto se pueden usar como List<objeto de valor> en el YAML (G4).
         tipos.usar_objetos({v["nombre"]: {c["nombre"]: c for c in v["campos"]}
-                            for a in self.ctx["agregados"] for v in a["objetos_valor"]})
+                            for a in self.ctx["agregados"] for v in a["objetos_valor"] + a["entidades"]})
         self.preparar_raiz()
         self.preparar_sas()
         self.preparar_eventos()
+        self.preparar_envios()
         self.preparar_comandos()
         self.preparar_consultas()
         self.preparar_politicas()
@@ -1204,9 +1528,11 @@ class Generador:
         enums = sorted(self.enums.values(), key=lambda e: e["clase"])
         self.render("enums.g.cs.j2", f"{p}/Dominio/Enums.g.cs", enums=enums, cabecera=cab_ctx)
         self.render("infraestructura.g.cs.j2", f"{p}/Infraestructura/Infraestructura.g.cs", cabecera=cab_ctx)
-        self.render("politicas.g.cs.j2", f"{p}/Politicas/Politicas.g.cs", politicas=self.politicas, cabecera=cab_ctx)
+        envios = [{**m_, "sa": e["sa"]["nombre"], "interfaz": e["interfaz"]} for e in self.emisores for m_ in e["mensajes"]]
+        self.render("politicas.g.cs.j2", f"{p}/Politicas/Politicas.g.cs", politicas=self.politicas, grupos=self.grupos,
+                    envios=envios, cabecera=cab_ctx)
         self.render("registro.g.cs.j2", f"{p}/Registro.g.cs", cabecera=cab_ctx, contexto=ctx["nombre"],
-                    raices=[x["raiz"] for x in self.raices.values()],
+                    raices=[x["raiz"] for x in self.raices.values()], emisores=self.emisores, grupos=self.grupos,
                     sas=list(self.sas.values()), comandos=self.comandos, consultas=self.consultas,
                     externos=self.externos, ruta_base=self.ruta_base, receptores_sa=self.receptores_sa,
                     temporizadores=[c["temporizador"] for c in self.comandos if c["temporizador"]],
@@ -1262,8 +1588,9 @@ class Generador:
 class Solucion:
     """Junta los contextos en una solución: host, bus entre contextos (Integracion), .sln y contextos.json."""
 
-    def __init__(self, modelo: dict, specs_: list[dict], salida: Path):
+    def __init__(self, modelo: dict, specs_: list[dict], salida: Path, entre_contextos: list[dict] | None = None):
         self.m, self.salida = modelo, salida
+        self.entre_contextos = entre_contextos or []
         self.modelo_nombre = modelo["generado_desde"]["modelo_nombre"]
         self.host = nombres.pascal(self.modelo_nombre)
         self.generadores = [Generador(modelo, s, salida) for s in specs_]
@@ -1282,6 +1609,53 @@ class Solucion:
         if "\r" in texto:
             raise ErrorDeGeneracion(f"{plantilla}: la salida tiene fin de línea CRLF")
         return texto
+
+    def escenarios_entre_contextos(self, gs: list["Generador"]) -> list[dict]:
+        """Los escenarios de punta a punta (S4), con la llamada HTTP de cada paso, su identidad y lo esperado.
+
+        Cada paso va al contexto que dice en. Un dato de la entrada que se llama como una identidad ya creada en el
+        escenario toma su valor (regla de los datos), así el arriendo y el yate pasan de un contexto a otro. Los
+        consecutivos siguen de un escenario al siguiente, porque todos corren contra la misma aplicación.
+        """
+        por_contexto = {g.ctx["nombre"]: g for g in gs}
+        envios = {m_["nombre"]: {"ruta_base": g.ruta_base, "nombre": m_["titulo"]}
+                  for g in gs for e in g.emisores for m_ in e["mensajes"]}
+        contador, salida = {}, []
+        for spec in self.entre_contextos:
+            for nombre_e, pasos in spec[specs.CLAVE_ENTRE_CONTEXTOS].items():
+                actual, lista = {}, []
+                for i, paso in enumerate(pasos, 1):
+                    nombre, op = next(iter(paso.items()))
+                    g = por_contexto[op["en"]]
+                    esp = op.get("espera")
+                    rechazo = isinstance(esp, int) or (isinstance(esp, dict) and "código" in esp)
+                    p = g.paso_entre_contextos(nombre, op.get("con") or {}, actual, contador, rechazo)
+                    if p["identidad"] and not rechazo:
+                        actual[p["id_nombre"]] = p["identidad"]
+                    if esp is None:
+                        espera = {"tipo": "exito", "texto": "HTTP 2xx"}
+                    elif isinstance(esp, int):
+                        espera = {"tipo": "codigo", "valor": esp, "texto": f"HTTP {esp}"}
+                    elif isinstance(esp, dict) and "código" in esp:
+                        campos_e = {specs.CAMPOS_DE_ERROR[k]: (nombres.pascal(v) if k == "estado actual" else v)
+                                    for k, v in esp.items() if k != "código"}
+                        espera = {"tipo": "codigo", "valor": esp["código"], "campos": campos_e,
+                                  "texto": f'HTTP {esp["código"]} y ' + ", ".join(f"{k} = {v}" for k, v in esp.items() if k != "código")}
+                    elif isinstance(esp, (str, list)):
+                        nombres_e = [esp] if isinstance(esp, str) else list(esp)
+                        espera = {"tipo": "eventos", "eventos": [x for x in nombres_e if x not in envios],
+                                  "envios": [envios[x] for x in nombres_e if x in envios],
+                                  "texto": "HTTP 2xx y " + ", ".join(f'"{x}"' for x in nombres_e)}
+                    else:
+                        q = next(q_ for q_ in g.consultas if q_["nombre"] == nombre)
+                        tipos_salida = {s_["nombre"]: s_["tipo"] for s_ in q["salida_campos"]}
+                        espera = {"tipo": "salida", "valores": {nombres.camel(k): valor_json(v, tipos_salida[k]) for k, v in esp.items()},
+                                  "texto": "HTTP 2xx y " + ", ".join(f"{k} = {v}" for k, v in esp.items())}
+                    lista.append({"numero": i, "nombre": nombre, "contexto": op["en"], "tipo": p["tipo"], "crea": p["crea"],
+                                  "identidad": p["identidad"], "metodo": p["metodo"], "ruta": p["ruta"],
+                                  "cuerpo": p["cuerpo"], "espera": espera})
+                salida.append({"nombre": nombre_e, "identidad": "", "pasos": lista})
+        return salida
 
     def generar(self) -> dict:
         for g in self.generadores:
@@ -1315,11 +1689,23 @@ class Solucion:
                            key=lambda x: x["nombre"])
         sln = f"{h}.sln"
         archivos[sln] = self.render("solucion.sln.j2", cabecera=cab, proyectos=proyectos, tipo_proyecto=TIPO_PROYECTO_CS)
-        archivos["contextos.json"] = json.dumps(
-            {"generado_desde": cab, "host": h, "puerto": PUERTO,
-             "contextos": [{"nombre": g.ctx["nombre"], "proyecto": g.proyecto, "ruta_base": g.ruta_base,
-                            "escenarios": g.escenarios_json, "trazabilidad": f"trazabilidad/{g.proyecto}.csv"}
-                           for g in gs]}, ensure_ascii=False, indent=2) + "\n"
+        manifiesto = {"generado_desde": cab, "host": h, "puerto": PUERTO,
+                      "contextos": [{"nombre": g.ctx["nombre"], "proyecto": g.proyecto, "ruta_base": g.ruta_base,
+                                     "escenarios": g.escenarios_json, "trazabilidad": f"trazabilidad/{g.proyecto}.csv"}
+                                    for g in gs]}
+        if self.entre_contextos:                            # S4: escenarios de punta a punta entre contextos
+            escenarios = self.escenarios_entre_contextos(gs)
+            archivos[f"{PRUEBAS_ENTRE_CONTEXTOS}/escenarios.json"] = json.dumps(
+                {"generado_desde": cab, "ruta_base": "", "entre_contextos": True,
+                 "contextos": [g.ruta_base for g in gs], "escenarios": escenarios}, ensure_ascii=False, indent=2) + "\n"
+            pruebas = gs[0].pruebas_de_escenarios(escenarios)
+            for p in pruebas:
+                if p["encabezado"]:
+                    p["encabezado"] = p["encabezado"].removesuffix(" ()")
+            archivos[f"{PRUEBAS_ENTRE_CONTEXTOS}/pruebas.http"] = self.render(
+                "pruebas.http.j2", cabecera=cab, ruta_base="", pruebas=pruebas, con_escenarios=True, primero="")
+            manifiesto["entre_contextos"] = f"{PRUEBAS_ENTRE_CONTEXTOS}/escenarios.json"
+        archivos["contextos.json"] = json.dumps(manifiesto, ensure_ascii=False, indent=2) + "\n"
         for g in gs:
             for archivo in (f"{h}/Program.g.cs", f"{h}/{h}.csproj", sln, "global.json", "contextos.json"):
                 g.traza_de(g.ctx["id"], "ApplicationComponent", g.ctx["nombre"], archivo, "")
@@ -1377,24 +1763,33 @@ def main():
         sys.exit(__doc__)
     ruta_json, ruta_salida, *rutas_yaml = sys.argv[1:]
     modelo = json.loads(Path(ruta_json).read_text(encoding="utf-8"))
-    specs_, errores = [], []
+    specs_, errores, entre, revisores = [], [], [], {}
     for ruta_yaml in rutas_yaml:
         try:
             spec = specs.cargar_yaml(ruta_yaml)
         except Exception as e:                              # YAML mal escrito o clave repetida
             sys.exit(f"ERROR al leer {ruta_yaml}: {e}")
+        if specs.es_entre_contextos(spec):                  # escenarios entre contextos (S4): se revisan al final
+            entre.append((ruta_yaml, spec))
+            continue
         rev = specs.Revisor(modelo, spec, ruta_yaml)
         rev.id_nombre = ""
         rev.revisar()
         errores += [f"{ruta_yaml}: {e}" for e in rev.errores]
         specs_.append(spec)
+        if not rev.errores:
+            revisores[spec["contexto"]] = rev
+    for ruta_yaml, spec in entre:
+        rev = specs.RevisorEntreContextos(modelo, spec, ruta_yaml, revisores)
+        rev.revisar()
+        errores += [f"{ruta_yaml}: {e}" for e in rev.errores]
     if errores:
         print(f"Los YAML no cumplen con el modelo ({len(errores)} error(es)); no se generó nada:", file=sys.stderr)
         for e in errores:
             print("  ERROR", e, file=sys.stderr)
         sys.exit(1)
     try:
-        res = Solucion(modelo, specs_, Path(ruta_salida)).generar()
+        res = Solucion(modelo, specs_, Path(ruta_salida), [s for _, s in entre]).generar()
     except (ErrorDeGeneracion, nombres.NombreInvalido) as e:
         sys.exit(f"ERROR de generación: {e}")
     generados = {n for n, _, _ in res["contextos"]}
