@@ -12,8 +12,8 @@ El modelo de ejemplo `ejemplo/Biblioteca.archimate` sigue cada paso de esta guí
 
 | Propiedad | En qué elemento | Valor |
 |---|---|---|
-| `Servicio básico V4` | Proceso de aplicación (comando) o servicio de aplicación (consulta) | Su código, único en el modelo: `SB-01` |
-| `Servicio anticorrupción V4` | Servicio de aplicación de la capa anticorrupción | Su código, único: `SA-01` |
+| `Código del servicio` | Proceso de aplicación (comando) o servicio de aplicación (consulta) | Su código, único en el modelo: `SB-01` |
+| `Código del servicio anticorrupción` | Servicio de aplicación de la capa anticorrupción | Su código, único: `SA-01` |
 | `Tipo DDD` | Objeto de datos | `Raíz`, `Entidad` u `Objeto de valor` |
 | `Campo: <nombre>` | Raíz, entidad u objeto de valor | El tipo del campo (ver el paso 6) |
 | `Cardinalidad` | Composición de la raíz a una entidad o un objeto de valor | `Uno`, `Cero o uno` o `Muchos` |
@@ -21,15 +21,15 @@ El modelo de ejemplo `ejemplo/Biblioteca.archimate` sigue cada paso de esta guí
 | `Servicio` | Contrato | El mismo código |
 | `Externo` | Contraparte de un servicio SA | `Sí` si es un sistema externo |
 
-Los nombres de las dos primeras vienen de la metodología con la que se hizo YateGear (la V4 es la vista de servicios). Se conservan para que el mismo generador lea los dos modelos.
+El valor de un código es libre (`SB-01`, `PR-1`, `PRESTAR`...): no puede estar vacío ni repetirse en el modelo, y es el mismo en el servicio de negocio (`Código`) y en el contrato (`Servicio`) del paso 10. Las clases y las rutas salen del nombre del elemento, no del código. El modelo de YateGear usa otros nombres para las dos primeras propiedades, `Servicio básico V4` y `Servicio anticorrupción V4`, que vienen de su vista V4 ("Descomposición de servicios"); el generador los acepta también, pero en un modelo nuevo conviene usar los de la tabla. Un elemento con las dos (la neutra y la de YateGear) y valores distintos es un error.
 
 ## 2. Paso a paso
 
 Cada paso dice qué elemento crear, con qué relación y con qué propiedad. Al final de cada uno, entre paréntesis, cómo se ve en el ejemplo.
 
 1. **Contexto.** Un componente de aplicación llamado "Contexto <dominio>". (`Contexto Préstamos`; el proyecto se llama `Prestamos`.)
-2. **Comandos.** Un proceso de aplicación por cada operación que cambia algo, con la propiedad `Servicio básico V4`. El contexto se le asigna con una **asignación** contexto --> proceso. Un componente es contexto si tiene asignado al menos un proceso con esa propiedad. (`Prestar un libro`, SB-01; `Devolver el libro`, SB-02.)
-3. **Consultas.** Un servicio de aplicación por cada consulta, con la propiedad `Servicio básico V4`, y una **realización** contexto --> servicio. (`Consultar el préstamo`, SB-03.)
+2. **Comandos.** Un proceso de aplicación por cada operación que cambia algo, con la propiedad `Código del servicio`. El contexto se le asigna con una **asignación** contexto --> proceso. Un componente es contexto si tiene asignado al menos un proceso con esa propiedad. (`Prestar un libro`, SB-01; `Devolver el libro`, SB-02.)
+3. **Consultas.** Un servicio de aplicación por cada consulta, con la propiedad `Código del servicio`, y una **realización** contexto --> servicio. (`Consultar el préstamo`, SB-03.)
 4. **Agregado.** Una agrupación llamada "Agregado <raíz>" que **agrega** (relación de agregación desde la agrupación) a sus comandos, sus eventos, su raíz y sus entidades y objetos de valor. Cada comando y cada evento está en exactamente un agregado. Las agrupaciones que no empiezan por "Agregado " no cuentan. (`Agregado Préstamo`.)
 5. **Raíz, entidades y objetos de valor.** Objetos de datos con `Tipo DDD`. Cada agregado agrega exactamente una raíz. La raíz **compone** a cada entidad y objeto de valor, y cada composición lleva `Cardinalidad`. Una entidad tiene identidad propia dentro de su raíz (por ejemplo, cada cobro de una cuenta, con su comprobante); un objeto de valor no (un plazo, un rango de fechas). (Raíz `Préstamo`; objeto de valor `Plazo del préstamo`, `Uno`.)
 6. **Campos.** Una propiedad `Campo: <nombre>` por cada dato, con su tipo como valor, en el orden en que se leen: `string`, `int`, `decimal`, `bool`, `DateOnly`, `DateTime`, `List<tipo>`, el sufijo `?` para un dato opcional y `enum <Nombre>(valor, valor, ...)`. La identidad y el estado de la raíz no son campos: se declaran en el YAML. Un nombre de campo no se repite entre la raíz y sus partes, porque un dato pasa de un lugar a otro por su nombre (regla de los datos). (`Campo: lector` = `string`; `Campo: hasta` = `DateOnly`.)
@@ -37,7 +37,7 @@ Cada paso dice qué elemento crear, con qué relación y con qué propiedad. Al 
 8. **Eventos.** Un evento de aplicación por cada hecho que publica un comando, con un **disparo** comando --> evento. Cada evento lo dispara al menos un comando del contexto. (`Libro prestado`, `Libro devuelto`.)
 9. **Políticas.** Si un evento del contexto pone en marcha otro comando del mismo contexto, un disparo evento --> comando. Los eventos que van a otro contexto no se dibujan como disparo: se declaran en el YAML de quien los recibe (`eventos_de_otros_contextos`), y el evento tiene que existir en el modelo, disparado por un comando del otro contexto. (El ejemplo no tiene políticas; YateGear tiene cuatro.)
 10. **Contratos.** Cada comando, consulta y servicio SA **realiza** un servicio de negocio con la propiedad `Código` (su mismo código). Ese servicio de negocio tiene una **asociación** con un contrato con la propiedad `Servicio` (el mismo código), y la documentación del contrato se escribe en líneas que empiezan por `Entrada:`, `Salida:` y, si hay reglas, `Reglas:`. Las reglas aparecen como comentario en el archivo manual de cada comando, donde se escriben a mano. (`Contrato de servicio: Prestar un libro`, con REG-01.)
-11. **Servicios de la capa anticorrupción.** Un servicio de aplicación con la propiedad `Servicio anticorrupción V4` y una **relación de servicio** SA --> contexto. Una interfaz de aplicación se le **asigna** (interfaz --> SA). La interfaz intercambia **flujos** con un solo elemento, la contraparte (el sistema externo, con `Externo` = `Sí`), y entre el SA y la contraparte hay una relación de servicio, en el sentido que corresponda. El nombre de cada flujo dice qué pasa y su sentido dice si entra o sale. Para llamar al sistema y esperar respuesta (`usa` en el YAML) hace falta un flujo que entra, la respuesta (conviene dibujar también el que sale, la pregunta); para recibir lo que el sistema envía (`recibe`), uno que entra; y para solo enviar (`envia`), uno que sale. `specs.py` revisa que estén. (`Catálogo de la biblioteca`, SA-01, con la interfaz `Interfaz del catálogo` y la contraparte `Sistema del catálogo`.)
+11. **Servicios de la capa anticorrupción.** Un servicio de aplicación con la propiedad `Código del servicio anticorrupción` y una **relación de servicio** SA --> contexto. Una interfaz de aplicación se le **asigna** (interfaz --> SA). La interfaz intercambia **flujos** con un solo elemento, la contraparte (el sistema externo, con `Externo` = `Sí`), y entre el SA y la contraparte hay una relación de servicio, en el sentido que corresponda. El nombre de cada flujo dice qué pasa y su sentido dice si entra o sale. Para llamar al sistema y esperar respuesta (`usa` en el YAML) hace falta un flujo que entra, la respuesta (conviene dibujar también el que sale, la pregunta); para recibir lo que el sistema envía (`recibe`), uno que entra; y para solo enviar (`envia`), uno que sale. `specs.py` revisa que estén. (`Catálogo de la biblioteca`, SA-01, con la interfaz `Interfaz del catálogo` y la contraparte `Sistema del catálogo`.)
 
 ## 3. Orden de trabajo
 
@@ -65,8 +65,9 @@ Cada paso dice qué elemento crear, con qué relación y con qué propiedad. Al 
 
 | Mensaje (empieza así) | Qué falta |
 |---|---|
-| el modelo no tiene contextos | Ningún componente de aplicación tiene asignado un proceso con `Servicio básico V4` (paso 2). |
-| ... está asignado al contexto pero no tiene la propiedad Servicio básico V4 | El proceso asignado al contexto no tiene su código (paso 2). |
+| el modelo no tiene contextos | Ningún componente de aplicación tiene asignado un proceso con `Código del servicio` (paso 2). |
+| ... está asignado al contexto pero no tiene la propiedad "Código del servicio" | El proceso asignado al contexto no tiene su código (paso 2). |
+| ... tiene "Código del servicio" = ... y "Servicio básico V4" = ...: deja una sola | El elemento tiene el código con los dos nombres y valores distintos. |
 | ... debe estar en 1 agrupación "Agregado ..." | Falta la agregación desde el agregado hacia ese comando o evento, o hay dos (paso 4). |
 | ... debe agregar exactamente 1 objeto de datos con Tipo DDD = Raíz | El agregado no agrega su raíz, o agrega dos, o a la raíz le falta `Tipo DDD` (pasos 4 y 5). |
 | ... debe tener exactamente 1 composición desde su raíz o entidad | Falta la composición hacia la entidad o el objeto de valor, o hay dos (paso 5). |

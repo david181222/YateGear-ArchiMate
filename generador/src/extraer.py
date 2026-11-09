@@ -2,7 +2,8 @@
 
 Todo se busca por tipo y por relación del modelo, nunca por nombre. Un contexto es
 un componente de aplicación al que se le asigna al menos un proceso de aplicación
-con la propiedad "Servicio básico V4". Nunca se leen los anidamientos de las vistas.
+con la propiedad "Código del servicio" (o "Servicio básico V4", el nombre que usa el modelo
+de YateGear). Nunca se leen los anidamientos de las vistas.
 
 Sin nombres de contexto, extrae todos. Con nombres, solo esos (los demás quedan
 como "otros_contextos" de cada uno, igual que siempre).
@@ -24,8 +25,13 @@ import tipos
 CARDINALIDADES = ("Uno", "Cero o uno", "Muchos")
 PREFIJO_AGREGADO = "Agregado "
 PREFIJO_CAMPO = "Campo: "
-P_CODIGO_SB = "Servicio básico V4"
-P_CODIGO_SA = "Servicio anticorrupción V4"
+# El código de un comando, una consulta o un servicio SA. Se acepta el nombre neutro (el recomendado) o el que usa el
+# modelo de YateGear, que viene de su vista V4 ("Descomposición de servicios"). El valor es libre (SB-03, PR-1, ...), pero
+# no se repite en el modelo y es el mismo en el servicio de negocio (Código) y en el contrato (Servicio).
+P_CODIGO_SB = ("Código del servicio", "Servicio básico V4")
+P_CODIGO_SA = ("Código del servicio anticorrupción", "Servicio anticorrupción V4")
+NOMBRE_SB = '"Código del servicio" (o "Servicio básico V4")'
+NOMBRE_SA = '"Código del servicio anticorrupción" (o "Servicio anticorrupción V4")'
 P_TIPO_DDD = "Tipo DDD"
 
 
@@ -34,6 +40,7 @@ class Extractor:
         self.g = g
         self.errores: list[str] = []
         self.avisos: list[str] = []
+        self.codigos_dobles: set[str] = set()
 
     # ------------------------------------------------------------ utilidades
     def c(self, i: str) -> leer.Concepto:
@@ -42,6 +49,16 @@ class Extractor:
     def ref(self, i: str) -> str:
         x = self.c(i)
         return f'{x.tipo} "{x.nombre}" ({x.id})'
+
+    def codigo(self, i: str, claves: tuple[str, ...]) -> str | None:
+        """El código del elemento: el valor de la propiedad de claves que tenga (neutra o la de YateGear). Si tiene las dos
+        con valores distintos, es un error (se informa una vez)."""
+        valores = {k: self.c(i).prop(k) for k in claves if self.c(i).prop(k)}
+        if len(set(valores.values())) > 1 and i not in self.codigos_dobles:
+            self.codigos_dobles.add(i)
+            self.error("código", f"{self.ref(i)} tiene " + " y ".join(f'"{k}" = {v}' for k, v in valores.items())
+                       + ": deja una sola")
+        return next(iter(valores.values()), None)
 
     def error(self, regla: str, texto: str):
         self.errores.append(f"[{regla}] {texto}")
@@ -117,7 +134,7 @@ class Extractor:
     def contextos(self) -> list[str]:
         """Nombres de los contextos del modelo, por orden alfabético."""
         return sorted({c.nombre for c in self.g.elementos("ApplicationComponent")
-                       if any(self.c(r.destino).prop(P_CODIGO_SB)
+                       if any(self.codigo(r.destino, P_CODIGO_SB)
                               for r in self.salen(c.id, "Assignment", "ApplicationProcess"))})
 
     # ------------------------------------------------------------ contexto
@@ -132,14 +149,14 @@ class Extractor:
         # Comandos: asignación contexto -> proceso de aplicación.
         comandos = [r.destino for r in self.salen(ctx, "Assignment", "ApplicationProcess")]
         for i in comandos:
-            if not self.c(i).prop(P_CODIGO_SB):
-                self.error("comando", f"{self.ref(i)} está asignado al contexto pero no tiene la propiedad {P_CODIGO_SB}")
+            if not self.codigo(i, P_CODIGO_SB):
+                self.error("comando", f"{self.ref(i)} está asignado al contexto pero no tiene la propiedad {NOMBRE_SB}")
         # Consultas: realización contexto -> servicio de aplicación con código SB.
         consultas = [r.destino for r in self.salen(ctx, "Realization", "ApplicationService")
-                     if self.c(r.destino).prop(P_CODIGO_SB)]
+                     if self.codigo(r.destino, P_CODIGO_SB)]
         # Servicios SA: servicio (relación) SA -> contexto.
         sas = [r.origen for r in self.llegan(ctx, "Serving", "ApplicationService")
-               if self.c(r.origen).prop(P_CODIGO_SA)]
+               if self.codigo(r.origen, P_CODIGO_SA)]
 
         # Agregados: los "Agregado ..." que agregan los comandos del contexto (las agrupaciones de la V11 no cuentan).
         agrupaciones_agr = {c.id for c in g.elementos("Grouping") if c.nombre.startswith(PREFIJO_AGREGADO)}
@@ -206,7 +223,7 @@ class Extractor:
         codigos = {}
         for i in self.por_nombre(comandos, g):
             cmd = self.c(i)
-            codigos.setdefault(cmd.prop(P_CODIGO_SB), []).append(i)
+            codigos.setdefault(self.codigo(i, P_CODIGO_SB), []).append(i)
             ag = agregado_de.get(i)
             raiz = raiz_de.get(ag)
             propio, lee_tambien = [], []
@@ -226,9 +243,10 @@ class Extractor:
                 self.error("acceso", f"{self.ref(i)} tiene un acceso sin especificar ({propio[0].acceso}) a su raíz")
             eventos = [r.destino for r in self.salen(i, "Triggering", "ApplicationEvent")]
             eventos_por_cmd[i] = eventos
-            sn, k = self.contrato(i, cmd.prop(P_CODIGO_SB))
+            # Sin código no hay con qué buscar su contrato: ya se informó que falta.
+            sn, k = self.contrato(i, self.codigo(i, P_CODIGO_SB)) if self.codigo(i, P_CODIGO_SB) else (None, None)
             comandos_json.append({
-                "id": i, "nombre": cmd.nombre, "codigo": cmd.prop(P_CODIGO_SB),
+                "id": i, "nombre": cmd.nombre, "codigo": self.codigo(i, P_CODIGO_SB),
                 "agregado_id": ag, "raiz_id": raiz,
                 "acceso": propio[0].acceso if propio else None, "acceso_id": propio[0].id if propio else None,
                 "lee_tambien": sorted(lee_tambien, key=lambda x: x["acceso_id"]),
@@ -268,15 +286,15 @@ class Extractor:
         consultas_json = []
         for i in self.por_nombre(consultas, g):
             q = self.c(i)
-            codigos.setdefault(q.prop(P_CODIGO_SB), []).append(i)
+            codigos.setdefault(self.codigo(i, P_CODIGO_SB), []).append(i)
             lee = []
             for r in self.salen(i, "Access"):
                 if r.destino in raices_ctx and r.acceso == "lectura":
                     lee.append({"raiz_id": r.destino, "acceso_id": r.id})
                 else:
                     self.error("consulta", f"{self.ref(i)} tiene acceso de {r.acceso} a {self.ref(r.destino)}; una consulta solo lee raíces del contexto")
-            sn, k = self.contrato(i, q.prop(P_CODIGO_SB))
-            consultas_json.append({"id": i, "nombre": q.nombre, "codigo": q.prop(P_CODIGO_SB),
+            sn, k = self.contrato(i, self.codigo(i, P_CODIGO_SB))
+            consultas_json.append({"id": i, "nombre": q.nombre, "codigo": self.codigo(i, P_CODIGO_SB),
                                    "lee": sorted(lee, key=lambda x: x["acceso_id"]),
                                    "servicio_negocio": sn, "contrato": k})
 
@@ -286,7 +304,7 @@ class Extractor:
         sas_json = []
         for i in self.por_nombre(sas, g):
             s = self.c(i)
-            codigos.setdefault(s.prop(P_CODIGO_SA), []).append(i)
+            codigos.setdefault(self.codigo(i, P_CODIGO_SA), []).append(i)
             itfs = [r.origen for r in self.llegan(i, "Assignment", "ApplicationInterface")]
             flujos, con, sentido = [], None, None
             if len(itfs) != 1:
@@ -308,9 +326,9 @@ class Extractor:
                         self.error("servicio SA", f"entre {self.ref(i)} y su contraparte {self.ref(con.id)} debe haber 1 relación de servicio; hay {len(sirve)}")
                     else:
                         sentido = "contraparte_a_sa" if sirve[0].origen == con.id else "sa_a_contraparte"
-            sn, k = self.contrato(i, s.prop(P_CODIGO_SA))
+            sn, k = self.contrato(i, self.codigo(i, P_CODIGO_SA))
             sas_json.append({
-                "id": i, "nombre": s.nombre, "codigo": s.prop(P_CODIGO_SA),
+                "id": i, "nombre": s.nombre, "codigo": self.codigo(i, P_CODIGO_SA),
                 "interfaz": {"id": itfs[0], "nombre": self.c(itfs[0]).nombre} if len(itfs) == 1 else None,
                 "contraparte": {"id": con.id, "nombre": con.nombre, "tipo": con.tipo,
                                 "externo": con.prop("Externo") == "Sí", "sentido_servicio": sentido} if con else None,
@@ -344,7 +362,7 @@ class Extractor:
             if comp.id == ctx:
                 continue
             cmds = [r.destino for r in self.salen(comp.id, "Assignment", "ApplicationProcess")
-                    if self.c(r.destino).prop(P_CODIGO_SB)]
+                    if self.codigo(r.destino, P_CODIGO_SB)]
             if cmds:
                 evs = {r.destino for i in cmds for r in self.salen(i, "Triggering", "ApplicationEvent")}
                 otros.append({"id": comp.id, "nombre": comp.nombre,
@@ -395,7 +413,7 @@ def main():
     nombres_ctx = nombres_ctx or ex.contextos()
     if not nombres_ctx:
         ex.error("contexto", "el modelo no tiene contextos: ningún componente de aplicación tiene asignado un proceso "
-                             f"con la propiedad {P_CODIGO_SB}")
+                             f"con la propiedad {NOMBRE_SB}")
     ctxs = [ex.extraer(n) for n in nombres_ctx]
     for a in ex.avisos:
         print("AVISO:", a)

@@ -223,9 +223,9 @@ Todo se busca por tipo y por relación, nunca solo por nombre, porque hay nombre
 | Concepto | Cómo se encuentra en el modelo |
 |---|---|
 | Contexto | Componente de aplicación "Contexto `<dominio>`". |
-| Comandos | Asignación contexto --> proceso de aplicación con la propiedad `Servicio básico V4`. |
-| Consultas | Realización contexto --> servicio de aplicación con `Servicio básico V4`. |
-| Servicios SA | Servicio SA --> servicio --> contexto, con la propiedad `Servicio anticorrupción V4`. Su interfaz es la que se le asigna. Su contraparte es el único elemento con el que esa interfaz intercambia flujos, y entre los dos hay una relación de servicio en cualquier sentido (en SA-08 el SA le sirve a la contraparte). |
+| Comandos | Asignación contexto --> proceso de aplicación con la propiedad `Código del servicio` (o `Servicio básico V4`, el nombre que usa el modelo de YateGear, de su vista V4). El valor es libre, pero único. |
+| Consultas | Realización contexto --> servicio de aplicación con `Código del servicio` (o `Servicio básico V4`). |
+| Servicios SA | Servicio SA --> servicio --> contexto, con la propiedad `Código del servicio anticorrupción` (o `Servicio anticorrupción V4`). Su interfaz es la que se le asigna. Su contraparte es el único elemento con el que esa interfaz intercambia flujos, y entre los dos hay una relación de servicio en cualquier sentido (en SA-08 el SA le sirve a la contraparte). |
 | Agregado | Agrupación cuyo nombre empieza por "Agregado " y que agrega exactamente un objeto de datos con `Tipo DDD` = Raíz. Las agrupaciones del canvas de la V11 no cuentan. |
 | Raíz, entidad y objeto de valor | Objeto de datos con `Tipo DDD`. La raíz compone a sus entidades y objetos de valor, y cada composición tiene `Cardinalidad`. La identidad de una entidad (uno de sus campos) se declara en el YAML. |
 | Campos | Propiedades `Campo: <nombre>` con su tipo, en el orden del modelo. |

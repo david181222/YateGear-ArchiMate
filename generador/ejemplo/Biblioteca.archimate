@@ -64,11 +64,11 @@ Reglas: La aplicación no cambia el catálogo; solo lo consulta.</documentation>
     </element>
     <element xsi:type="archimate:ApplicationProcess" name="Prestar un libro" id="id-adbef6a6733f58f5a9e0ba51f136a4ac">
       <documentation>Comando: presta un libro a un lector, si el catálogo dice que está disponible.</documentation>
-      <property key="Servicio básico V4" value="SB-01"/>
+      <property key="Código del servicio" value="SB-01"/>
     </element>
     <element xsi:type="archimate:ApplicationProcess" name="Devolver el libro" id="id-5bf799b38b425df3b814b33aa2929f70">
       <documentation>Comando: el lector devuelve el libro.</documentation>
-      <property key="Servicio básico V4" value="SB-02"/>
+      <property key="Código del servicio" value="SB-02"/>
     </element>
     <element xsi:type="archimate:ApplicationEvent" name="Libro prestado" id="id-7808c0a36e435cbeb9af1243ed983bec">
       <documentation>El libro quedó prestado al lector.</documentation>
@@ -78,11 +78,11 @@ Reglas: La aplicación no cambia el catálogo; solo lo consulta.</documentation>
     </element>
     <element xsi:type="archimate:ApplicationService" name="Consultar el préstamo" id="id-b3770e1c734d569ca65ced6e4d6ce41a">
       <documentation>Consulta: el estado de un préstamo y hasta cuándo va.</documentation>
-      <property key="Servicio básico V4" value="SB-03"/>
+      <property key="Código del servicio" value="SB-03"/>
     </element>
     <element xsi:type="archimate:ApplicationService" name="Catálogo de la biblioteca" id="id-ae10d4fa9958587aa03b1c8536870bb3">
       <documentation>Servicio de la capa anticorrupción: pregunta al sistema del catálogo si el libro está disponible.</documentation>
-      <property key="Servicio anticorrupción V4" value="SA-01"/>
+      <property key="Código del servicio anticorrupción" value="SA-01"/>
     </element>
     <element xsi:type="archimate:ApplicationInterface" name="Interfaz del catálogo" id="id-bd12ff4c48e651eb91ff722ffd2d41fe">
       <documentation>Interfaz por la que se consulta el catálogo.</documentation>
