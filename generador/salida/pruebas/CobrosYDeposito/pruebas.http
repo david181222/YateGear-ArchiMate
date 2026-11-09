@@ -171,7 +171,22 @@ Content-Type: application/json
 }
 
 # ==============================================================================
-# Escenario 5: Cobros rechazados (ARR-0007)
+# Escenario 5: Cancelación antes del pago ()
+# ==============================================================================
+
+### Cancelación antes del pago · paso 1: Reserva cancelada
+# Evento de otro contexto. Espera: HTTP 2xx.
+POST {{base}}/eventos-externos/reserva-cancelada
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0008",
+  "fechaDeLaCancelacion": "2026-03-05",
+  "diasDeAnticipacion": 20
+}
+
+# ==============================================================================
+# Escenario 6: Cobros rechazados (ARR-0007)
 # ==============================================================================
 
 ### Cobros rechazados · paso 1: Contrato del cliente firmado

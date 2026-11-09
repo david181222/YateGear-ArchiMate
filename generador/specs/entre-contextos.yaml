@@ -8,7 +8,7 @@
 # valor (el yate YATE-0001, el arriendo ARR-0001); espera es un evento o una lista de eventos de cualquier contexto,
 # o de mensajes que envía un SA (G11), que deben ocurrir durante el paso; o un código, o datos de una consulta.
 #
-# Los tres escenarios recorren los 11 eventos entre dominios de la V6, la copia del yate que Gestión del arriendo toma
+# Los cuatro escenarios recorren los 11 eventos entre dominios de la V6, la copia del yate que Gestión del arriendo toma
 # de "Yate registrado" (V8), el envío del contrato al cliente (SA-02), la alerta de señal a la marina (SA-05) y el
 # de los arriendos cerrados a Finanzas (SA-08). Corren en orden contra la aplicación recién levantada.
 
@@ -113,3 +113,13 @@ escenarios_entre_contextos:
         en: Contexto Disponibilidad de yates
         con: {identificador de la marina: MAR-01, inicio: "2026-03-24", fin: "2026-03-25"}
         espera: {yates disponibles: 1}
+
+  Cancelación antes del pago:                     # ARR-0004: sin contrato firmado, Cobros no tiene nada que liberar ni devolver
+    - Registrar la solicitud de reserva:
+        en: Contexto Gestión del arriendo
+        con: {cliente: CLI-0003, identificador del yate: YATE-0001, inicio: "2026-04-01", fin: "2026-04-02"}
+        espera: [Reserva solicitada, Fechas apartadas]
+    - Cancelar la reserva:                         # Disponibilidad suelta las fechas; en Cobros no aplica (si_existe), sin errores en el bus
+        en: Contexto Gestión del arriendo
+        con: {fecha de la cancelación: "2026-03-20"}
+        espera: [Reserva cancelada, Fechas liberadas]

@@ -264,3 +264,36 @@ Content-Type: application/json
 ### Riesgo alto · paso 3: Consultar yates disponibles
 # Consulta. Espera: HTTP 2xx y yates disponibles = 1.
 GET {{base}}/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-24&fin=2026-03-25
+
+# ==============================================================================
+# Escenario 4: Cancelación antes del pago
+# ==============================================================================
+
+### Cancelación antes del pago · paso 1: Registrar la solicitud de reserva
+# Comando. Espera: HTTP 2xx y "Reserva solicitada", "Fechas apartadas".
+POST {{base}}/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva
+Content-Type: application/json
+
+{
+  "cliente": "CLI-0003",
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-04-01",
+  "fin": "2026-04-02",
+  "numeroDeLaLicencia": "número de la licencia",
+  "vigenciaDeLaLicencia": "2026-02-01",
+  "fechaDeLaAutorizacion": "2026-02-01",
+  "tercerosAutorizados": [
+    "terceros autorizados"
+  ]
+}
+
+### Cancelación antes del pago · paso 2: Cancelar la reserva
+# Comando. Espera: HTTP 2xx y "Reserva cancelada", "Fechas liberadas".
+POST {{base}}/gestion-del-arriendo/comandos/cancelar-la-reserva
+Content-Type: application/json
+
+{
+  "numeroDelArriendo": "ARR-0004",
+  "quienCancela": "quién cancela",
+  "fechaDeLaCancelacion": "2026-03-20"
+}

@@ -607,6 +607,67 @@
           }
         }
       ]
+    },
+    {
+      "nombre": "Cancelación antes del pago",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0004",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "CLI-0003",
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-04-01",
+            "fin": "2026-04-02",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Reserva solicitada",
+              "Fechas apartadas"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Reserva solicitada\", \"Fechas apartadas\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Cancelar la reserva",
+          "contexto": "Contexto Gestión del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "ARR-0004",
+          "metodo": "POST",
+          "ruta": "/gestion-del-arriendo/comandos/cancelar-la-reserva",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0004",
+            "quienCancela": "quién cancela",
+            "fechaDeLaCancelacion": "2026-03-20"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Reserva cancelada",
+              "Fechas liberadas"
+            ],
+            "envios": [],
+            "texto": "HTTP 2xx y \"Reserva cancelada\", \"Fechas liberadas\""
+          }
+        }
+      ]
     }
   ]
 }

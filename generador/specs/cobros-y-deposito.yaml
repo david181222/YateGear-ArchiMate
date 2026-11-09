@@ -321,7 +321,9 @@ eventos_de_otros_contextos:
     datos:
       fecha de la cancelación: DateOnly
       días de anticipación: int                   # Gestión del arriendo lo calcula al cancelar (SB-08)
-    dispara: [Liberar el depósito, Reembolsar una cancelación]
+    dispara:                                      # una reserva cancelada antes del contrato firmado no tiene depósito ni cuenta:
+      Liberar el depósito: {si_existe: true}      # entonces no hay nada que liberar ni devolver, y no es un error (GEN-SUP-81)
+      Reembolsar una cancelación: {si_existe: true}
 
   Diferencias determinadas:                       # V6: SB-14, y SB-20 o SB-21
     de: Contexto Operación del arriendo
@@ -480,6 +482,10 @@ escenarios:
     - Reserva cancelada:                          # 2 días antes: no se reembolsa (el plazo del contrato es de 7)
         con: {número del arriendo: ARR-0004, fecha de la cancelación: "2026-03-20", días de anticipación: 2}
         espera: Cancelación no reembolsada
+
+  Cancelación antes del pago:
+    - Reserva cancelada:                          # sin contrato firmado no hay depósito ni cuenta: no aplica (si_existe)
+        con: {número del arriendo: ARR-0008, fecha de la cancelación: "2026-03-05", días de anticipación: 20}
 
   Cobros rechazados:
     - Contrato del cliente firmado:               # rechazo a propósito: INT-PAG, la pasarela rechaza la tarjeta

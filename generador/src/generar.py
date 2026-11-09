@@ -749,6 +749,16 @@ class Generador:
                 partes.append(f"!{o}" if negada else o)
         return " && ".join(partes) or None
 
+    def condicion_disparo(self, op: dict, amb: Ambito, rc: dict, id_raiz: str, dependencias: dict) -> str | None:
+        """La condición de un comando que dispara un evento o un mensaje: si y salvo, y con si_existe, que su raíz exista
+        (si no existe, el evento no le aplica y el comando no corre). Agrega a dependencias el repositorio que hace falta."""
+        cond = self.condicion(op, amb)
+        if not op.get("si_existe"):
+            return cond
+        dependencias[rc["repositorio"]] = {"cs": f'Repositorio<{rc["clase"]}>', "var": rc["repositorio"]}
+        existe = f'{rc["repositorio"]}.Obtener({id_raiz}) is not null'
+        return f"{existe} && {cond}" if cond else existe
+
     def guardar(self, guarda, amb: Ambito, r: dict) -> tuple[list[dict], list[str]]:
         """Lo que escribe en la raíz (YAML: guarda). Devuelve las asignaciones (propiedad = expresión) y las
         operaciones sobre listas (sentencias de C#) de los objetos de valor con Cardinalidad Muchos (G4)."""
@@ -1091,7 +1101,7 @@ class Generador:
                     manejadores[var_m] = {"cs": cmd["manejador"], "var": var_m}
                     disparos_x.append({"comando": cmd["nombre"], "comando_clase": cmd["clase"], "manejador_var": var_m,
                                        "args": [id_raiz] + self.argumentos(cmd, amb, op.get("con") or {}, op.get("correspondencias") or {}),
-                                       "condicion": self.condicion(op, amb)})
+                                       "condicion": self.condicion_disparo(op, amb, rc, id_raiz, manejadores)})
                 self.usar_raiz(r["nombre"])
                 x.update({"comando": disparos_x[0]["comando"], "disparos": disparos_x})
                 self.registrar_externo(x)
@@ -1181,7 +1191,7 @@ class Generador:
                     disparos_m.append({"comando": c_["nombre"], "comando_clase": c_["clase"], "manejador_var": var_c,
                                        "args": ([] if c_["crea"] else [f'mensaje.{rc["id_prop"]}'])
                                        + self.argumentos(c_, amb, op.get("con") or {}, op.get("correspondencias") or {}),
-                                       "condicion": self.condicion(op, amb)})
+                                       "condicion": self.condicion_disparo(op, amb, rc, f'mensaje.{rc["id_prop"]}', manejadores)})
                 r = self.usar_raiz(cmd["raiz_nombre"])
                 args, var_m = disparos_m[0]["args"], disparos_m[0]["manejador_var"]
                 obligatorios = ", ".join(f"({cs_cadena(nombres.camel(d['nombre']))}, {cs_cadena(d['nombre'])})"

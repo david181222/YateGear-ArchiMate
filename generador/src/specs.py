@@ -102,7 +102,7 @@ def valor_valido(v, t: dict) -> bool:
     return False
 
 
-OPCIONES_DISPARO = ("con", "correspondencias", "si", "salvo")
+OPCIONES_DISPARO = ("con", "correspondencias", "si", "salvo", "si_existe")
 OPCIONES_USO_SA = ("con", "entrada", "salida", "si", "salvo")
 
 
@@ -110,7 +110,7 @@ def disparos(x: dict) -> list[tuple[str, dict]]:
     """Los comandos que dispara un evento de otro contexto o un mensaje de un SA, en orden, con sus opciones.
 
     dispara puede ser un nombre (las opciones con y correspondencias van junto a dispara), una lista de nombres o
-    {comando: {con, correspondencias, si, salvo}, ...}. Un nombre o un elemento que no es texto se devuelve igual,
+    {comando: {con, correspondencias, si, salvo, si_existe}, ...}. Un nombre o un elemento que no es texto se devuelve igual,
     para que el revisor diga cuál está mal.
     """
     d = x.get("dispara")
@@ -452,8 +452,9 @@ class Revisor:
     def revisar_disparo(self, cmd: str, op: dict, aporta: dict, llegan: dict, entradas_cmd: dict, d: str, quien: str) -> set:
         """Un comando que dispara un evento de otro contexto o un mensaje de un SA. aporta: los datos que le llegan por
         su nombre; llegan: todos los que trae (para las correspondencias y las condiciones). con fija valores de su
-        entrada, correspondencias {dato de la entrada: dato que llega} toma un dato que llega con otro nombre (D2), y
-        si o salvo lo dispara solo si se cumple la condición. Devuelve los datos que llegan y el comando usa."""
+        entrada, correspondencias {dato de la entrada: dato que llega} toma un dato que llega con otro nombre (D2),
+        si o salvo lo dispara solo si se cumple la condición, y si_existe: true solo si su raíz existe (si no existe,
+        el evento no le aplica: no es un error). Devuelve los datos que llegan y el comando usa."""
         op = self.mapa(op, d, list(OPCIONES_DISPARO))
         ent = entradas_cmd[cmd]["entrada"]
         aporta = dict(aporta)
@@ -476,6 +477,11 @@ class Revisor:
                 aporta[k] = llegan[dato]
                 usados.add(dato)
         self.si_salvo(op, llegan, d, frozenset(llegan))
+        if "si_existe" in op:
+            if op["si_existe"] not in (True, False):
+                self.error(f"{d} > si_existe", "es true o false")
+            elif op["si_existe"] and entradas_cmd[cmd]["crea"]:
+                self.error(f"{d} > si_existe", f'"{cmd}" crea la raíz: no hay una raíz que pueda faltar')
         for k in ("si", "salvo"):
             usados |= set(op.get(k) or {}) if isinstance(op.get(k), dict) else set()
         for k, tk in aporta.items():

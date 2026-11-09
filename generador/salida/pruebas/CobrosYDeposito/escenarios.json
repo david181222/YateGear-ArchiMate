@@ -302,6 +302,30 @@
       ]
     },
     {
+      "nombre": "Cancelación antes del pago",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Reserva cancelada",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": "ARR-0008",
+          "metodo": "POST",
+          "ruta": "/eventos-externos/reserva-cancelada",
+          "cuerpo": {
+            "numeroDelArriendo": "ARR-0008",
+            "fechaDeLaCancelacion": "2026-03-05",
+            "diasDeAnticipacion": 20
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        }
+      ]
+    },
+    {
       "nombre": "Cobros rechazados",
       "identidad": "ARR-0007",
       "pasos": [
