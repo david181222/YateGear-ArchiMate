@@ -1,6 +1,6 @@
 # Pendientes del generador
 
-Estado al 7 de noviembre de 2026. Edwin terminó el piloto (Contexto Gestión del arriendo), José terminó J1 a J8 y Santiago terminó S1 a S5: los cinco contextos se generan, se comunican por el bus entre contextos y tienen un recorrido de punta a punta en verde (ver "Estado actual"). Aquí está lo que se hizo, lo que se decidió y lo que queda abierto. Cada quien actualiza este archivo al terminar su parte: marca lo que cerró y escribe las decisiones tomadas.
+Estado al 9 de noviembre de 2026: **el generador está terminado.** Edwin hizo el piloto (Contexto Gestión del arriendo), José, J1 a J8, y Santiago, S1 a S5: los cinco contextos se generan, se comunican por el bus entre contextos y tienen un recorrido de punta a punta. Después, Edwin lo cerró (S6 a S12, sección 4): contratos entre contextos revisados antes de generar, errores del bus que hacen fallar las pruebas, pruebas del propio validador, `verificar.ps1`, las discrepancias 12 y 13, la alerta de señal por SA-05, la guía de modelado y un modelo de ejemplo que no es YateGear. Este archivo queda como registro de lo que se hizo y se decidió.
 
 Cómo funciona el generador y cómo se ejecuta: [README.md](README.md).
 
@@ -12,22 +12,24 @@ Las cifras de esta sección son las de la entrega del piloto (3 de noviembre); l
 - El piloto, "Contexto Gestión del arriendo": `probar.ps1` pasa los 19 pasos de sus 4 escenarios. REG-01 está escrita a mano en `salida/GestionDelArriendo/Comandos/ConfirmarLaReserva.cs`.
 - Es determinista: el mismo modelo y el mismo YAML dan la misma huella. La trazabilidad está completa (161 filas), con 33 supuestos (GEN-SUP-02 a 34) y 3 discrepancias documentadas en el README. GEN-SUP-01 se retiró porque la tecnología es una decisión del equipo.
 
-### Estado actual (7 de noviembre, después de S5)
+### Estado actual (9 de noviembre, después de S12)
 
 | Qué | Hoy | Cómo se recalcula |
 |---|---|---|
 | Contextos generados | 5 de 5: Calificaciones, Cobros y depósito, Disponibilidad de yates, Gestión del arriendo y Operación del arriendo, en un solo programa y comunicados por el bus entre contextos (G12). | `generar.py` lista los generados y los que no tienen YAML. |
-| Pasos de los escenarios | 104, todos en verde: 10, 19, 18, 19 y 16 de los contextos, y 22 de los escenarios entre contextos (S4). Ningún error en el bus en el recorrido de punta a punta. | `probar.ps1` |
-| Trazabilidad | 580 filas: 47, 171, 86, 172 y 104; todos los elementos de los cinco contextos están. | `src/revisar_trazabilidad.py salida/intermedio/modelo-ddd.json salida` |
-| Supuestos | 77 vigentes: GEN-SUP-02 a 83, sin GEN-SUP-20 a 24 (retirados en G12). GEN-SUP-01 también se retiró. | Tablas "Supuestos" del README. |
-| Discrepancias | 12: la 1 y la 3 cerradas sin cambiar el modelo, la 12 abierta y las otras 9 corregidas en el modelo. | Tabla "Discrepancias encontradas" del README. |
+| Pasos de los escenarios | 110, todos en verde: 10, 20, 18, 21 y 16 de los contextos, y 25 de los escenarios entre contextos. Ningún error en el bus, y `probar.py` lo comprueba (S7). | `probar.ps1` |
+| Trazabilidad | 592 filas: 47, 171, 86, 175 y 113; todos los elementos de los cinco contextos están. | `src/revisar_trazabilidad.py salida/intermedio/modelo-ddd.json salida` |
+| Supuestos | 75 vigentes: GEN-SUP-02 a 84, sin GEN-SUP-09 a 11 (retirados con la discrepancia 13) ni GEN-SUP-20 a 24 (retirados en G12). GEN-SUP-01 también se retiró. | Tablas "Supuestos" del README. |
+| Discrepancias | 13, ninguna abierta: la 1, la 3 y la 13 cerradas sin cambiar el modelo, y las otras 10 corregidas en el modelo. | Tabla "Discrepancias encontradas" del README. |
 | Modelo | 425 elementos, 913 relaciones y 27 vistas. | Sección "Totales del modelo" del README principal. |
+| Pruebas del validador | 34 copias rotas a propósito de los YAML: `specs.py` da el error esperado en cada una (S8). | `src/probar_validador.py salida/intermedio/modelo-ddd.json pruebas-validador/casos.yaml` |
+| Verificación | **9 nov 2026, Windows (.NET 8.0.404, Archi 5):** `verificar.ps1` da las cinco revisiones en ✓ (compila sin advertencias, la misma huella en dos generaciones, trazabilidad completa, pruebas del validador y escenarios). El modelo de ejemplo también (sin las pruebas del validador, que son de YateGear). | `verificar.ps1` |
 
-Estas cifras cambian con cada contexto: al terminar uno, se actualiza esta tabla.
+Si se cambia el modelo o un YAML, `verificar.ps1` vuelve a dar estas cifras y esta tabla se actualiza.
 
-## 2. Lo que le falta al generador
+## 2. Capacidades del generador (G1 a G13)
 
-Al principio el generador producía **1 de los 5 contextos**. Estas son las capacidades que se le agregaron para los otros cuatro (todas hechas, salvo la guía de G13):
+Al principio el generador producía **1 de los 5 contextos**. Estas son las capacidades que se le agregaron para los otros cuatro y para usarlo con otro modelo (todas hechas):
 
 | ID | Qué falta | Lo necesita | Qué pasa hoy | Quién |
 |---|---|---|---|---|
@@ -43,9 +45,9 @@ Al principio el generador producía **1 de los 5 contextos**. Estas son las capa
 | G10 | **Políticas internas con varios disparos:** "junto con" y "uno de". | SB-17: "Cargos del cierre cobrados" y, además, "Depósito liberado" o "Daños descontados del depósito" | **Hecho (S2, 7 nov 2026):** sección `politicas` (D7) con `junto_con`, `uno_de` (cada uno con su `con`), `si`, `salvo`, `con` y `correspondencias`. Además, una política puede disparar un comando que crea la raíz (SB-16 crea el reclamo). | Santiago |
 | G11 | **SA solo de salida** (lenguaje publicado). | SA-08, envío de arriendos cerrados a Finanzas | **Hecho (S2, 7 nov 2026):** `servicios_sa > envia`, con mensajes que salen `cuando` ocurre un evento del contexto, con sus datos; el emisor simulado los anota en la bitácora. `specs.py` revisa los flujos: un SA que se llama con `usa` necesita uno que entra, y uno con `envia`, uno que sale. También lo usa SA-02 en Gestión del arriendo, con "Riesgo aceptable obtenido". | Santiago |
 | G12 | **Integración entre contextos** según D1, con los nombres de los datos de los eventos alineados (D2). El host y el bus los construye José en G1; aquí se conectan las suscripciones entre contextos. | Los 11 eventos entre dominios de la V6 | **Hecho (S3, 7 nov 2026):** cada contexto se suscribe en el bus a los eventos de su YAML, por el contexto que los publica y su nombre; los datos llegan con los nombres de quien publica y `correspondencias` los lleva a la entrada del comando. Un evento o un mensaje puede disparar varios comandos (`dispara` con una lista o un mapa, con `si` y `salvo`). Los endpoints de prueba siguen para los escenarios de cada contexto. | Santiago |
-| G13 | **Documentación para usar el generador con otro modelo:** las convenciones de diagramación que lee, y la referencia completa del formato del YAML (cada clave, para qué sirve y qué revisa `specs.py`). Cada capacidad nueva del YAML se documenta ahí al agregarla. | Cualquier modelo que siga las convenciones | **En parte (7 nov 2026):** el README tiene la sección "Formato del YAML" con todas las claves, también las de S2 a S4 (entidades, calculados, `usa` con opciones, `politicas`, `envia`, `correspondencias`, `dispara` con varios comandos y escenarios entre contextos). Falta una guía de las convenciones de diagramación para quien modele en Archi desde cero. | José (y quien agregue claves) |
+| G13 | **Documentación para usar el generador con otro modelo:** las convenciones de diagramación que lee, y la referencia completa del formato del YAML (cada clave, para qué sirve y qué revisa `specs.py`). Cada capacidad nueva del YAML se documenta ahí al agregarla. | Cualquier modelo que siga las convenciones | **Hecho (S11, 9 nov 2026):** [GUIA-DE-MODELADO.md](GUIA-DE-MODELADO.md) dice qué dibujar en Archi, paso a paso, en qué orden trabajar y qué significa cada error del modelo; el README tiene la referencia del YAML. `ejemplo/` tiene un modelo mínimo de una biblioteca que se genera, compila y pasa sus escenarios, y nada de lo generado para él nombra a YateGear. | José y Edwin |
 
-## 3. Decisiones por tomar
+## 3. Decisiones (D1 a D8)
 
 **Ya decidido:** el proyecto generado es C# con una API web (ASP.NET Core, .NET 8). No es una decisión pendiente.
 
@@ -62,7 +64,7 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 | D7 | Cómo se escriben en el YAML las políticas con varios disparos (SB-17). | Extender `junto_con` a las políticas internas y agregar "uno de". | Esa misma. | Santiago | S2 | **Esa misma (7 nov 2026):** una sección `politicas` por comando, con `junto_con` (deben llegar todos) y `uno_de` (y además uno de estos, cada uno con su `con`), que nombran todos los eventos que disparan el comando en el modelo. La misma sección sirve para las condiciones (`si`, `salvo`) de una política de un solo disparo (SB-16). |
 | D8 | Fuentes de las 6 agrupaciones de área de la V2 (opcional). | Arreglarlas en Archi o dejarlas. | Arreglarlas: así desaparecen los 6 errores que muestra la exportación. | José | Cuando pueda | **Arreglado (4 nov 2026):** las 6 agrupaciones de la V2 tienen fuente explícita (Sans 9, negrita). La exportación sale sin errores. |
 
-## 4. Reparto del trabajo
+## 4. Quién hizo qué
 
 ### José (terminado)
 
@@ -87,25 +89,31 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 | S4 | Un escenario de punta a punta entre contextos: desde "Consultar yates disponibles" hasta el envío a Finanzas (SA-08), pasando por los 11 eventos entre dominios. | `probar.ps1` lo da en verde. **Hecho (7 nov 2026):** `specs/entre-contextos.yaml`, con tres escenarios (22 pasos): del inventario al envío a Finanzas, una cancelación con reembolso y un cliente de riesgo alto. Entre los tres pasan los 11 eventos entre dominios; ningún error en el bus. |
 | S5 | Cierre: el README del generador (tablas, supuestos, discrepancias y limitaciones), una mención del generador en el README principal ("Contenido del repositorio" y "Tabla de aportes") y la verificación final. | Huella estable, trazabilidad completa, cero advertencias, todos los escenarios en verde y commit hecho. **Hecho (7 nov 2026):** 104 de 104 pasos, 580 filas de trazabilidad, 0 advertencias y la misma huella en dos generaciones seguidas. Diecisiete copias rotas del YAML a propósito: `specs.py` detecta cada una. Los totales del README principal estaban desactualizados desde J7 y se corrigieron. |
 
+### Edwin: cierre del generador (terminado)
+
+Con S1 a S5 el generador ya estaba completo. Esta iteración lo dejó sólido (un error entre contextos se detecta antes de ejecutar, y el validador tiene sus propias pruebas), verificable con un solo comando y usable con otro modelo. No agrega alcance: lo que se dejó fuera está en la sección 7. Rama `e-edwin-cierre`.
+
+| Paso | Qué se hizo | Resultado |
+|---|---|---|
+| S6 | **Contratos entre contextos (D2):** `specs.py` revisa que lo que un contexto declara recibir de otro llegue en el evento tal como lo publica el YAML de ese contexto (el dato con que llega, cada dato con su tipo, y ningún obligatorio publicado como opcional). Lo hacen `specs.py` (contra los YAML de su carpeta) y `generar.py`, antes de escribir nada. | Antes, un dato renombrado en quien recibe pasaba la revisión y solo fallaba al ejecutar (probado el 9 nov). Ahora se detiene con el dato y los dos contextos. |
+| S7 | **El bus no falla en silencio:** en los escenarios entre contextos, un paso falla si durante él falla un suscriptor del bus, y al final se dice cuántos errores hubo. Además, `si_existe` en `dispara`: un evento que no le aplica a un comando (no existe su raíz) no es un error; Cobros lo usa con "Reserva cancelada" antes del pago (GEN-SUP-81). | Un suscriptor roto a propósito hace fallar el paso. 0 errores en el bus. |
+| S8 | **Pruebas del validador:** `pruebas-validador/casos.yaml` y `src/probar_validador.py`. Cada caso rompe en memoria una copia de un YAML y dice qué error debe dar `specs.py`. | 34 casos, al menos uno por capacidad (G1 a G12, D2, D5, S6, `si_existe` y la discrepancia 13). |
+| S9 | **`verificar.ps1`:** lo de la sección 5 en un solo comando, con una tabla al final. Los `.csproj` tratan las advertencias como errores. `generar.ps1 -SoloValidar` revisa sin tocar `salida/`, y los tres comandos aceptan `-Salida`. | Las cinco revisiones en ✓. |
+| S10 | **Lo que le faltaba al modelo de YateGear:** discrepancia 12 corregida en el modelo (el Cobro tiene `fecha`, la de la orden que confirma la pasarela, y SB-18 la devuelve); discrepancia 13 (Gestión del arriendo toma la copia del yate de "Yate registrado", como dice la V8, y no de quien llama: GEN-SUP-09 a 11 retirados); la alerta de pérdida de señal sale por SA-05 (`envia`), como dice el flujo del modelo. | Las dos discrepancias, cerradas. Los escenarios lo prueban, también el de punta a punta. |
+| S11 | **G13:** la guía de modelado, el modelo de ejemplo y "la aplicación" en lugar de "YateGear" en lo que se genera y en los mensajes. | G13 cerrado. |
+| S12 | **Cierre:** el README del generador (con "Fuera de alcance"), el README principal y este archivo. | `verificar.ps1` en verde. |
+
 ### Lo que queda abierto
 
-| Qué | Por qué queda | Quién la lleva |
-|---|---|---|
-| Discrepancia 12: los movimientos del estado de cuenta (SB-18) no tienen fecha. | Hay que decidir si el Cobro guarda la fecha de cada orden de la pasarela (cambia el modelo). | El equipo |
-| G13: guía de las convenciones de diagramación. | No la necesitaba ningún contexto de YateGear. | José (y quien agregue claves) |
-| Gestión del arriendo todavía recibe la copia del yate (propietario, precio y marina) en la solicitud (GEN-SUP-09 a 11). | Podría tomarla del evento "Yate registrado" de Disponibilidad de yates (V8-DEC-04); el escenario entre contextos le pasa los mismos datos. | El equipo |
+Nada para la entrega. Lo que el generador todavía no expresa está en "Limitaciones conocidas" del README, y lo que se dejó fuera a propósito, en "Fuera de alcance" del mismo README y en la sección 7.
 
 ## 5. Cuándo está terminado un contexto
 
-- [ ] `specs/<contexto>.yaml` lleva `# supuesto` en cada dato que no salga del README. Sus escenarios incluyen al menos un rechazo a propósito (409 o 422).
-- [ ] `specs.py` no da errores.
-- [ ] `generar.ps1` compila con 0 advertencias.
-- [ ] `probar.ps1` da todos los pasos en ✓.
-- [ ] `src/huella.py` da la misma huella en dos generaciones seguidas.
-- [ ] `src/revisar_trazabilidad.py` no encuentra faltantes.
+- [ ] `verificar.ps1` da las cinco revisiones en ✓: compila sin advertencias, la misma huella en dos generaciones, la trazabilidad completa, las pruebas del validador y todos los escenarios (sin errores en el bus).
+- [ ] `specs/<contexto>.yaml` lleva `# supuesto` en cada dato que no salga del README. Sus escenarios incluyen al menos un rechazo a propósito (409 o 422), con su motivo.
 - [ ] Las reglas de contrato que necesitan los escenarios están escritas a mano en los archivos manuales (`.cs`, nunca en los `.g.cs`).
-- [ ] El README del generador está al día: supuestos nuevos desde GEN-SUP-35, sin repetir números; discrepancias nuevas; y la tabla "qué genera" si hay elementos nuevos.
-- [ ] Este archivo está al día: los G y los D que se cerraron.
+- [ ] Cada clave nueva del YAML tiene su caso en `pruebas-validador/casos.yaml` y su fila en "Formato del YAML" del README.
+- [ ] El README del generador está al día: supuestos nuevos (desde GEN-SUP-85, sin repetir números), discrepancias nuevas y la tabla "qué genera" si hay elementos nuevos.
 
 ## 6. Cosas que conviene saber
 
@@ -118,9 +126,30 @@ Cuando una de las siguientes se decida, se escribe la decisión en la columna "D
 - En el modelo, todo se busca por tipo y por relación, nunca solo por nombre. Las agrupaciones del canvas de la V11 también agregan comandos y eventos: solo cuentan las "Agregado ...".
 - El puerto (5080) se cambia en `PUERTO`, en `src/generar.py`. Para una sola vez: `-Puerto`. Es uno solo para todos los contextos, porque corren en el mismo programa.
 - Para agregar un contexto basta con escribir su `specs/<contexto>.yaml`: `generar.ps1` genera todos los que tienen YAML, y `probar.ps1 -Contexto "<nombre>"` prueba solo uno.
+- Mientras se escribe un YAML o se modela, `generar.ps1 -SoloValidar` revisa todo en menos tiempo y sin tocar `salida/`.
+- Otro modelo se genera en su propia carpeta con `-Modelo`, `-Specs` y `-Salida` (ver `ejemplo/` y la guía de modelado).
 - Un cambio en el modelo se hace en Archi y se guarda en `modelo/YateGear.archimate`; después se vuelve a correr `generar.ps1`.
 - Si una revisión nueva pasa a la primera, conviene romper a propósito una copia del YAML para comprobar que de verdad detecta el error.
 - `probar.ps1` levanta la aplicación de nuevo para cada contexto y para los escenarios entre contextos (`-Contexto "entre contextos"` prueba solo esos). Con la integración, los eventos de los escenarios de un contexto llegan a los demás; los errores que eso produce quedan en `GET /eventos-entre-contextos` y no cambian el resultado.
 - `specs/entre-contextos.yaml` no es el YAML de un contexto: `specs.py` lo revisa contra los demás YAML de la carpeta, así que con `-Specs` hay que pasar también los de sus contextos.
 - Los `.ps1` corren en Windows y en Linux (`pwsh`). Las rutas van con `/`, que sirve en los dos. Para detener la aplicación, `probar.ps1` la busca por la ruta de su ejecutable y no por el nombre, porque en Linux el nombre del proceso se corta a 15 caracteres.
 - En Linux, el venv se crea con la ruta real de Python 3.13. Si se crea desde un enlace (como el `python3.13` que `uv` deja en `~/.local/bin`), el venv no encuentra la biblioteca estándar y `ensurepip` falla con "No module named 'encodings'".
+
+## 7. Lo que no se hizo (revisión del 9 de noviembre)
+
+El 9 de noviembre se revisó una propuesta de mejoras al generador, escrita sobre el estado de J8. Su primer bloque (G9 a G12, SB-18 y el escenario de punta a punta) ya lo había hecho Santiago en S1 a S5. De lo demás, lo que servía se hizo en S6 a S12. Esto es lo que no se hizo, y por qué; el resumen está en "Fuera de alcance" del README.
+
+| Propuesta | Por qué no |
+|---|---|
+| Escribir la salida de forma transaccional (carpeta temporal y reemplazo al final). | `generar.py` ya prepara todos los archivos en memoria y escribe solo al final: un error de una plantilla no deja nada a medias. Si falla el disco a mitad, `salida/` está versionada y git la recupera. |
+| Versión del esquema del YAML (`version: 1`). | El generador y los YAML viven en el mismo repositorio y cambian juntos, en el mismo commit. Un YAML viejo ya falla con un mensaje claro: "clave desconocida", con las permitidas. |
+| Prohibir `DateTime.Now`, `Guid.NewGuid` y similares en las plantillas. | El determinismo es del texto generado, no de lo que hace la aplicación al correr: el temporizador de G8 usa `DateTime.Now` a propósito. Lo que lo vigila son dos generaciones seguidas con la misma huella, y eso va en `verificar.ps1` (S9). |
+| `-Limpiar` y un resumen de "qué cambió". | El generador ya borra lo generado que ya no corresponde y avisa de los manuales huérfanos. Como `salida/` está versionada, `git status` y `git diff` muestran qué cambió. |
+| `-Diagnostico` para auditar un modelo ajeno de una vez. | `extraer.py` y `specs.py` ya juntan todos los errores antes de detenerse; no paran en el primero. Lo que le falta a quien modela desde cero es la guía de S11. |
+| Configuración externa (`generador.config.yaml`: puerto, versión de .NET, idioma y prefijos). | El puerto ya se cambia con `-Puerto` o `PUERTO`, y el SDK lo fija `global.json`. Los prefijos ("Contexto ", "Agregado ") y las propiedades en español son la convención misma: se documentan en la guía, no se parametrizan. |
+| Empaquetado: versión, licencia, instalable. | `requirements.txt` tiene versiones fijas y el README tiene la tabla de requisitos. Es la herramienta del proyecto, no un producto que se distribuye. |
+| Swagger u OpenAPI. | En .NET 8 necesita un paquete NuGet (red al restaurar y una dependencia más). La API ya está descrita en los `pruebas.http` y en los escenarios. |
+| Cambiar los errores a `ProblemDetails` y agregar logging estructurado. | Las respuestas de error tienen su propio contrato (`regla`, `requiere`, `identidad`, `operación` y `estado actual`), y los escenarios lo afirman. Cambiarlo sería trabajo sin ganancia. El contrato ya está en "Escenarios y pruebas" del README. |
+| Mover los servicios SA después de `ValidarReglas`. | Ya está justificado en las limitaciones del README: las reglas usan las respuestas de los SA (REG-01 necesita el estado del contrato). |
+| Marcar o esconder los endpoints de prueba (eventos de otros contextos). | No hay producción: todo está en memoria y simulado (GEN-SUP-02 y 03). Esos endpoints sirven para probar cada contexto por separado, y el README ya lo dice. |
+| Autenticación, base de datos, microservicios, paginación, CI/CD y un asistente que escriba el YAML. | Están fuera del alcance de la primera versión de referencia. S12 los deja escritos en "Fuera de alcance". |

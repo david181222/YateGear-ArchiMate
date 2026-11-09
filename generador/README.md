@@ -2,7 +2,9 @@
 
 Este generador construye la primera versión de la aplicación de YateGear a partir del modelo de Archi (`../modelo/YateGear.archimate`) y de un archivo de especificaciones por contexto (`specs/*.yaml`). Es determinista: no usa IA ni red, y el mismo modelo con el mismo YAML da siempre los mismos archivos.
 
-Genera un proyecto por cada contexto que tiene YAML en `specs/`, y los levanta todos en un solo programa (D1), comunicados por el bus entre contextos (G12). Hoy tienen YAML los cinco contextos del modelo, y `specs/entre-contextos.yaml` tiene los escenarios de punta a punta entre ellos (S4). Lo que falta, las decisiones y el reparto del trabajo están en [PENDIENTES.md](PENDIENTES.md).
+Genera un proyecto por cada contexto que tiene YAML en `specs/`, y los levanta todos en un solo programa (D1), comunicados por el bus entre contextos (G12). Hoy tienen YAML los cinco contextos del modelo, y `specs/entre-contextos.yaml` tiene los escenarios de punta a punta entre ellos (S4). Las decisiones, lo que se hizo y lo que queda abierto están en [PENDIENTES.md](PENDIENTES.md).
+
+El generador no conoce YateGear: sirve para cualquier modelo que siga sus convenciones. La [guía de modelado](GUIA-DE-MODELADO.md) dice qué dibujar en Archi y en qué orden trabajar, y `ejemplo/` tiene un modelo mínimo de otro dominio (una biblioteca) que se genera y se prueba igual que YateGear.
 
 ## Tecnología
 
@@ -29,6 +31,7 @@ Desde la carpeta `generador`:
 powershell -ExecutionPolicy Bypass -File .\generar.ps1     # exporta, lee, valida, genera y compila
 powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1    # levanta la aplicación (Ctrl+C para detenerla)
 powershell -ExecutionPolicy Bypass -File .\probar.ps1      # ejecuta los escenarios y marca cada paso con ✓ o ✗
+powershell -ExecutionPolicy Bypass -File .\verificar.ps1   # todo lo anterior, más determinismo, trazabilidad y pruebas del validador
 ```
 
 En Linux, lo mismo con `pwsh`:
@@ -37,17 +40,24 @@ En Linux, lo mismo con `pwsh`:
 pwsh ./generar.ps1
 pwsh ./ejecutar.ps1
 pwsh ./probar.ps1      # la salida de la aplicación queda en salida/intermedio/aplicacion*.log
+pwsh ./verificar.ps1
 ```
 
 Las herramientas de Python se llaman con `.\.venv\Scripts\python.exe` en Windows y con `./.venv/bin/python` en Linux.
 
-`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`) y `-Archi`. Ojo: `salida/` queda con exactamente los contextos que se generan, así que con `-Specs` se borran los archivos generados de los demás (nunca su código a mano); vuelven al generar todo.
+`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`) `-Archi` y `-Salida` (la carpeta de lo generado, por defecto `salida`). Con `-SoloValidar` hace solo los pasos 1 a 4 (exportar, extraer y revisar los YAML) sin tocar la carpeta de salida: es el modo para quien está escribiendo un YAML o modelando. Ojo: `salida/` queda con exactamente los contextos que se generan, así que con `-Specs` se borran los archivos generados de los demás (nunca su código a mano); vuelven al generar todo.
 
 `ejecutar.ps1` levanta la aplicación (el host, con todos los contextos) desde `salida/`, para que `dotnet` use el SDK 8 de `salida/global.json`. Con la aplicación arriba, cada `salida/pruebas/<Proyecto>/pruebas.http` se puede ejecutar llamada por llamada con la extensión REST Client de VS Code o con Visual Studio.
 
 `probar.ps1` compila y, para cada contexto (`salida/pruebas/<Proyecto>/escenarios.json`) y después para los escenarios entre contextos (`salida/pruebas/EntreContextos/escenarios.json`), levanta la aplicación, ejecuta sus escenarios y la detiene; termina con código 1 si algún paso falla. Con `-Contexto "<nombre del contexto o del proyecto>"` prueba solo ese, y con `-Contexto "entre contextos"`, solo los de punta a punta.
 
-Los dos leen de `salida/contextos.json` qué proyecto levantar, en qué puerto y qué contextos hay, así que no tienen escrito ningún nombre del modelo.
+Los dos leen de `salida/contextos.json` qué proyecto levantar, en qué puerto y qué contextos hay, así que no tienen escrito ningún nombre del modelo. Los dos aceptan `-Salida`, para otra carpeta generada.
+
+`verificar.ps1` revisa en un solo comando lo de "Cuándo está terminado un contexto" ([PENDIENTES.md](PENDIENTES.md)): genera y compila (una advertencia es un error), genera otra vez y compara la huella (determinismo), revisa la trazabilidad, corre las pruebas del validador (`pruebas-validador/casos.yaml`) y prueba los escenarios. Al final muestra una tabla con cada revisión y termina con código 1 si alguna falla. Acepta `-Modelo`, `-Specs`, `-Archi`, `-Salida` y `-Puerto`, y `-SinPruebasDelValidador` para otro modelo, como el de ejemplo:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\verificar.ps1 -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida -SinPruebasDelValidador
+```
 
 ### Puerto
 
@@ -82,15 +92,18 @@ Se lee el XML de intercambio y no el `.archimate` directo, porque los dos dan lo
 
 | Carpeta o archivo | Qué es |
 |---|---|
-| `generar.ps1`, `ejecutar.ps1`, `probar.ps1` | Los tres comandos. Van en UTF-8 con BOM, porque Windows PowerShell 5.1 lee sin BOM como ANSI y rompería la "ó" de "Gestión". |
-| `src/` | El generador en Python: `leer.py`, `tipos.py`, `extraer.py`, `specs.py`, `nombres.py`, `generar.py`, y las herramientas de prueba `comparar_lectura.py`, `huella.py`, `revisar_trazabilidad.py` y `probar.py`. |
+| `generar.ps1`, `ejecutar.ps1`, `probar.ps1`, `verificar.ps1` | Los comandos. Van en UTF-8 con BOM, porque Windows PowerShell 5.1 lee sin BOM como ANSI y rompería la "ó" de "Gestión". |
+| `src/` | El generador en Python: `leer.py`, `tipos.py`, `extraer.py`, `specs.py`, `nombres.py`, `generar.py`, y las herramientas de prueba `comparar_lectura.py`, `huella.py`, `revisar_trazabilidad.py`, `probar.py` y `probar_validador.py`. |
 | `plantillas/` | Una plantilla Jinja2 por tipo de archivo generado. |
 | `specs/` | Un YAML de especificaciones por contexto. Su comentario inicial explica cada sección. |
 | `salida/` | Lo generado. Se versiona todo, salvo `bin/`, `obj/`, el XML exportado (`intermedio/*.xml`) y los registros de la aplicación (`intermedio/*.log`). |
+| `pruebas-validador/` | `casos.yaml`: copias rotas a propósito de los YAML de `specs/` y el error que `specs.py` debe dar en cada una (ver "Validaciones"). |
+| `ejemplo/` | Un modelo mínimo que no es YateGear (`Biblioteca.archimate`, Contexto Préstamos), su YAML (`specs/prestamos.yaml`) y lo generado (`salida/`, con su regla escrita a mano). Es el ejemplo de la guía de modelado y prueba que el generador no conoce YateGear. |
+| `GUIA-DE-MODELADO.md` | Qué dibujar en Archi para que el generador lo lea, en qué orden trabajar y qué significa cada error del modelo. |
 
 ## Qué se lee del modelo
 
-Todo se busca por tipo y por relación, nunca solo por nombre, porque hay nombres repetidos entre capas (por ejemplo, el objeto de negocio y el objeto de datos "Arriendo"). El único nombre que se usa para buscar es el del contexto. No se leen los anidamientos de las vistas: los objetos de valor se dibujan dentro de su raíz, pero lo que cuenta es su composición.
+Todo se busca por tipo y por relación, nunca solo por nombre, porque hay nombres repetidos entre capas (por ejemplo, el objeto de negocio y el objeto de datos "Arriendo"). El único nombre que se usa para buscar es el del contexto. No se leen los anidamientos de las vistas: los objetos de valor se dibujan dentro de su raíz, pero lo que cuenta es su composición. La [guía de modelado](GUIA-DE-MODELADO.md) explica estas convenciones paso a paso, con un ejemplo y los errores de cada una.
 
 | Concepto | Cómo se encuentra en el modelo |
 |---|---|
@@ -186,7 +199,7 @@ El generador debe servir para cualquier modelo ArchiMate que siga las convencion
 - Si a un contexto le falta algo que el código no puede inferir ni declarar en el YAML, se amplía el formato del YAML (y `specs.py` lo revisa) y se documenta. No se escribe a mano en el generador.
 - Si el modelo tiene un error o le falta un dato, se corrige el modelo en Archi, no el generador. Las correcciones quedan en "Discrepancias encontradas".
 
-Los nombres del modelo que antes estaban escritos en los scripts (el proyecto, el contexto, el YAML y el XML del piloto) se quitaron en G1: hoy salen del modelo, de `specs/` o de `salida/contextos.json`.
+Los nombres del modelo que antes estaban escritos en los scripts (el proyecto, el contexto, el YAML y el XML del piloto) se quitaron en G1: hoy salen del modelo, de `specs/` o de `salida/contextos.json`. Desde G13, lo generado tampoco menciona YateGear (dice "la aplicación"), y el modelo de `ejemplo/` lo prueba: se genera, compila y pasa sus escenarios, y nada de lo que se genera para él nombra a YateGear ni a su dominio.
 
 ### Regla de los datos
 
@@ -223,6 +236,8 @@ Cada comando y cada consulta tiene un archivo `.cs` que el generador crea **una 
 - un valor provisional para cada dato calculado, marcado `PENDIENTE` y con la regla de la que sale.
 
 El código generado va en los `.g.cs`, que el generador sí reescribe. Ejemplo: REG-01 está escrita a mano en `salida/GestionDelArriendo/Comandos/ConfirmarLaReserva.cs` y sobrevive a la regeneración.
+
+Los `.csproj` tratan las advertencias como errores (`TreatWarningsAsErrors`): una advertencia en un archivo manual también detiene la compilación.
 
 Si un manual queda sin su `.g.cs` (por ejemplo, porque se quitó un comando), el generador no lo borra: avisa al final y lo saca de la compilación en el `.csproj`, con un comentario que dice cuál es y por qué. Los `.g.cs` que ya no corresponden sí se borran.
 
@@ -303,12 +318,12 @@ Entre los cuatro pasan los 11 eventos entre dominios de la V6 (Reserva solicitad
 
 ## Reproducibilidad y trazabilidad
 
-- El mismo modelo y el mismo YAML dan los mismos archivos. Para comprobarlo: `.\.venv\Scripts\python.exe src\huella.py salida`, después de generar dos veces, o con dos carpetas para compararlas.
+- El mismo modelo y el mismo YAML dan los mismos archivos. `verificar.ps1` lo comprueba solo (dos generaciones seguidas con la misma huella). A mano: `.\.venv\Scripts\python.exe src\huella.py salida`, después de generar dos veces, o con dos carpetas para compararlas.
 - Todo se ordena por nombre o por ID. Hay dos excepciones, porque ahí el orden tiene significado: los campos van en el orden del modelo, y los pasos de las pruebas en el orden del YAML.
 - Sin fechas ni horas en lo generado. Todo en UTF-8 sin BOM y con fin de línea LF. `.gitattributes` (`* text=auto eol=lf`) hace que git entregue LF en todas las máquinas.
 - Cada archivo generado empieza con `// Generado desde ArchiMate: <tipo> "<nombre>" (<código>, <ID>).`. En `.csproj` y `.sln` va en la segunda y en la tercera línea, porque su formato lo exige. Los `.json` y el `.csv` no admiten comentarios.
 - `salida/trazabilidad/<Proyecto>.csv` tiene una fila por cada elemento o relación del contexto. El proyecto `Integracion` (el bus entre contextos) no tiene filas, porque es infraestructura y no sale de ningún elemento del modelo, y tampoco `pruebas/EntreContextos/`, que sale de los escenarios; el host sí aparece, en la fila del contexto que registra. Las columnas son ID ArchiMate, tipo, nombre, archivo generado y clase. Para revisarlo: `.\.venv\Scripts\python.exe src\revisar_trazabilidad.py salida\intermedio\modelo-ddd.json salida`.
-- El código generado compila con cero advertencias.
+- El código generado compila con cero advertencias, y una advertencia es un error de compilación.
 
 ## Validaciones
 
@@ -318,6 +333,8 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 |---|---|
 | `extraer.py` (modelo) | La regla del agregado. Cada objeto de valor tiene exactamente una composición desde su raíz o entidad, con Cardinalidad. Cada `Campo:` tiene un tipo permitido. No hay nombres repetidos dentro del mismo tipo entre los elementos del contexto. Cada comando tiene exactamente un acceso a la raíz de su agregado; además puede leer otras raíces del contexto, y escribir otra raíz es error. Cada evento lo dispara al menos un comando del contexto. Cada comando, consulta y servicio SA tiene un solo contrato. |
 | `specs.py` (YAML) | Cada comando, evento, consulta y servicio SA del contexto está en el YAML, y el YAML no nombra nada que no exista. Hay claves conocidas y no repetidas, tipos permitidos y estados de la lista cerrada. Los eventos de cada comando son exactamente los del modelo. Se cumple la regla de los datos. Las políticas, `junto_con` y `con` están completos. La identidad es un consecutivo o se forma con datos que el comando que crea tiene; los `valores` son válidos; cada evento de `requiere` está declarado y el comando tiene su identidad; las correspondencias de `guarda` tienen el mismo tipo; un evento sin `dispara` lo requiere algún comando; las consultas sobre todas filtran por datos de su entrada y sus agregaciones tienen el tipo correcto; una lista tiene nombre y sus datos son de la raíz. Con varios agregados, cada comando, evento y consulta se revisa contra la raíz de su agregado; `crea: si_no_existe` necesita una identidad recibida; las operaciones sobre listas tienen claves que son campos de la lista; un evento que dispara con otra identidad trae la de la raíz en sus datos. Un mensaje de un SA cubre la entrada del comando que dispara (y trae la identidad si el comando no crea); un SA que recibe tiene en el modelo un flujo que entra; un comando sobre todas no escribe y su temporizador cubre su entrada; `List<objeto de valor>` nombra un objeto de valor del contexto; `orden` usa datos de la raíz. Desde Cobros y depósito: la identidad de cada entidad es uno de sus campos; los `calculados` de un comando salen de datos que el comando tiene (antes o después de sus SA); en `usa`, `con`, `entrada` y `salida` nombran datos del SA, y un SA al que se llama tiene en el modelo un flujo que entra (uno que solo sale va con `envia`, G11); `agregar` con correspondencias nombra campos de la lista; `si` y `salvo` usan datos disponibles; `correspondencias` toman datos que llegan; los comandos de un mensaje o de un evento existen y usan la misma identidad; `politicas` nombra comandos con políticas en el modelo, y `junto_con` y `uno_de` todos sus eventos, sin repetir; `envia` sale con un evento del contexto que trae sus datos; una consulta por identidad que lee varias raíces dice con `de` cuál, y las demás tienen la misma identidad. Los escenarios están bien escritos, y los escenarios entre contextos, contra los YAML de sus contextos. **Contratos entre contextos (D2):** lo que un YAML declara recibir de otro contexto llega en el evento tal como lo publica el YAML de ese contexto: el dato con que llega, cada dato con el mismo tipo, y ningún dato obligatorio que se publique como opcional. Se revisa contra los YAML de la misma carpeta, en `specs.py` y en `generar.py` antes de escribir nada. |
+
+Las validaciones tienen sus propias pruebas: `pruebas-validador/casos.yaml` tiene copias rotas a propósito de los YAML de `specs/` (al menos una por capacidad, de G1 a G12, y las de los contratos entre contextos), cada una con el error que debe dar, y `src/probar_validador.py` comprueba que salga (lo corre `verificar.ps1`). Cada clave nueva del YAML trae su caso: si un caso deja de fallar, `specs.py` dejó de revisar algo.
 
 ## Discrepancias encontradas
 
@@ -472,6 +489,13 @@ De la integración en los YAML de los otros contextos:
 | GEN-SUP-82 | gestion-del-arriendo.yaml: servicios_sa > Contratos con propietarios y clientes > envia | Con "Riesgo aceptable obtenido", SA-02 envía los datos para el contrato del cliente (arriendo, cliente, yate, fechas y precio por día); la gestión de contratos está simulada. |
 | GEN-SUP-83 | operacion-del-arriendo.yaml: Diferencias determinadas, y `DeterminarLasDiferenciasEntreEntregaYDevolucion.cs` | El evento lleva la hora de regreso y la evidencia: las fotos del acta de entrega y las del acta de inspección. |
 | GEN-SUP-84 | operacion-del-arriendo.yaml: servicios_sa > Avisos y actas de las marinas > envia | La alerta de pérdida de señal lleva el yate y su última lectura; SA-05 la lleva a la marina que guarda el yate, porque Operación del arriendo no guarda la marina. |
+
+## Fuera de alcance
+
+El generador construye una primera versión de referencia que demuestra el camino del modelo al código. Estas cosas quedan fuera a propósito (la revisión del 9 de noviembre de 2026 está en la sección 7 de [PENDIENTES.md](PENDIENTES.md)):
+
+- **De la aplicación generada:** autenticación (por eso no se revisa quién llama: GEN-SUP-46 y 79), base de datos (todo en memoria: GEN-SUP-02), microservicios (un solo programa: D1), paginación, Swagger u OpenAPI (la API está en los `pruebas.http`), errores en formato `ProblemDetails` (las respuestas de error tienen su propio contrato, el que afirman los escenarios) y la traducción del formato propio de cada sistema externo.
+- **Del generador:** una versión del formato del YAML (el generador y los YAML cambian juntos, en el mismo repositorio), un archivo de configuración (el puerto ya se cambia con `-Puerto`, y los prefijos y las propiedades en español son la convención misma), empaquetarlo como una herramienta instalable, integración continua y un asistente que escriba el YAML a partir de la documentación.
 
 ## Limitaciones conocidas
 

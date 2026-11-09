@@ -1016,7 +1016,7 @@ class Generador:
 
     # ------------------------------------------------------------ mensajes que envían los SA (G11)
     def preparar_envios(self):
-        """Lo que YateGear envía por un SA que solo sale (YAML: envia): un mensaje por cada evento del contexto que lo
+        """Lo que la aplicación envía por un SA que solo sale (YAML: envia): un mensaje por cada evento del contexto que lo
         dispara, con sus datos por nombre. El sistema externo está simulado: el envío queda en la bitácora."""
         self.emisores = []
         for msa in self.ctx["servicios_sa"]:
@@ -1161,7 +1161,7 @@ class Generador:
 
     # ------------------------------------------------------------ mensajes que reciben los SA (G7)
     def preparar_mensajes_sa(self):
-        """Lo que un sistema externo le envía a YateGear por un SA (YAML: recibe). Por cada SA, un receptor con un
+        """Lo que un sistema externo le envía a la aplicación por un SA (YAML: recibe). Por cada SA, un receptor con un
         método por mensaje: lee el JSON (revisa los datos obligatorios) y dispara el comando, por nombre de dato."""
         cmd_por_nombre = {c["nombre"]: c for c in self.comandos}
         self.receptores_sa, self.mensajes = [], []

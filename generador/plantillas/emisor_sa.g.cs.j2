@@ -1,16 +1,16 @@
 {% import "_macros.j2" as m %}
 // {{ cabecera }}
-// Capa anticorrupción, lo que sale (G11): lo que YateGear envía por este servicio SA cuando ocurre un evento del
+// Capa anticorrupción, lo que sale (G11): lo que la aplicación envía por este servicio SA cuando ocurre un evento del
 // contexto (envia del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 namespace {{ ns }};
 {% for x in e.mensajes %}
 
-/// <summary>Mensaje "{{ x.nombre | xml }}" que YateGear envía por "{{ sa.nombre | xml }}" cuando ocurre "{{ x.evento | xml }}".</summary>
+/// <summary>Mensaje "{{ x.nombre | xml }}" que la aplicación envía por "{{ sa.nombre | xml }}" cuando ocurre "{{ x.evento | xml }}".</summary>
 {{ m.record(x.clase, x.datos, ";") }}
 {% endfor %}
 
-/// <summary>Lo que YateGear envía a "{{ sa.contraparte.nombre | xml }}" por "{{ sa.nombre | xml }}" ({{ sa.codigo }}). No espera respuesta
+/// <summary>Lo que la aplicación envía a "{{ sa.contraparte.nombre | xml }}" por "{{ sa.nombre | xml }}" ({{ sa.codigo }}). No espera respuesta
 /// (lenguaje publicado).</summary>
 /// <remarks>
 /// <para>Interfaz: "{{ sa.interfaz.nombre | xml }}" ({{ sa.interfaz.id }}).

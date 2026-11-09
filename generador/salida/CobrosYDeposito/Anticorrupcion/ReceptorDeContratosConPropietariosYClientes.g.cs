@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationService "Contratos con propietarios y clientes" (SA-02, id-18b80ed18f3d4d43a5290e01b90ca4eb).
-// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a YateGear por este servicio SA
+// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a la aplicación por este servicio SA
 // (recibe del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Text.Json;
@@ -21,7 +21,7 @@ public sealed record ContratoDelClienteFirmado(
     string MedioDePago
 );
 
-/// <summary>Recibe lo que "Gestión de contratos" le envía a YateGear por "Contratos con propietarios y clientes" (SA-02)
+/// <summary>Recibe lo que "Gestión de contratos" le envía a la aplicación por "Contratos con propietarios y clientes" (SA-02)
 /// y dispara el comando de cada mensaje, con sus datos por nombre.</summary>
 /// <remarks>
 /// <para>Contrato de servicio: Contratos con propietarios y clientes (id-3f0f0a61815d4247bbb2d2cf80f1ad6e). Entrada: Datos del arriendo o del propietario para el contrato, o número de contrato a consultar.</para>

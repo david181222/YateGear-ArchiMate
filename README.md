@@ -71,7 +71,7 @@ La columna "Dónde se resuelve" sale de las relaciones del modelo. En la V1 est�
 ## Contenido del repositorio
 
 - [modelo/YateGear.archimate](modelo/YateGear.archimate): el modelo ArchiMate fuente. Es un único modelo con 425 elementos, 913 relaciones y 27 vistas, y se abre con Archi.
-- [generador/](generador/): el generador de código. Lee el modelo y un YAML por contexto y genera la primera versión de la aplicación en C# (.NET 8): los cinco contextos en un solo programa, comunicados por un bus de eventos, con sus escenarios de prueba y su trazabilidad hasta el modelo. Cómo se usa: [generador/README.md](generador/README.md); qué falta y quién hizo qué: [generador/PENDIENTES.md](generador/PENDIENTES.md).
+- [generador/](generador/): el generador de código. Lee el modelo y un YAML por contexto y genera la primera versión de la aplicación en C# (.NET 8): los cinco contextos en un solo programa, comunicados por un bus de eventos, con sus escenarios de prueba y su trazabilidad hasta el modelo. Sirve también para otros modelos que sigan sus convenciones: [generador/GUIA-DE-MODELADO.md](generador/GUIA-DE-MODELADO.md) dice qué dibujar en Archi, y `generador/ejemplo/` tiene un modelo mínimo de otro dominio. Cómo se usa: [generador/README.md](generador/README.md); qué se decidió y quién hizo qué: [generador/PENDIENTES.md](generador/PENDIENTES.md).
 - [vistas/](vistas/): las 27 vistas exportadas como imagen. Cada archivo lleva el código de su vista, por ejemplo `V4.01.png`.
 - [entrevista/](entrevista/): la evidencia de la Fase 0.
   - [01-instruccion-rol-experto.md](entrevista/01-instruccion-rol-experto.md): la instrucción de rol del experto.
@@ -1990,6 +1990,6 @@ Las 27 vistas son V1, V2, V3, V4 y sus diez vistas de apoyo V4.01 a V4.10, V5, V
 
 | Integrante | Usuario de GitHub | Qué construyó |
 |---|---|---|
-| Edwin Vélez | david181222 | Fase 1: V1 y V2. Fase 3: V5. Fase 4: V6. Fase 5: V9. Generador: el piloto, Contexto Gestión del arriendo |
+| Edwin Vélez | david181222 | Fase 1: V1 y V2. Fase 3: V5. Fase 4: V6. Fase 5: V9. Generador: el piloto, Contexto Gestión del arriendo, y el cierre (S6 a S12): contratos entre contextos, pruebas del validador, `verificar.ps1`, discrepancias 12 y 13, guía de modelado y modelo de ejemplo |
 | José Díaz | jeliasdiaz | Fase 0: análisis de hallazgos y entrevista simulada. Fase 1: V3. Fase 3: V7. Trazabilidad: V10. Generador: varios contextos en una solución y los contextos Calificaciones, Disponibilidad de yates y Operación del arriendo (J1 a J8) |
 | Santiago Martínez | spectuu | Fase 0: instrucción de rol y guion de la entrevista. Fase 2: V4. Fase 5: V8. Fase 6: V11. Generador: el Contexto Cobros y depósito, la integración entre contextos y los escenarios de punta a punta (S1 a S5) |

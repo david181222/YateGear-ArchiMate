@@ -1,10 +1,10 @@
 // Generado desde ArchiMate: ApplicationService "Avisos y actas de las marinas" (SA-05, id-2754472851d144d5b79323ab235a3f20).
-// Capa anticorrupción, lo que sale (G11): lo que YateGear envía por este servicio SA cuando ocurre un evento del
+// Capa anticorrupción, lo que sale (G11): lo que la aplicación envía por este servicio SA cuando ocurre un evento del
 // contexto (envia del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 namespace YateGear.OperacionDelArriendo;
 
-/// <summary>Mensaje "Alerta de pérdida de señal" que YateGear envía por "Avisos y actas de las marinas" cuando ocurre "Pérdida de señal del yate".</summary>
+/// <summary>Mensaje "Alerta de pérdida de señal" que la aplicación envía por "Avisos y actas de las marinas" cuando ocurre "Pérdida de señal del yate".</summary>
 public sealed record AlertaDePerdidaDeSenal(
     string IdentificadorDelYate,
     decimal Latitud,
@@ -13,7 +13,7 @@ public sealed record AlertaDePerdidaDeSenal(
     DateTime HoraDeLaLectura
 );
 
-/// <summary>Lo que YateGear envía a "Sistemas de las marinas" por "Avisos y actas de las marinas" (SA-05). No espera respuesta
+/// <summary>Lo que la aplicación envía a "Sistemas de las marinas" por "Avisos y actas de las marinas" (SA-05). No espera respuesta
 /// (lenguaje publicado).</summary>
 /// <remarks>
 /// <para>Interfaz: "Interfaz con las marinas" (id-8e8765a8065440cf8596cf26a6d141b2).

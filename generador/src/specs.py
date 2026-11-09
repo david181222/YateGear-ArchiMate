@@ -643,25 +643,25 @@ class Revisor:
         self.envios_crudos: dict[str, dict] = {}        # SA -> mensajes que envía (G11), se revisan con los eventos
         for n in sorted(set(sas_y) & set(sas_m)):
             d = f"servicios_sa > {n}"
-            # Un SA que llama YateGear (sale) declara entrada, salida y respuestas simuladas; uno que recibe lo que el
-            # sistema externo le envía a YateGear (G7) declara recibe. Puede tener las dos partes.
+            # Un SA que llama la aplicación (sale) declara entrada, salida y respuestas simuladas; uno que recibe lo que el
+            # sistema externo le envía a la aplicación (G7) declara recibe. Puede tener las dos partes.
             x = self.mapa(sas_y[n], d, ["entrada", "salida", "respuesta_por_defecto", "casos", "recibe", "envia"],
                           [] if {"recibe", "envia"} & set(sas_y[n] or {}) else ["entrada", "salida", "respuesta_por_defecto"])
             sale = any(k in x for k in ("entrada", "salida", "respuesta_por_defecto"))
             if sale:
                 for k in ("entrada", "salida", "respuesta_por_defecto"):
                     if k not in x:
-                        self.error(d, f'falta la clave "{k}" (un SA que YateGear llama declara entrada, salida y respuesta_por_defecto)')
+                        self.error(d, f'falta la clave "{k}" (un SA que la aplicación llama declara entrada, salida y respuesta_por_defecto)')
             direcciones = {f["direccion"] for f in sas_m[n]["flujos"]}
             if "recibe" in x and "entra" not in direcciones:
                 self.error(f"{d} > recibe", "en el modelo ningún flujo entra por la interfaz de este SA: no recibe nada")
             if "recibe" in x:
                 self.mensajes_crudos[n] = self.mapa(x["recibe"], f"{d} > recibe")
-            # G11: un SA al que YateGear llama y espera respuesta necesita un flujo que entre; uno que solo sale
+            # G11: un SA al que la aplicación llama y espera respuesta necesita un flujo que entre; uno que solo sale
             # (lenguaje publicado) se declara con envia: sus mensajes salen con un evento del contexto.
             if sale and "entra" not in direcciones:
                 self.error(d, "en el modelo ningún flujo entra por la interfaz de este SA: no responde. "
-                              "Si YateGear solo le envía datos, decláralo con envia")
+                              "Si la aplicación solo le envía datos, decláralo con envia")
             if "envia" in x:
                 if "sale" not in direcciones:
                     self.error(f"{d} > envia", "en el modelo ningún flujo sale por la interfaz de este SA: no envía nada")
@@ -1370,7 +1370,7 @@ class Revisor:
         if "agrega" not in q:
             # Sin agregaciones, la consulta devuelve una lista: un elemento por raíz, con los datos de la salida.
             if not isinstance(q.get("lista"), str) or not q["lista"].strip():
-                self.error(d, "sin agrega, la consulta devuelve una lista: di su nombre con lista (por ejemplo, lista: yates disponibles)")
+                self.error(d, "sin agrega, la consulta devuelve una lista: di su nombre con lista (por ejemplo, lista: elementos disponibles)")
             self.pide(con_raiz, sal, f"{d} > salida", "un elemento de la lista")
             for dato in self.lista(q.get("orden"), f"{d} > orden"):      # de menor a mayor, en el orden escrito
                 if dato not in con_raiz or con_raiz[dato]["lista"]:

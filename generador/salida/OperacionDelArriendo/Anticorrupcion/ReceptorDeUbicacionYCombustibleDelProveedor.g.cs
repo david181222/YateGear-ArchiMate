@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationService "Ubicación y combustible del proveedor" (SA-07, id-ec3bc54925a940ccbbcb5ac42ee8479c).
-// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a YateGear por este servicio SA
+// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a la aplicación por este servicio SA
 // (recibe del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Text.Json;
@@ -15,7 +15,7 @@ public sealed record LecturaDelProveedor(
     DateTime HoraDeLaLectura
 );
 
-/// <summary>Recibe lo que "Plataforma del proveedor de ubicación y combustible" le envía a YateGear por "Ubicación y combustible del proveedor" (SA-07)
+/// <summary>Recibe lo que "Plataforma del proveedor de ubicación y combustible" le envía a la aplicación por "Ubicación y combustible del proveedor" (SA-07)
 /// y dispara el comando de cada mensaje, con sus datos por nombre.</summary>
 /// <remarks>
 /// <para>Contrato de servicio: Ubicación y combustible del proveedor (id-a380456bbb084bc7b84ac707207538a9). Entrada: Lectura del proveedor.</para>

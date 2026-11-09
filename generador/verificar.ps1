@@ -12,7 +12,7 @@
 #   powershell -ExecutionPolicy Bypass -File .\verificar.ps1     (Windows)
 #   pwsh ./verificar.ps1                                          (Linux)
 #   ... -Modelo, -Specs, -Archi, -Salida y -Puerto pasan a generar.ps1 y probar.ps1.
-#   ... -Casos ""     (sin las pruebas del validador; por ejemplo, para el modelo de ejemplo)
+#   ... -SinPruebasDelValidador   (por ejemplo, con el modelo de ejemplo: los casos son de los YAML de specs/)
 #
 # Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
 param(
@@ -21,8 +21,9 @@ param(
     [string]$Archi = "",
     [string]$Salida = "salida",
     [int]$Puerto = 0,
-    [string]$Casos = "pruebas-validador/casos.yaml"
+    [switch]$SinPruebasDelValidador
 )
+$casos = "pruebas-validador/casos.yaml"
 
 Set-Location $PSScriptRoot
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -73,10 +74,10 @@ $ok = $LASTEXITCODE -eq 0
 Revision "Trazabilidad completa" $ok $(if ($ok) { "Todos los elementos de los contextos generados tienen su fila." } else { "Faltan filas o archivos (ver arriba)." })
 
 # 4. Pruebas del validador.
-if ($Casos) {
-    & $py src/probar_validador.py "$Salida/intermedio/modelo-ddd.json" $Casos | Out-Host
+if (-not $SinPruebasDelValidador) {
+    & $py src/probar_validador.py "$Salida/intermedio/modelo-ddd.json" $casos | Out-Host
     $ok = $LASTEXITCODE -eq 0
-    Revision "Pruebas del validador" $ok $(if ($ok) { "specs.py detecta cada copia rota de $Casos." } else { "Algún caso no da el error esperado (ver arriba)." })
+    Revision "Pruebas del validador" $ok $(if ($ok) { "specs.py detecta cada copia rota de $casos." } else { "Algún caso no da el error esperado (ver arriba)." })
 }
 
 # 5. Escenarios.

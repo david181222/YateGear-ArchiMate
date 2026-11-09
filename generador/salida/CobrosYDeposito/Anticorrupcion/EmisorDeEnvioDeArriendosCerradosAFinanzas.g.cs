@@ -1,10 +1,10 @@
 // Generado desde ArchiMate: ApplicationService "Envío de arriendos cerrados a Finanzas" (SA-08, id-415716c21d684fd5b6f0a59dab8bbc17).
-// Capa anticorrupción, lo que sale (G11): lo que YateGear envía por este servicio SA cuando ocurre un evento del
+// Capa anticorrupción, lo que sale (G11): lo que la aplicación envía por este servicio SA cuando ocurre un evento del
 // contexto (envia del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 namespace YateGear.CobrosYDeposito;
 
-/// <summary>Mensaje "Arriendo cerrado para Finanzas" que YateGear envía por "Envío de arriendos cerrados a Finanzas" cuando ocurre "Cuenta del arriendo cerrada".</summary>
+/// <summary>Mensaje "Arriendo cerrado para Finanzas" que la aplicación envía por "Envío de arriendos cerrados a Finanzas" cuando ocurre "Cuenta del arriendo cerrada".</summary>
 public sealed record ArriendoCerradoParaFinanzas(
     string NumeroDelArriendo,
     string Propietario,
@@ -14,7 +14,7 @@ public sealed record ArriendoCerradoParaFinanzas(
     decimal ValorDelPropietario
 );
 
-/// <summary>Lo que YateGear envía a "Pagar mensualmente al propietario" por "Envío de arriendos cerrados a Finanzas" (SA-08). No espera respuesta
+/// <summary>Lo que la aplicación envía a "Pagar mensualmente al propietario" por "Envío de arriendos cerrados a Finanzas" (SA-08). No espera respuesta
 /// (lenguaje publicado).</summary>
 /// <remarks>
 /// <para>Interfaz: "Registro de arriendos cerrados para Finanzas" (id-3cfd84c427b943df83d5b8cfe5dee869).

@@ -1,0 +1,62 @@
+# Generado desde ArchiMate: ApplicationComponent "Contexto Préstamos" (id-ccd77ee8d6e85373b2058f86905a7b2c).
+# Escenarios del YAML (sección escenarios): cada uno tiene su propia raíz y se ejecuta en orden.
+# "Espera" sale de espera en el YAML; sin espera, el paso debe responder 2xx. probar.ps1 los ejecuta
+# y revisa solo; aquí se pueden ejecutar uno por uno.
+# Se usa con la extensión REST Client de VS Code o con Visual Studio. Reinicia la aplicación antes
+# de empezar para que la primera raíz sea PRE-0001. Si cambias el puerto con ejecutar.ps1 -Puerto, cambia también @base.
+
+@base = http://localhost:5080/prestamos
+
+# ==============================================================================
+# Escenario 1: Préstamo y devolución (PRE-0001)
+# ==============================================================================
+
+### Préstamo y devolución · paso 1: Prestar un libro
+# Comando. Espera: HTTP 2xx y el evento "Libro prestado".
+POST {{base}}/comandos/prestar-un-libro
+Content-Type: application/json
+
+{
+  "lector": "LEC-0001",
+  "libro": "LIBRO-0001",
+  "desde": "2026-11-01",
+  "hasta": "2026-11-15"
+}
+
+### Préstamo y devolución · paso 2: Consultar el préstamo
+# Consulta. Espera: HTTP 2xx y estado = prestado, hasta = 2026-11-15.
+GET {{base}}/consultas/consultar-el-prestamo/PRE-0001
+
+### Préstamo y devolución · paso 3: Devolver el libro
+# Comando. Espera: HTTP 2xx y el evento "Libro devuelto".
+POST {{base}}/comandos/devolver-el-libro
+Content-Type: application/json
+
+{
+  "numeroDelPrestamo": "PRE-0001"
+}
+
+### Préstamo y devolución · paso 4: Devolver el libro
+# Comando. Espera: HTTP 409 y estado actual = devuelto.
+POST {{base}}/comandos/devolver-el-libro
+Content-Type: application/json
+
+{
+  "numeroDelPrestamo": "PRE-0001"
+}
+
+# ==============================================================================
+# Escenario 2: Libro no disponible ()
+# ==============================================================================
+
+### Libro no disponible · paso 1: Prestar un libro
+# Comando. Espera: HTTP 422 y regla = REG-01.
+POST {{base}}/comandos/prestar-un-libro
+Content-Type: application/json
+
+{
+  "lector": "LEC-0002",
+  "libro": "LIBRO-PRESTADO",
+  "desde": "2026-02-01",
+  "hasta": "2026-02-01"
+}

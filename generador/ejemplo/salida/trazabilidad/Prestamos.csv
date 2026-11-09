@@ -1,0 +1,56 @@
+ID ArchiMate,tipo,nombre,archivo generado,clase
+id-1eb53a4c5895511dba1b123b4317670e,Contract,Contrato de servicio: Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.cs,ConsultarElPrestamoManejador.ValidarReglas (manual)
+id-1eb53a4c5895511dba1b123b4317670e,Contract,Contrato de servicio: Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.g.cs,ConsultarElPrestamoManejador
+id-23f42c26c59a58d4b094e7c17ba625f7,DataObject,Plazo del préstamo,Prestamos/Dominio/PlazoDelPrestamo.g.cs,PlazoDelPrestamo
+id-291efe88ae465b5b839afcfd422c02da,BusinessService,Catálogo de la biblioteca,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,ICatalogoDeLaBiblioteca
+id-2c4ab840149c5f6bb997fd138b8d7665,BusinessService,Prestar un libro,Prestamos/Comandos/PrestarUnLibro.g.cs,PrestarUnLibroManejador
+id-48151143e7315060b5a0ceed638aadcf,BusinessService,Devolver el libro,Prestamos/Comandos/DevolverElLibro.g.cs,DevolverElLibroManejador
+id-4baadb7858ae500cb39ea7b0dc99f59c,ApplicationEvent,Libro devuelto,Prestamos/Eventos/LibroDevuelto.g.cs,LibroDevuelto
+id-5bf799b38b425df3b814b33aa2929f70,ApplicationProcess,Devolver el libro,Prestamos/Comandos/DevolverElLibro.cs,DevolverElLibroManejador (manual)
+id-5bf799b38b425df3b814b33aa2929f70,ApplicationProcess,Devolver el libro,Prestamos/Comandos/DevolverElLibro.g.cs,DevolverElLibro
+id-5bf799b38b425df3b814b33aa2929f70,ApplicationProcess,Devolver el libro,Prestamos/Comandos/DevolverElLibro.g.cs,DevolverElLibroDatos
+id-5bf799b38b425df3b814b33aa2929f70,ApplicationProcess,Devolver el libro,Prestamos/Comandos/DevolverElLibro.g.cs,DevolverElLibroManejador
+id-5bf799b38b425df3b814b33aa2929f70,ApplicationProcess,Devolver el libro,Prestamos/Registro.g.cs,POST /prestamos/comandos/devolver-el-libro
+id-5ee7ad76766c50d7abc0cfeea3d26980,Contract,Contrato de servicio: Catálogo de la biblioteca,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,ICatalogoDeLaBiblioteca
+id-7808c0a36e435cbeb9af1243ed983bec,ApplicationEvent,Libro prestado,Prestamos/Eventos/LibroPrestado.g.cs,LibroPrestado
+id-82e9dfaeb1e95ee8bca50ff5107b6c70,Flow,Consulta del libro (sale),Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,CatalogoDeLaBibliotecaSimulado
+id-86bfa95f526f5a4b8ccf361274067d5f,Composition,Préstamo -> Plazo del préstamo,Prestamos/Dominio/Prestamo.g.cs,Prestamo.PlazoDelPrestamo
+id-8fc36207505e52cc9ef19a99e47dfca7,DataObject,Préstamo,Prestamos/Dominio/Prestamo.g.cs,Prestamo
+id-94a54a4626ed53a3bea811adf0f8258a,Grouping,Agregado Préstamo,Prestamos/Dominio/Prestamo.g.cs,Prestamo
+id-a17fb94b9d105e6cb5ec8095d9d61062,BusinessService,Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.g.cs,ConsultarElPrestamoManejador
+id-adbef6a6733f58f5a9e0ba51f136a4ac,ApplicationProcess,Prestar un libro,Prestamos/Comandos/PrestarUnLibro.cs,PrestarUnLibroManejador (manual)
+id-adbef6a6733f58f5a9e0ba51f136a4ac,ApplicationProcess,Prestar un libro,Prestamos/Comandos/PrestarUnLibro.g.cs,PrestarUnLibro
+id-adbef6a6733f58f5a9e0ba51f136a4ac,ApplicationProcess,Prestar un libro,Prestamos/Comandos/PrestarUnLibro.g.cs,PrestarUnLibroDatos
+id-adbef6a6733f58f5a9e0ba51f136a4ac,ApplicationProcess,Prestar un libro,Prestamos/Comandos/PrestarUnLibro.g.cs,PrestarUnLibroManejador
+id-adbef6a6733f58f5a9e0ba51f136a4ac,ApplicationProcess,Prestar un libro,Prestamos/Registro.g.cs,POST /prestamos/comandos/prestar-un-libro
+id-ae10d4fa9958587aa03b1c8536870bb3,ApplicationService,Catálogo de la biblioteca,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,CatalogoDeLaBibliotecaEntrada
+id-ae10d4fa9958587aa03b1c8536870bb3,ApplicationService,Catálogo de la biblioteca,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,CatalogoDeLaBibliotecaSalida
+id-ae10d4fa9958587aa03b1c8536870bb3,ApplicationService,Catálogo de la biblioteca,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,CatalogoDeLaBibliotecaSimulado
+id-ae10d4fa9958587aa03b1c8536870bb3,ApplicationService,Catálogo de la biblioteca,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,ICatalogoDeLaBiblioteca
+id-ae3bbf116893597ab208483228f70381,Contract,Contrato de servicio: Prestar un libro,Prestamos/Comandos/PrestarUnLibro.cs,PrestarUnLibroManejador.ValidarReglas (manual)
+id-ae3bbf116893597ab208483228f70381,Contract,Contrato de servicio: Prestar un libro,Prestamos/Comandos/PrestarUnLibro.g.cs,PrestarUnLibroManejador
+id-b3770e1c734d569ca65ced6e4d6ce41a,ApplicationService,Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.cs,ConsultarElPrestamoManejador (manual)
+id-b3770e1c734d569ca65ced6e4d6ce41a,ApplicationService,Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.g.cs,ConsultarElPrestamo
+id-b3770e1c734d569ca65ced6e4d6ce41a,ApplicationService,Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.g.cs,ConsultarElPrestamoDatos
+id-b3770e1c734d569ca65ced6e4d6ce41a,ApplicationService,Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.g.cs,ConsultarElPrestamoManejador
+id-b3770e1c734d569ca65ced6e4d6ce41a,ApplicationService,Consultar el préstamo,Prestamos/Consultas/ConsultarElPrestamo.g.cs,ConsultarElPrestamoSalida
+id-b3770e1c734d569ca65ced6e4d6ce41a,ApplicationService,Consultar el préstamo,Prestamos/Registro.g.cs,GET /prestamos/consultas/consultar-el-prestamo/{numeroDelPrestamo}
+id-bb752d7b8aa0564a9d2ea5cd62208367,Flow,Estado del libro (entra),Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,CatalogoDeLaBibliotecaSimulado
+id-bd12ff4c48e651eb91ff722ffd2d41fe,ApplicationInterface,Interfaz del catálogo,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,ICatalogoDeLaBiblioteca
+id-be012cf9cf7a573c8176e8e3dadd4814,Contract,Contrato de servicio: Devolver el libro,Prestamos/Comandos/DevolverElLibro.cs,DevolverElLibroManejador.ValidarReglas (manual)
+id-be012cf9cf7a573c8176e8e3dadd4814,Contract,Contrato de servicio: Devolver el libro,Prestamos/Comandos/DevolverElLibro.g.cs,DevolverElLibroManejador
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Biblioteca.sln,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Biblioteca/Biblioteca.csproj,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Biblioteca/Program.g.cs,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Prestamos/Dominio/Enums.g.cs,enums
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Prestamos/Infraestructura/Infraestructura.g.cs,infraestructura
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Prestamos/Prestamos.csproj,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Prestamos/Registro.g.cs,Registro
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,contextos.json,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,global.json,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,pruebas/Prestamos/escenarios.json,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,pruebas/Prestamos/pruebas.http,
+id-d786ef09ddd45e14b3c11ad96164d2d8,Access,Prestar un libro -> Préstamo (escritura),Prestamos/Comandos/PrestarUnLibro.g.cs,PrestarUnLibroManejador
+id-ee2e90a68c66577392479d044f78ef46,Access,Consultar el préstamo -> Préstamo (lectura),Prestamos/Consultas/ConsultarElPrestamo.g.cs,ConsultarElPrestamoManejador
+id-f54043eceb535aa29eac2de716f4bdf7,Access,Devolver el libro -> Préstamo (lectura y escritura),Prestamos/Comandos/DevolverElLibro.g.cs,DevolverElLibroManejador
+id-f96fb87fb5e759699af89f8e28598a96,ApplicationComponent,Sistema del catálogo,Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs,CatalogoDeLaBibliotecaSimulado

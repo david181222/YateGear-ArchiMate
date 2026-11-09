@@ -1,0 +1,116 @@
+{
+  "generado_desde": "Generado desde ArchiMate: ApplicationComponent \"Contexto Préstamos\" (id-ccd77ee8d6e85373b2058f86905a7b2c).",
+  "ruta_base": "/prestamos",
+  "escenarios": [
+    {
+      "nombre": "Préstamo y devolución",
+      "identidad": "PRE-0001",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Prestar un libro",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "PRE-0001",
+          "metodo": "POST",
+          "ruta": "/comandos/prestar-un-libro",
+          "cuerpo": {
+            "lector": "LEC-0001",
+            "libro": "LIBRO-0001",
+            "desde": "2026-11-01",
+            "hasta": "2026-11-15"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Libro prestado",
+            "texto": "HTTP 2xx y el evento \"Libro prestado\""
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Consultar el préstamo",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "PRE-0001",
+          "metodo": "GET",
+          "ruta": "/consultas/consultar-el-prestamo/PRE-0001",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "estado": "Prestado",
+              "hasta": "2026-11-15"
+            },
+            "texto": "HTTP 2xx y estado = prestado, hasta = 2026-11-15"
+          }
+        },
+        {
+          "numero": 3,
+          "nombre": "Devolver el libro",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "PRE-0001",
+          "metodo": "POST",
+          "ruta": "/comandos/devolver-el-libro",
+          "cuerpo": {
+            "numeroDelPrestamo": "PRE-0001"
+          },
+          "espera": {
+            "tipo": "evento",
+            "valor": "Libro devuelto",
+            "texto": "HTTP 2xx y el evento \"Libro devuelto\""
+          }
+        },
+        {
+          "numero": 4,
+          "nombre": "Devolver el libro",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": "PRE-0001",
+          "metodo": "POST",
+          "ruta": "/comandos/devolver-el-libro",
+          "cuerpo": {
+            "numeroDelPrestamo": "PRE-0001"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "campos": {
+              "estadoActual": "Devuelto"
+            },
+            "texto": "HTTP 409 y estado actual = devuelto"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Libro no disponible",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Prestar un libro",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/comandos/prestar-un-libro",
+          "cuerpo": {
+            "lector": "LEC-0002",
+            "libro": "LIBRO-PRESTADO",
+            "desde": "2026-02-01",
+            "hasta": "2026-02-01"
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 422,
+            "campos": {
+              "regla": "REG-01"
+            },
+            "texto": "HTTP 422 y regla = REG-01"
+          }
+        }
+      ]
+    }
+  ]
+}
