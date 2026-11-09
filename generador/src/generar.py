@@ -1783,6 +1783,11 @@ def main():
         rev = specs.RevisorEntreContextos(modelo, spec, ruta_yaml, revisores)
         rev.revisar()
         errores += [f"{ruta_yaml}: {e}" for e in rev.errores]
+    if not errores:                                         # contratos entre contextos (D2)
+        err_c, av_c = specs.revisar_contratos(modelo, revisores)
+        errores += [f"contratos entre contextos: {e}" for e in err_c]
+        for a in av_c:
+            print("AVISO contratos entre contextos:", a)
     if errores:
         print(f"Los YAML no cumplen con el modelo ({len(errores)} error(es)); no se generó nada:", file=sys.stderr)
         for e in errores:

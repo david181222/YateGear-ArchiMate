@@ -9,6 +9,10 @@ No genera nada. Junta todos los errores y termina con código 1 si el YAML:
   - usa un dato que no está disponible por su nombre, con el mismo tipo, donde
     se necesita (regla de los datos, ver el comentario al inicio del YAML).
 
+Además revisa los contratos entre contextos (revisar_contratos, D2) contra los YAML de los demás contextos de su
+misma carpeta: lo que el YAML declara que recibe de otro contexto debe llegar, con el mismo tipo, en el evento que ese
+contexto publica; y lo que publica debe cubrir lo que los demás declaran recibir de él.
+
 Un YAML de escenarios entre contextos (S4, solo con escenarios_entre_contextos) se revisa contra los YAML de
 los contextos de su misma carpeta.
 
@@ -1218,6 +1222,7 @@ class Revisor:
             for e in o["eventos"]:
                 catalogo.setdefault(e["nombre"], []).append(o["nombre"])
         ext = self.mapa(s.get("eventos_de_otros_contextos"), "eventos_de_otros_contextos")
+        self.identidad_externos: dict[str, str] = {}      # evento de otro contexto -> dato con que llega
         for n in sorted(ext):
             d = f"eventos_de_otros_contextos > {n}"
             x = self.mapa(ext[n], d, ["de", "identidad", "dispara", "con", "correspondencias", "junto_con", "datos"], ["de", "datos"])
@@ -1244,6 +1249,7 @@ class Revisor:
                 self.error(f"{d} > identidad", "el contexto tiene varias raíces: di con qué dato llega el evento (identidad)")
             # identidad: el dato con que llega el evento (por defecto, la identidad de la raíz de este contexto).
             id_ev = x.get("identidad", self.id_nombre)
+            self.identidad_externos[n] = id_ev            # para los contratos entre contextos (revisar_contratos)
             if not isinstance(id_ev, str) or not id_ev.strip():
                 self.error(f"{d} > identidad", "es el nombre del dato con que llega el evento")
             elif id_ev in (x.get("datos") or {}):
@@ -1695,6 +1701,80 @@ def revisores_de_contextos(modelo: dict, rutas: list[str]) -> tuple[dict[str, Re
     return revisores, errores
 
 
+def revisar_contratos(modelo: dict, revisores: dict[str, Revisor], solo: str | None = None) -> tuple[list[str], list[str]]:
+    """Contratos entre contextos (D2): lo que quien recibe un evento de otro contexto declara en
+    eventos_de_otros_contextos debe llegar en ese evento tal como lo publica el YAML del contexto que lo publica.
+
+    Por cada evento: el dato con que llega (identidad) y cada dato de datos están entre los que publica (la identidad
+    de su raíz, datos y calculados), con el mismo tipo; y un dato obligatorio para quien recibe no es opcional para
+    quien publica (podría llegar en null). Quien publica puede mandar más datos de los que se reciben.
+    Con solo, revisa únicamente los pares en que está ese contexto. Devuelve (errores, avisos).
+    """
+    errores, avisos = [], []
+    ctxs = {c["nombre"]: c for c in modelo["contextos"]}
+
+    def objetos(nombre_ctx: str) -> dict:
+        return {v["nombre"]: {c["nombre"]: c for c in v["campos"]}
+                for a in ctxs[nombre_ctx]["agregados"] for v in a["objetos_valor"]}
+
+    def tipo_en(nombre_ctx: str, texto):
+        tipos.usar_objetos(objetos(nombre_ctx))    # List<objeto de valor> se interpreta con los del contexto
+        try:
+            return tipos.interpretar(texto)
+        except tipos.TipoInvalido:
+            return None                            # el error ya lo dio el Revisor de ese contexto
+
+    def mismo_entre(tr: dict, receptor: str, tp: dict, emisor: str) -> bool:
+        """Mismo tipo entre dos contextos: una lista de objetos de valor se compara por sus campos, no por el nombre."""
+        if tr["base"] == "objeto" and tp["base"] == "objeto":
+            cr, cp = objetos(receptor)[tr["objeto"]], objetos(emisor)[tp["objeto"]]
+            return tr["lista"] == tp["lista"] and set(cr) == set(cp) and all(mismo_tipo(cr[k], cp[k]) for k in cr)
+        return mismo_tipo(tr, tp)
+
+    for receptor, rv in sorted(revisores.items()):
+        ext = rv.s.get("eventos_de_otros_contextos") if isinstance(rv.s.get("eventos_de_otros_contextos"), dict) else {}
+        for n, x in sorted(ext.items()):
+            if not isinstance(x, dict):
+                continue
+            emisor = x.get("de")
+            if solo and solo not in (receptor, emisor):
+                continue
+            d = f"{receptor} > eventos_de_otros_contextos > {n}"
+            pub = revisores.get(emisor)
+            if pub is None:
+                avisos.append(f'[{d}] "{emisor}" no tiene YAML (o tiene errores): no se revisa contra lo que publica')
+                continue
+            ev_y = (pub.s.get("eventos") or {}).get(n)
+            ev_m = next((e for e in ctxs[emisor]["eventos"] if e["nombre"] == n), None)
+            if not isinstance(ev_y, dict) or ev_m is None or ev_m["agregado_id"] not in pub.raiz_por_agregado:
+                continue                                  # lo dice el Revisor de quien publica
+            id_pub = pub.raiz_por_agregado[ev_m["agregado_id"]]["id_nombre"]
+            publica = {id_pub: tipos.interpretar("string")}
+            for k, t in {**(ev_y.get("datos") or {}), **(ev_y.get("calculados") or {})}.items():
+                tp = tipo_en(emisor, t)
+                if tp:
+                    publica[k] = tp
+            lista_pub = ", ".join(f'"{k}"' for k in sorted(publica))
+            id_rec = rv.identidad_externos.get(n)
+            if isinstance(id_rec, str) and id_rec not in publica:
+                errores.append(f'[{d} > identidad] llega con "{id_rec}", y "{emisor}" no lo publica en "{n}"; '
+                               f"publica: {lista_pub}")
+            for k, t in (x.get("datos") or {}).items():
+                tr = tipo_en(receptor, t)
+                if tr is None:
+                    continue
+                if k not in publica:
+                    errores.append(f'[{d} > datos] "{k}" no llega: "{emisor}" no lo publica en "{n}"; publica: {lista_pub}')
+                elif not mismo_entre(tr, receptor, publica[k], emisor):
+                    errores.append(f'[{d} > datos] "{k}" se recibe como {tr["tipo"]} y "{emisor}" lo publica como '
+                                   f'{publica[k]["tipo"]}')
+                elif publica[k]["opcional"] and not tr["opcional"]:
+                    errores.append(f'[{d} > datos] "{k}" es obligatorio aquí y "{emisor}" lo publica como opcional '
+                                   f'({publica[k]["tipo"]}): puede llegar en null. Recíbelo como {tr["tipo"]}?')
+    tipos.usar_objetos({})
+    return errores, avisos
+
+
 def main():
     for f in (sys.stdout, sys.stderr):
         f.reconfigure(encoding="utf-8")
@@ -1713,6 +1793,10 @@ def main():
         rev = RevisorEntreContextos(modelo, spec, ruta_yaml, revisores)
         rev.revisar()
         errores += rev.errores
+        err_c, av_c = revisar_contratos(modelo, revisores)
+        errores += err_c
+        for a in av_c:
+            print("AVISO", a)
         if errores:
             print(f"\n{len(errores)} error(es) en {ruta_yaml}:", file=sys.stderr)
             for e in errores:
@@ -1726,6 +1810,15 @@ def main():
     rev = Revisor(modelo, spec, ruta_yaml)
     rev.id_nombre = ""
     rev.revisar()
+    if not rev.errores and isinstance(spec, dict):
+        # Contratos entre contextos (D2): contra los YAML de los demás contextos de la misma carpeta. Los que tienen
+        # errores no se usan (cada uno los dice cuando se revisa).
+        rutas = sorted(str(p) for p in Path(ruta_yaml).parent.glob("*.yaml") if p.resolve() != Path(ruta_yaml).resolve())
+        otros, _ = revisores_de_contextos(modelo, rutas)
+        otros[spec["contexto"]] = rev
+        err_c, av_c = revisar_contratos(modelo, otros, solo=spec["contexto"])
+        rev.errores += err_c
+        rev.avisos += av_c
     for a in rev.avisos:
         print("AVISO", a)
     if rev.varios_origenes:
