@@ -6,6 +6,38 @@ Genera un proyecto por cada contexto que tiene YAML en `specs/`, y los levanta t
 
 El generador no conoce YateGear: sirve para cualquier modelo que siga sus convenciones. La [guía de modelado](GUIA-DE-MODELADO.md) dice qué dibujar en Archi y en qué orden trabajar, y `ejemplo/` tiene un modelo mínimo de otro dominio (una biblioteca) que se genera y se prueba igual que YateGear.
 
+## Índice
+
+Para generar y levantar la API por primera vez: [Paso a paso](#paso-a-paso-del-modelo-a-la-api-corriendo). Para modelar otro sistema: [GUIA-DE-MODELADO.md](GUIA-DE-MODELADO.md).
+
+- [Tecnología](#tecnología)
+- [Requisitos](#requisitos)
+- [Paso a paso: del modelo a la API corriendo](#paso-a-paso-del-modelo-a-la-api-corriendo)
+- [Los comandos y sus parámetros](#los-comandos-y-sus-parámetros)
+  - [Puerto](#puerto)
+- [Cómo funciona](#cómo-funciona)
+  - [Carpetas](#carpetas)
+- [Qué se lee del modelo](#qué-se-lee-del-modelo)
+- [Formato del YAML](#formato-del-yaml)
+- [Qué genera cada elemento del modelo](#qué-genera-cada-elemento-del-modelo)
+  - [Comunicación entre contextos (D1)](#comunicación-entre-contextos-d1)
+- [Reglas del generador](#reglas-del-generador)
+  - [Generalidad: el generador no conoce YateGear](#generalidad-el-generador-no-conoce-yategear)
+  - [Regla de los datos](#regla-de-los-datos)
+  - [Pasos de un comando](#pasos-de-un-comando)
+  - [Capas](#capas)
+  - [Qué borra el generador](#qué-borra-el-generador)
+  - [Archivos manuales](#archivos-manuales)
+  - [Bitácora](#bitácora)
+- [Escenarios y pruebas](#escenarios-y-pruebas)
+  - [Escenarios entre contextos](#escenarios-entre-contextos)
+- [Reproducibilidad y trazabilidad](#reproducibilidad-y-trazabilidad)
+- [Validaciones](#validaciones)
+- [Discrepancias encontradas](#discrepancias-encontradas)
+- [Supuestos](#supuestos)
+- [Fuera de alcance](#fuera-de-alcance)
+- [Limitaciones conocidas](#limitaciones-conocidas)
+
 ## Tecnología
 
 El proyecto generado es C# con una API web de ASP.NET Core (API mínima) sobre .NET 8. Es una decisión del equipo.
