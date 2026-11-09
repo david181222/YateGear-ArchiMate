@@ -38,9 +38,6 @@ Content-Type: application/json
 {
   "cliente": "CLI-0001",
   "identificadorDelYate": "YATE-0001",
-  "propietario": "PROP-0001",
-  "precioPorDia": 500,
-  "marina": "MAR-01",
   "inicio": "2026-03-10",
   "fin": "2026-03-12",
   "numeroDeLaLicencia": "número de la licencia",
@@ -116,7 +113,17 @@ Content-Type: application/json
 # Consulta. Espera: HTTP 2xx y recorrido = 1.
 GET {{base}}/operacion-del-arriendo/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=ARR-0001
 
-### Del inventario al envío a Finanzas · paso 10: Acta de inspección recibida
+### Del inventario al envío a Finanzas · paso 10: Detectar la pérdida de señal
+# Comando. Espera: HTTP 2xx y "Pérdida de señal del yate", "Alerta de pérdida de señal".
+POST {{base}}/operacion-del-arriendo/comandos/detectar-la-perdida-de-senal
+Content-Type: application/json
+
+{
+  "minutosSinLecturas": 30,
+  "ahora": "2026-03-10T11:00:00"
+}
+
+### Del inventario al envío a Finanzas · paso 11: Acta de inspección recibida
 # Mensaje de un servicio sa. Espera: HTTP 2xx y "Inspección de devolución registrada", "Yate devuelto", "Diferencias determinadas", "Cargos del cierre cobrados", "Daños descontados del depósito", "Reclamo enviado a la aseguradora", "Cuenta del arriendo cerrada", "Arriendo cerrado", "Arriendo cerrado para Finanzas".
 POST {{base}}/operacion-del-arriendo/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida
 Content-Type: application/json
@@ -136,15 +143,15 @@ Content-Type: application/json
   ]
 }
 
-### Del inventario al envío a Finanzas · paso 11: Consultar el arriendo
+### Del inventario al envío a Finanzas · paso 12: Consultar el arriendo
 # Consulta. Espera: HTTP 2xx y estado = cerrado.
 GET {{base}}/gestion-del-arriendo/consultas/consultar-el-arriendo/ARR-0001
 
-### Del inventario al envío a Finanzas · paso 12: Consultar el estado de cuenta del arriendo
+### Del inventario al envío a Finanzas · paso 13: Consultar el estado de cuenta del arriendo
 # Consulta. Espera: HTTP 2xx y estado = cerrada, movimientos = 4, comisión = 300, valor del propietario = 1200, estado del depósito = descontado.
 GET {{base}}/cobros-y-deposito/consultas/consultar-el-estado-de-cuenta-del-arriendo/ARR-0001
 
-### Del inventario al envío a Finanzas · paso 13: Calificar al propietario
+### Del inventario al envío a Finanzas · paso 14: Calificar al propietario
 # Comando. Espera: HTTP 2xx y "Propietario calificado".
 POST {{base}}/calificaciones/comandos/calificar-al-propietario
 Content-Type: application/json
@@ -154,7 +161,7 @@ Content-Type: application/json
   "calificacionDada": 5
 }
 
-### Del inventario al envío a Finanzas · paso 14: Consultar calificaciones promedio
+### Del inventario al envío a Finanzas · paso 15: Consultar calificaciones promedio
 # Consulta. Espera: HTTP 2xx y calificación promedio = 5, número de calificaciones = 1.
 GET {{base}}/calificaciones/consultas/consultar-calificaciones-promedio?calificado=PROP-0001
 
@@ -170,9 +177,6 @@ Content-Type: application/json
 {
   "cliente": "CLI-0002",
   "identificadorDelYate": "YATE-0001",
-  "propietario": "PROP-0001",
-  "precioPorDia": 500,
-  "marina": "MAR-01",
   "inicio": "2026-03-20",
   "fin": "2026-03-22",
   "numeroDeLaLicencia": "número de la licencia",
@@ -238,9 +242,6 @@ Content-Type: application/json
 {
   "cliente": "CLI-RIESGO-ALTO",
   "identificadorDelYate": "YATE-0001",
-  "propietario": "PROP-0001",
-  "precioPorDia": 100,
-  "marina": "MAR-01",
   "inicio": "2026-03-24",
   "fin": "2026-03-25",
   "numeroDeLaLicencia": "número de la licencia",

@@ -72,8 +72,8 @@ public sealed partial class CobrarAlquilerYSeguroManejador(
             Propietario = comando.Propietario,
             PolizaDelArriendo = new PolizaDelArriendo(respuestaPolizasYReclamosDeLaAseguradora.Numero, (respuestaPolizasYReclamosDeLaAseguradora.Valor ?? throw new DatoFaltante("valor"))),
         };
-        Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.Alquiler, calculadoValorDelAlquiler, respuestaCobrosPorLaPasarelaDePagos1.Comprobante, []));
-        Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.Seguro, comando.ValorDelSeguro, respuestaCobrosPorLaPasarelaDePagos2.Comprobante, []));
+        Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.Alquiler, calculadoValorDelAlquiler, respuestaCobrosPorLaPasarelaDePagos1.Comprobante, [], respuestaCobrosPorLaPasarelaDePagos1.FechaDeLaOrden));
+        Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.Seguro, comando.ValorDelSeguro, respuestaCobrosPorLaPasarelaDePagos2.Comprobante, [], respuestaCobrosPorLaPasarelaDePagos2.FechaDeLaOrden));
         repositorio.Agregar(cuentaDelArriendo, $"{(comando.NumeroDelArriendo)}");
 
         // 7. Publicar los eventos.

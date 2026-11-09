@@ -71,9 +71,6 @@
           "cuerpo": {
             "cliente": "CLI-0001",
             "identificadorDelYate": "YATE-0001",
-            "propietario": "PROP-0001",
-            "precioPorDia": 500,
-            "marina": "MAR-01",
             "inicio": "2026-03-10",
             "fin": "2026-03-12",
             "numeroDeLaLicencia": "número de la licencia",
@@ -246,6 +243,33 @@
         },
         {
           "numero": 10,
+          "nombre": "Detectar la pérdida de señal",
+          "contexto": "Contexto Operación del arriendo",
+          "tipo": "comando",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/operacion-del-arriendo/comandos/detectar-la-perdida-de-senal",
+          "cuerpo": {
+            "minutosSinLecturas": 30,
+            "ahora": "2026-03-10T11:00:00"
+          },
+          "espera": {
+            "tipo": "eventos",
+            "eventos": [
+              "Pérdida de señal del yate"
+            ],
+            "envios": [
+              {
+                "ruta_base": "/operacion-del-arriendo",
+                "nombre": "Avisos y actas de las marinas: Alerta de pérdida de señal"
+              }
+            ],
+            "texto": "HTTP 2xx y \"Pérdida de señal del yate\", \"Alerta de pérdida de señal\""
+          }
+        },
+        {
+          "numero": 11,
           "nombre": "Acta de inspección recibida",
           "contexto": "Contexto Operación del arriendo",
           "tipo": "mensaje de un servicio SA",
@@ -289,7 +313,7 @@
           }
         },
         {
-          "numero": 11,
+          "numero": 12,
           "nombre": "Consultar el arriendo",
           "contexto": "Contexto Gestión del arriendo",
           "tipo": "consulta",
@@ -307,7 +331,7 @@
           }
         },
         {
-          "numero": 12,
+          "numero": 13,
           "nombre": "Consultar el estado de cuenta del arriendo",
           "contexto": "Contexto Cobros y depósito",
           "tipo": "consulta",
@@ -329,7 +353,7 @@
           }
         },
         {
-          "numero": 13,
+          "numero": 14,
           "nombre": "Calificar al propietario",
           "contexto": "Contexto Calificaciones",
           "tipo": "comando",
@@ -351,7 +375,7 @@
           }
         },
         {
-          "numero": 14,
+          "numero": 15,
           "nombre": "Consultar calificaciones promedio",
           "contexto": "Contexto Calificaciones",
           "tipo": "consulta",
@@ -387,9 +411,6 @@
           "cuerpo": {
             "cliente": "CLI-0002",
             "identificadorDelYate": "YATE-0001",
-            "propietario": "PROP-0001",
-            "precioPorDia": 500,
-            "marina": "MAR-01",
             "inicio": "2026-03-20",
             "fin": "2026-03-22",
             "numeroDeLaLicencia": "número de la licencia",
@@ -526,9 +547,6 @@
           "cuerpo": {
             "cliente": "CLI-RIESGO-ALTO",
             "identificadorDelYate": "YATE-0001",
-            "propietario": "PROP-0001",
-            "precioPorDia": 100,
-            "marina": "MAR-01",
             "inicio": "2026-03-24",
             "fin": "2026-03-25",
             "numeroDeLaLicencia": "número de la licencia",

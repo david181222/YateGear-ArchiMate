@@ -13,9 +13,10 @@ public sealed partial class ConsultarElEstadoDeCuentaDelArriendoManejador
     {
     }
 
-    // Escrito a mano: los movimientos de la cuenta, en el orden en que se cobraron, con su concepto, valor y evidencia.
-    // Sin fecha: el Cobro no la tiene (discrepancia 12).
-    private partial List<Cobro> Movimientos(ConsultarElEstadoDeCuentaDelArriendoDatos datos) => datos.CuentaDelArriendo.Cobro.ToList();
+    // Escrito a mano: los movimientos de la cuenta con su fecha, concepto, valor y evidencia, por fecha; los del mismo
+    // día, en el orden en que se cobraron. La fecha es la de la orden que confirmó la pasarela (discrepancia 12).
+    private partial List<Cobro> Movimientos(ConsultarElEstadoDeCuentaDelArriendoDatos datos) =>
+        datos.CuentaDelArriendo.Cobro.OrderBy(c => c.Fecha).ToList();
 
     // Escrito a mano: el estado del depósito, si se bloqueó.
     private partial EstadoDelDeposito? EstadoDelDeposito(ConsultarElEstadoDeCuentaDelArriendoDatos datos) =>

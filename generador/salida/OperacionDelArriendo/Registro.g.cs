@@ -24,6 +24,7 @@ public static class Registro
         servicios.AddSingleton<MemoriaDeEventos>();
 
         // Servicios de la capa anticorrupción, simulados.
+        servicios.AddSingleton<IEmisorDeAvisosYActasDeLasMarinas, EmisorDeAvisosYActasDeLasMarinasSimulado>();          // solo envía (G11)
 
         // Manejadores de comandos y consultas.
         servicios.AddSingleton<DetectarLaPerdidaDeSenalManejador>();

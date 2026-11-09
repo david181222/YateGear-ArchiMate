@@ -19,6 +19,7 @@ public static class Registro
         servicios.AddSingleton(s => new BusDeEventos(s.GetRequiredService<Bitacora>(),
             s.GetRequiredService<BusEntreContextos>(), "Contexto Gestión del arriendo"));
         servicios.AddSingleton(new Repositorio<Arriendo>("ARR-", 4));
+        servicios.AddSingleton<MemoriaDeEventos>();
 
         // Servicios de la capa anticorrupción, simulados.
         servicios.AddSingleton<IAvisosYActasDeLasMarinas, AvisosYActasDeLasMarinasSimulado>();
@@ -61,6 +62,8 @@ public static class Registro
             m => receptorEntreContextos.RecibirInspeccionDeDevolucionRegistrada(m.DatosConIdentidad("numeroDelArriendo")));
         entreContextos.Suscribir("Contexto Operación del arriendo", "Yate entregado al cliente",
             m => receptorEntreContextos.RecibirYateEntregadoAlCliente(m.DatosConIdentidad("numeroDelArriendo")));
+        entreContextos.Suscribir("Contexto Disponibilidad de yates", "Yate registrado",
+            m => receptorEntreContextos.RecibirYateRegistrado(m.DatosConIdentidad("identificadorDelYate")));
 
         // Comandos: POST con el comando en JSON.
         app.MapPost("/gestion-del-arriendo/comandos/cancelar-la-reserva",
@@ -94,6 +97,8 @@ public static class Registro
             (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirInspeccionDeDevolucionRegistrada(evento), Recibido));
         app.MapPost("/gestion-del-arriendo/eventos-externos/yate-entregado-al-cliente",
             (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirYateEntregadoAlCliente(evento), Recibido));
+        app.MapPost("/gestion-del-arriendo/eventos-externos/yate-registrado",
+            (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirYateRegistrado(evento), Recibido));
 
 
         // Bitácora (infraestructura, no sale del modelo): eventos y llamadas a los servicios SA simulados, en orden.

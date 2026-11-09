@@ -7,9 +7,6 @@ namespace YateGear.GestionDelArriendo;
 public sealed record RegistrarLaSolicitudDeReserva(
     string Cliente,
     string IdentificadorDelYate,
-    string Propietario,
-    decimal PrecioPorDia,
-    string Marina,
     DateOnly Inicio,
     DateOnly Fin,
     string NumeroDeLaLicencia,
@@ -21,6 +18,7 @@ public sealed record RegistrarLaSolicitudDeReserva(
 /// <summary>Lo que reciben ValidarReglas y los datos calculados: el comando y las respuestas de los servicios SA.</summary>
 public sealed record RegistrarLaSolicitudDeReservaDatos(
     RegistrarLaSolicitudDeReserva Comando,
+    YateRegistrado YateRegistrado,
     ClientesDelCRMSalida ClientesDelCRM
 );
 
@@ -35,6 +33,7 @@ public sealed record RegistrarLaSolicitudDeReservaDatos(
 public sealed partial class RegistrarLaSolicitudDeReservaManejador(
     Repositorio<Arriendo> repositorio,
     BusDeEventos bus,
+    MemoriaDeEventos memoria,
     IClientesDelCRM clientesDelCRM
 )
 {
@@ -46,11 +45,15 @@ public sealed partial class RegistrarLaSolicitudDeReservaManejador(
     {
         // 1. El comando crea la raíz: se arma en el paso 6, después de ValidarReglas.
 
+        // 1c. Eventos de otros contextos que el comando requiere (D5): si no han llegado para su identidad, 409.
+        var yateRegistrado = memoria.Buscar<YateRegistrado>("Yate registrado", comando.IdentificadorDelYate)
+            ?? throw new FaltaEventoRequerido("Registrar la solicitud de reserva", "Yate registrado", comando.IdentificadorDelYate);
+
         // 2. Servicios SA que usa, en orden.
         var respuestaClientesDelCRM = clientesDelCRM.Llamar(new ClientesDelCRMEntrada(comando.Cliente, comando.IdentificadorDelYate, comando.Inicio, comando.Fin));
 
         // 4. Reglas del contrato (archivo manual).
-        var datos = new RegistrarLaSolicitudDeReservaDatos(comando, respuestaClientesDelCRM);
+        var datos = new RegistrarLaSolicitudDeReservaDatos(comando, yateRegistrado, respuestaClientesDelCRM);
         ValidarReglas(datos);
 
         // 6. Crear la raíz con su estado inicial y lo que guarda el comando. Al guardarla recibe su identidad.
@@ -58,7 +61,7 @@ public sealed partial class RegistrarLaSolicitudDeReservaManejador(
         {
             Estado = EstadoDelArriendo.ReservaSolicitada,
             FechasDelArriendo = new FechasDelArriendo(comando.Inicio, comando.Fin),
-            YateDelArriendo = new YateDelArriendo(comando.IdentificadorDelYate, comando.Propietario, comando.PrecioPorDia, comando.Marina),
+            YateDelArriendo = new YateDelArriendo(comando.IdentificadorDelYate, yateRegistrado.Propietario, yateRegistrado.PrecioPorDia, yateRegistrado.IdentificadorDeLaMarina),
             FichaDelCliente = new FichaDelCliente(respuestaClientesDelCRM.ReferenciaAlCRM, comando.NumeroDeLaLicencia, comando.VigenciaDeLaLicencia, comando.FechaDeLaAutorizacion, comando.TercerosAutorizados),
         };
         repositorio.Guardar(arriendo);

@@ -15,5 +15,9 @@ public static class Politicas
         // "Inspección de devolución registrada" dispara "Determinar las diferencias entre entrega y devolución" (relación id-653c0c10e4184badb60b3efcc37e9720).
         bus.Suscribir<InspeccionDeDevolucionRegistrada>(e => servicios.GetRequiredService<DeterminarLasDiferenciasEntreEntregaYDevolucionManejador>()
             .Manejar(new DeterminarLasDiferenciasEntreEntregaYDevolucion(e.NumeroDelArriendo)));
+
+        // "Pérdida de señal del yate": "Avisos y actas de las marinas" envía "Alerta de pérdida de señal" (lenguaje publicado, G11).
+        bus.Suscribir<PerdidaDeSenalDelYate>(e => servicios.GetRequiredService<IEmisorDeAvisosYActasDeLasMarinas>()
+            .Enviar(new AlertaDePerdidaDeSenal(e.IdentificadorDelYate, e.Latitud, e.Longitud, e.NivelDeCombustible, e.HoraDeLaLectura)));
     }
 }

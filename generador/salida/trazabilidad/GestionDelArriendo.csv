@@ -50,6 +50,9 @@ id-47df454247c847e0be29ca1bb86c09af,BusinessService,Consultar el arriendo,Gestio
 id-4a7df69a98244bba96965f2dae86b543,Access,Obtener el nivel de riesgo del cliente -> Arriendo (escritura),GestionDelArriendo/Comandos/ObtenerElNivelDeRiesgoDelCliente.g.cs,ObtenerElNivelDeRiesgoDelClienteManejador
 id-4bb3be2830b946619f18bcacda5e4eb4,Triggering,Reserva confirmada -> Enviar el aviso de reserva confirmada,GestionDelArriendo/Politicas/Politicas.g.cs,Politicas
 id-4d7f4d13934141c099ed84fd06d65c9a,Access,Consultar el arriendo -> Arriendo (lectura),GestionDelArriendo/Consultas/ConsultarElArriendo.g.cs,ConsultarElArriendoManejador
+id-4f03a460e265434e87e0081ee5018122,ApplicationEvent,Yate registrado,GestionDelArriendo/EventosExternos/ReceptorDeEventosExternos.g.cs,ReceptorDeEventosExternos
+id-4f03a460e265434e87e0081ee5018122,ApplicationEvent,Yate registrado,GestionDelArriendo/EventosExternos/YateRegistrado.g.cs,YateRegistrado
+id-4f03a460e265434e87e0081ee5018122,ApplicationEvent,Yate registrado,GestionDelArriendo/Registro.g.cs,POST /gestion-del-arriendo/eventos-externos/yate-registrado
 id-50762e19dd0a427ca2544391c5ab5962,ApplicationInterface,Interfaz con el CRM,GestionDelArriendo/Anticorrupcion/ClientesDelCRM.g.cs,IClientesDelCRM
 id-543ee022ee44497dbc49d870bc511326,BusinessService,Cancelar la reserva,GestionDelArriendo/Comandos/CancelarLaReserva.g.cs,CancelarLaReservaManejador
 id-57da84f53a9742cea51396bf297bf06d,ApplicationProcess,Enviar el aviso de reserva confirmada,GestionDelArriendo/Comandos/EnviarElAvisoDeReservaConfirmada.cs,EnviarElAvisoDeReservaConfirmadaManejador (manual)

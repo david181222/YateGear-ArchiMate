@@ -6,6 +6,7 @@ namespace YateGear.DisponibilidadDeYates;
 /// <summary>Evento "Yate registrado". Lo publica "Registrar yate en el inventario" (SB-01).</summary>
 public sealed record YateRegistrado(
     string IdentificadorDelYate,
+    string Propietario,
     string IdentificadorDeLaMarina,
     decimal PrecioPorDia
 ) : IEvento

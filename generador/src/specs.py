@@ -774,6 +774,12 @@ class Revisor:
                         datos_ev[k] = tipos.interpretar(tx)
                     except tipos.TipoInvalido:
                         pass                              # el error se informa al revisar eventos_de_otros_contextos
+                # Si el evento solo se recuerda, sus correspondencias {dato del comando: dato del evento} le dan al
+                # comando un dato que llega con otro nombre (D2). Se revisan en eventos_de_otros_contextos.
+                corr_ev = x.get("correspondencias") if "dispara" not in x and isinstance(x.get("correspondencias"), dict) else {}
+                for local, del_ev in corr_ev.items():
+                    if isinstance(del_ev, str) and del_ev in datos_ev:
+                        datos_ev[local] = datos_ev[del_ev]
                 self.agregar(bolsa, datos_ev, f"{d} > requiere > {ev}")
                 propios |= set(datos_ev)
                 for k in datos_ev:
@@ -1255,13 +1261,19 @@ class Revisor:
             elif id_ev in (x.get("datos") or {}):
                 self.error(f"{d} > datos", f'"{id_ev}" es la identidad del evento: se agrega sola')
             if "dispara" not in x:
-                # Sin dispara, el evento solo se recuerda, para los comandos que lo requieren (requiere).
-                for k in ("con", "correspondencias", "junto_con"):
+                # Sin dispara, el evento solo se recuerda, para los comandos que lo requieren (requiere). Puede llevar
+                # correspondencias {dato del comando: dato del evento}, para un dato que llega con otro nombre (D2).
+                for k in ("con", "junto_con"):
                     if k in x:
                         self.error(d, f"{k} solo va con dispara")
                 if n not in self.requeridos:
                     self.error(d, "no dispara ningún comando y ningún comando lo requiere (requiere): nadie lo usa")
-                self.campos(x.get("datos"), f"{d} > datos")
+                datos_ev = self.campos(x.get("datos"), f"{d} > datos")
+                for local, del_ev in self.mapa(x.get("correspondencias"), f"{d} > correspondencias").items():
+                    if not isinstance(del_ev, str) or del_ev not in datos_ev:
+                        self.error(f"{d} > correspondencias", f'"{local}" se toma de "{del_ev}", que no está en los datos del evento')
+                    elif local in datos_ev:
+                        self.error(f"{d} > correspondencias", f'"{local}" ya es un dato del evento: no necesita correspondencia')
                 continue
             # La identidad de la raíz de cada comando: la del evento o (G3) un dato del evento con su nombre.
             ids_raiz = {self.raices[entradas_cmd[c_]["raiz"]]["id_nombre"] for c_, _ in lista if c_ in entradas_cmd}

@@ -91,17 +91,17 @@ comandos:
       - Cobros por la pasarela de pagos:
           con: {tipo de orden: alquiler}
           entrada: {valor: valor del alquiler}
-          salida: {comprobante: comprobante del alquiler, aprobada: alquiler aprobado}
+          salida: {comprobante: comprobante del alquiler, aprobada: alquiler aprobado, fecha de la orden: fecha del alquiler}
       - Cobros por la pasarela de pagos:
           con: {tipo de orden: seguro}
           entrada: {valor: valor del seguro}
-          salida: {comprobante: comprobante del seguro, aprobada: seguro aprobado}
+          salida: {comprobante: comprobante del seguro, aprobada: seguro aprobado, fecha de la orden: fecha del seguro}
     guarda:                                       # V6.2: "SB-13 escribe en una sola operación el cobro del alquiler, el del seguro y la póliza"
       - identificador del yate
       - propietario
       - Póliza del arriendo
-      - Cobro: {agregar: {valor: valor del alquiler, comprobante: comprobante del alquiler}, valores: {concepto: alquiler}}
-      - Cobro: {agregar: {valor: valor del seguro, comprobante: comprobante del seguro}, valores: {concepto: seguro}}
+      - Cobro: {agregar: {valor: valor del alquiler, comprobante: comprobante del alquiler, fecha: fecha del alquiler}, valores: {concepto: alquiler}}
+      - Cobro: {agregar: {valor: valor del seguro, comprobante: comprobante del seguro, fecha: fecha del seguro}, valores: {concepto: seguro}}
     eventos: [Alquiler y seguro cobrados]
 
   Liquidar y cobrar los cargos del cierre:        # contrato SB-14; lo dispara "Diferencias determinadas" (Operación)
@@ -119,16 +119,16 @@ comandos:
       - Cobros por la pasarela de pagos:
           con: {tipo de orden: combustible consumido}
           entrada: {valor: valor del combustible}
-          salida: {comprobante: comprobante del combustible, aprobada: combustible aprobado}
+          salida: {comprobante: comprobante del combustible, aprobada: combustible aprobado, fecha de la orden: fecha del combustible}
       - Cobros por la pasarela de pagos:
           si: {hay tiempo adicional: [true]}
           con: {tipo de orden: tiempo adicional}
           entrada: {valor: valor del tiempo adicional}
-          salida: {comprobante: comprobante del tiempo adicional, aprobada: tiempo adicional aprobado}
+          salida: {comprobante: comprobante del tiempo adicional, aprobada: tiempo adicional aprobado, fecha de la orden: fecha del tiempo adicional}
     guarda:
-      - Cobro: {agregar: {valor: valor del combustible, comprobante: comprobante del combustible}, valores: {concepto: combustible consumido}}
+      - Cobro: {agregar: {valor: valor del combustible, comprobante: comprobante del combustible, fecha: fecha del combustible}, valores: {concepto: combustible consumido}}
       - Cobro:
-          agregar: {valor: valor del tiempo adicional, comprobante: comprobante del tiempo adicional}
+          agregar: {valor: valor del tiempo adicional, comprobante: comprobante del tiempo adicional, fecha: fecha del tiempo adicional}
           valores: {concepto: tiempo adicional}
           si: {hay tiempo adicional: [true]}
     eventos: [Cargos del cierre cobrados]
@@ -146,13 +146,13 @@ comandos:
           si: {reembolsable: [true]}
           con: {tipo de orden: reembolso}
           entrada: {valor: valor del reembolso}
-          salida: {comprobante: comprobante del reembolso, aprobada: reembolso aprobado}
+          salida: {comprobante: comprobante del reembolso, aprobada: reembolso aprobado, fecha de la orden: fecha del reembolso}
     resultados:                                   # V6-DEC-08: un evento por resultado
       Cancelación reembolsada:
         si: {reembolsable: [true]}
         a: cerrada                                # supuesto: la cuenta de un arriendo cancelado se cierra con la decisión
         guarda:
-          - Cobro: {agregar: {valor: valor del reembolso, comprobante: comprobante del reembolso}, valores: {concepto: reembolso}}
+          - Cobro: {agregar: {valor: valor del reembolso, comprobante: comprobante del reembolso, fecha: fecha del reembolso}, valores: {concepto: reembolso}}
       Cancelación no reembolsada:
         si: {reembolsable: [false]}
         a: cerrada                                # supuesto: igual
@@ -296,7 +296,7 @@ consultas:
       valor del depósito: decimal?                # del depósito, si se bloqueó
       evidencia del descuento: List<string>?
     calculados:
-      movimientos: List<Cobro>                    # "movimientos con concepto, valor y evidencia" (sin fecha: discrepancia 12)
+      movimientos: List<Cobro>                    # "movimientos con fecha, concepto, valor y evidencia" (la fecha: discrepancia 12)
       estado del depósito: enum Estado del depósito(bloqueado, liberado, descontado)?
 
 politicas:
@@ -395,33 +395,35 @@ servicios_sa:
       número del arriendo: string
       valor: decimal
       medio de pago: string?                      # supuesto: en el cierre se usa el medio de pago que el cliente dio al reservar
-    salida:                                       # "orden aprobada o rechazada, con su comprobante o código de autorización"
+    salida:                                       # "orden aprobada o rechazada, con su comprobante o código de autorización y la fecha de la orden"
       aprobada: bool
       comprobante: string
       vencimiento del bloqueo: DateOnly?
+      fecha de la orden: DateOnly                 # discrepancia 12: cada cobro guarda la fecha en que la pasarela confirmó la orden
     respuesta_por_defecto:                        # supuesto: valores de prueba
       aprobada: true
       comprobante: PAG-0001
       vencimiento del bloqueo: null
-    casos:                                        # supuesto: un comprobante de prueba por tipo de orden
+      fecha de la orden: "2026-03-01"
+    casos:                                        # supuesto: un comprobante y una fecha de prueba por tipo de orden (GEN-SUP-03)
       - si: {medio de pago: [TARJETA-RECHAZADA]}  # supuesto: medio de pago de prueba que la pasarela rechaza
-        respuesta: {aprobada: false, comprobante: RECHAZADA, vencimiento del bloqueo: null}
+        respuesta: {aprobada: false, comprobante: RECHAZADA, vencimiento del bloqueo: null, fecha de la orden: "2026-03-01"}
       - si: {tipo de orden: [bloqueo del depósito]}
-        respuesta: {aprobada: true, comprobante: AUT-0001, vencimiento del bloqueo: "2026-03-29"}   # 28 días (V4-SUP-07)
+        respuesta: {aprobada: true, comprobante: AUT-0001, vencimiento del bloqueo: "2026-03-29", fecha de la orden: "2026-03-01"}   # 28 días (V4-SUP-07)
       - si: {tipo de orden: [alquiler]}
-        respuesta: {aprobada: true, comprobante: PAG-ALQ-0001, vencimiento del bloqueo: null}
+        respuesta: {aprobada: true, comprobante: PAG-ALQ-0001, vencimiento del bloqueo: null, fecha de la orden: "2026-03-01"}
       - si: {tipo de orden: [seguro]}
-        respuesta: {aprobada: true, comprobante: PAG-SEG-0001, vencimiento del bloqueo: null}
+        respuesta: {aprobada: true, comprobante: PAG-SEG-0001, vencimiento del bloqueo: null, fecha de la orden: "2026-03-01"}
       - si: {tipo de orden: [combustible consumido]}
-        respuesta: {aprobada: true, comprobante: PAG-COM-0001, vencimiento del bloqueo: null}
+        respuesta: {aprobada: true, comprobante: PAG-COM-0001, vencimiento del bloqueo: null, fecha de la orden: "2026-03-13"}
       - si: {tipo de orden: [tiempo adicional]}
-        respuesta: {aprobada: true, comprobante: PAG-TAD-0001, vencimiento del bloqueo: null}
+        respuesta: {aprobada: true, comprobante: PAG-TAD-0001, vencimiento del bloqueo: null, fecha de la orden: "2026-03-13"}
       - si: {tipo de orden: [reembolso]}
-        respuesta: {aprobada: true, comprobante: REE-0001, vencimiento del bloqueo: null}
+        respuesta: {aprobada: true, comprobante: REE-0001, vencimiento del bloqueo: null, fecha de la orden: "2026-03-11"}
       - si: {tipo de orden: [liberación del depósito]}
-        respuesta: {aprobada: true, comprobante: LIB-0001, vencimiento del bloqueo: null}
+        respuesta: {aprobada: true, comprobante: LIB-0001, vencimiento del bloqueo: null, fecha de la orden: "2026-03-13"}
       - si: {tipo de orden: [descuento del depósito]}
-        respuesta: {aprobada: true, comprobante: DES-0001, vencimiento del bloqueo: null}
+        respuesta: {aprobada: true, comprobante: DES-0001, vencimiento del bloqueo: null, fecha de la orden: "2026-03-13"}
 
   Envío de arriendos cerrados a Finanzas:         # contrato SA-08; solo sale (lenguaje publicado, V8)
     envia:

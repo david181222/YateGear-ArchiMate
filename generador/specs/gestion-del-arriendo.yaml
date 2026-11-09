@@ -66,18 +66,16 @@ comandos:
   Registrar la solicitud de reserva:              # contrato SB-06
     crea: true
     a: reserva solicitada
-    entrada:
+    entrada:                                      # contrato SB-06: cliente, yate, fechas, licencia y autorización
       cliente: string                             # identificación del cliente
       identificador del yate: string
-      propietario: string                         # supuesto: en el piloto la copia del inventario (V8-DEC-04) la envía quien llama, porque el Contexto Disponibilidad de yates todavía no se genera
-      precio por día: decimal                     # supuesto: igual que propietario
-      marina: string                              # supuesto: igual que propietario
       inicio: DateOnly
       fin: DateOnly
       número de la licencia: string
       vigencia de la licencia: DateOnly
       fecha de la autorización: DateOnly
       terceros autorizados: List<string>
+    requiere: [Yate registrado]                   # la copia del yate sale del inventario (V8); sin él, 409
     usa: [Clientes del CRM]                       # V9; de SA-01 sale la referencia al CRM
     guarda: [Fechas del arriendo, Yate del arriendo, Ficha del cliente]   # V6.1: Fuente SB-06
     eventos: [Reserva solicitada]
@@ -215,6 +213,15 @@ consultas:
 # correspondencia dice de cuál dato sale: {dato de la entrada: dato del evento}.
 eventos_de_otros_contextos:
 
+  Yate registrado:                                # V8: Disponibilidad le da a Gestión del arriendo el yate, su propietario y su marina (SB-06)
+    de: Contexto Disponibilidad de yates
+    identidad: identificador del yate
+    datos:                                        # los nombres de "Yate registrado" en disponibilidad-de-yates.yaml
+      propietario: string
+      precio por día: decimal
+      identificador de la marina: string
+    correspondencias: {marina: identificador de la marina}   # el campo de "Yate del arriendo" se llama marina (D2)
+
   Alquiler y seguro cobrados:
     de: Contexto Cobros y depósito
     dispara: Confirmar la reserva                 # SB-07 recibe los comprobantes y la autorización del depósito
@@ -326,7 +333,10 @@ servicios_sa:
 escenarios:
 
   Principal hasta el cierre:                      # ARR-0001
-    - Registrar la solicitud de reserva
+    - Yate registrado:                            # Gestión del arriendo recuerda la copia del yate (V8)
+        con: {identificador del yate: YATE-0001, propietario: PROP-0001, precio por día: 500, identificador de la marina: MAR-01}
+    - Registrar la solicitud de reserva:
+        con: {identificador del yate: YATE-0001}
     - Obtener el nivel de riesgo del cliente:
         espera: Riesgo aceptable obtenido
     - Verificar los requisitos del cliente
@@ -348,14 +358,15 @@ escenarios:
 
   Riesgo alto:                                    # ARR-0002
     - Registrar la solicitud de reserva:
-        con: {cliente: CLI-RIESGO-ALTO}           # el CRM simulado responde CRM-0002 y la evaluadora, alto
+        con: {cliente: CLI-RIESGO-ALTO, identificador del yate: YATE-0001}   # el CRM simulado responde CRM-0002 y la evaluadora, alto
     - Obtener el nivel de riesgo del cliente:
         espera: Arriendo no realizado por riesgo alto
     - Consultar el arriendo:
         espera: {estado: no realizado por riesgo alto}
 
   Cancelación:                                    # ARR-0003
-    - Registrar la solicitud de reserva
+    - Registrar la solicitud de reserva:
+        con: {identificador del yate: YATE-0001}
     - Cancelar la reserva:
         espera: Reserva cancelada
     - Registrar el avance del arriendo:           # rechazo a propósito: un arriendo cancelado no empieza
@@ -363,6 +374,12 @@ escenarios:
         espera: {código: 409, estado actual: cancelado}
 
   Confirmar sin riesgo evaluado:                  # ARR-0004
-    - Registrar la solicitud de reserva
+    - Registrar la solicitud de reserva:
+        con: {identificador del yate: YATE-0001}
     - Confirmar la reserva:                       # REG-01 (escrita a mano en ConfirmarLaReserva.cs): falta el riesgo aceptable
         espera: {código: 422, regla: REG-01}
+
+  Yate fuera del inventario:
+    - Registrar la solicitud de reserva:          # rechazo a propósito: el yate no está en el inventario (no llegó "Yate registrado")
+        con: {identificador del yate: YATE-0099}
+        espera: {código: 409, requiere: Yate registrado}

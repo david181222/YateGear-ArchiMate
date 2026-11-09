@@ -10,6 +10,7 @@ namespace YateGear.GestionDelArriendo;
 /// los de su grupo (en memoria, por identidad) y entonces dispara el comando con los datos de todos.</summary>
 public sealed class ReceptorDeEventosExternos(
     EsperaDeEventos espera,
+    MemoriaDeEventos memoria,
     Bitacora bitacora,
     ConfirmarLaReservaManejador confirmarLaReserva,
     RegistrarElAvanceDelArriendoManejador registrarElAvanceDelArriendo
@@ -83,4 +84,16 @@ public sealed class ReceptorDeEventosExternos(
     /// <summary>Lee "Yate entregado al cliente" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
     public RespuestaDeEventoExterno RecibirYateEntregadoAlCliente(JsonElement json) =>
         Recibir(LectorDeEventos.Leer<YateEntregadoAlCliente>(json, ("numeroDelArriendo", "número del arriendo"), ("horaDeEntrega", "hora de entrega")));
+
+    /// <summary>"Yate registrado" de "Contexto Disponibilidad de yates" (id-4f03a460e265434e87e0081ee5018122). Se recuerda para los comandos que lo requieren.</summary>
+    public RespuestaDeEventoExterno Recibir(YateRegistrado evento)
+    {
+        bitacora.Anotar("evento recibido", evento.NombreEnElModelo, evento);
+        memoria.Anotar(evento);
+        return RespuestaDeEventoExterno.Recordado();
+    }
+
+    /// <summary>Lee "Yate registrado" desde JSON y lo recibe. Si falta un dato obligatorio, DatoFaltante (422).</summary>
+    public RespuestaDeEventoExterno RecibirYateRegistrado(JsonElement json) =>
+        Recibir(LectorDeEventos.Leer<YateRegistrado>(json, ("identificadorDelYate", "identificador del yate"), ("propietario", "propietario"), ("precioPorDia", "precio por día"), ("identificadorDeLaMarina", "identificador de la marina")));
 }

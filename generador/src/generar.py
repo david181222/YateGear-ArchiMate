@@ -494,6 +494,11 @@ class Generador:
                                    "identidad": antes.expr(id_ev, False)})
                 capa = {k: fuente(f"{var_ev}.{nombres.pascal(k)}", tipos.interpretar(tx))
                         for k, tx in (x.get("datos") or {}).items()}
+                # Un evento que solo se recuerda puede traer un dato con otro nombre (correspondencias, D2): el comando
+                # lo toma con su nombre, {dato del comando: dato del evento}.
+                if "dispara" not in x:
+                    for local, del_ev in (x.get("correspondencias") or {}).items():
+                        capa[local] = fuente(f"{var_ev}.{nombres.pascal(del_ev)}", tipos.interpretar(x["datos"][del_ev]))
                 antes.agregar(capa)
                 capas_req.append(capa)
                 datos_props.append({"cs": ev_clase, "prop": ev_clase})
