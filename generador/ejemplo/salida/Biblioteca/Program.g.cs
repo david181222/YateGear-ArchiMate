@@ -13,6 +13,9 @@ builder.Services.AddSingleton<BusEntreContextos>();
 Biblioteca.Prestamos.Registro.AgregarServicios(builder.Services);         // Contexto Préstamos
 
 var app = builder.Build();
+// Página de inicio (infraestructura, no sale del modelo): wwwroot/index.html, con las rutas de cada contexto.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 Biblioteca.Prestamos.Registro.MapearEndpoints(app);
 
 // Infraestructura (no sale del modelo): los contextos generados y los eventos que pasaron por el bus entre contextos.
@@ -21,5 +24,7 @@ app.MapGet("/contextos", () => new[]
     new { nombre = "Contexto Préstamos", ruta = "/prestamos" },
 });
 app.MapGet("/eventos-entre-contextos", (BusEntreContextos bus) => bus.Historial());
+// La ruta de cada contexto lleva a su parte de la página de inicio.
+app.MapGet("/prestamos", () => Results.Redirect("/#prestamos"));
 
 app.Run();

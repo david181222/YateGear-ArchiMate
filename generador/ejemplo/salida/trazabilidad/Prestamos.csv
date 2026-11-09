@@ -42,6 +42,7 @@ id-be012cf9cf7a573c8176e8e3dadd4814,Contract,Contrato de servicio: Devolver el l
 id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Biblioteca.sln,
 id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Biblioteca/Biblioteca.csproj,
 id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Biblioteca/Program.g.cs,
+id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Biblioteca/wwwroot/index.html,
 id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Prestamos/Dominio/Enums.g.cs,enums
 id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Prestamos/Infraestructura/Infraestructura.g.cs,infraestructura
 id-ccd77ee8d6e85373b2058f86905a7b2c,ApplicationComponent,Contexto Préstamos,Prestamos/Prestamos.csproj,

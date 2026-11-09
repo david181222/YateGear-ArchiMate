@@ -1,0 +1,132 @@
+<!doctype html>
+<!-- Generado desde ArchiMate: Model "YateGear" (id-98e02fd4df1c4f21a8610d291649a7af). -->
+<!-- Página de inicio de la API: las rutas de cada contexto. Es infraestructura (no sale de un elemento del modelo).
+     No editar: el generador reescribe este archivo. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YateGear: rutas de la API</title>
+<style>
+  :root { --fondo: #ffffff; --texto: #1f2328; --suave: #59636e; --borde: #d1d9e0; --codigo: #f6f8fa; --enlace: #0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fondo: #0d1117; --texto: #e6edf3; --suave: #9198a1; --borde: #3d444d; --codigo: #151b23; --enlace: #4493f8; }
+  }
+  body { background: var(--fondo); color: var(--texto); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+         max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin-bottom: 4px; }
+  h2 { margin-top: 36px; padding-bottom: 6px; border-bottom: 1px solid var(--borde); }
+  p, li { color: var(--suave); }
+  a { color: var(--enlace); }
+  code { background: var(--codigo); padding: 1px 5px; border-radius: 4px; font-size: 13px; word-break: break-all; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--borde); }
+  th { color: var(--suave); font-weight: 600; }
+  td.metodo { font-weight: 600; white-space: nowrap; }
+</style>
+</head>
+<body>
+<h1>YateGear</h1>
+<p>API generada desde el modelo ArchiMate: 5 contexto(s) en un solo programa, con los datos en memoria
+(se pierden al detenerla). Las rutas <strong>GET</strong> se abren aquí mismo y devuelven JSON. Las <strong>POST</strong> reciben
+un JSON: se envían con el <code>pruebas.http</code> de cada contexto (en <code>pruebas/&lt;Proyecto&gt;/</code>, con REST Client de
+VS Code o con Visual Studio) o con PowerShell, como dice el paso a paso del README del generador.</p>
+<ul>
+  <li><a href="/contextos">/contextos</a>: los contextos que levantó el programa.</li>
+  <li><a href="/eventos-entre-contextos">/eventos-entre-contextos</a>: los eventos que pasaron por el bus entre contextos y los errores de sus suscriptores.</li>
+  <li><a href="#calificaciones">Contexto Calificaciones</a></li>
+  <li><a href="#cobros-y-deposito">Contexto Cobros y depósito</a></li>
+  <li><a href="#disponibilidad-de-yates">Contexto Disponibilidad de yates</a></li>
+  <li><a href="#gestion-del-arriendo">Contexto Gestión del arriendo</a></li>
+  <li><a href="#operacion-del-arriendo">Contexto Operación del arriendo</a></li>
+</ul>
+
+<h2 id="calificaciones">Contexto Calificaciones</h2>
+<table>
+  <thead><tr><th>Método</th><th>Ruta</th><th>Qué es</th></tr></thead>
+  <tbody>
+    <tr><td class="metodo">GET</td><td><code>/calificaciones/consultas/consultar-calificaciones-promedio?calificado=...</code></td><td>Consulta SB-30 &#34;Consultar calificaciones promedio&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/calificaciones/comandos/calificar-al-propietario</code></td><td>Comando SB-28 &#34;Calificar al propietario&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/calificaciones/comandos/calificar-al-cliente</code></td><td>Comando SB-29 &#34;Calificar al cliente&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/calificaciones/eventos-externos/arriendo-cerrado</code></td><td>Evento &#34;Arriendo cerrado&#34; de Contexto Gestión del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">GET</td><td><a href="/calificaciones/bitacora"><code>/calificaciones/bitacora</code></a></td><td>Bitácora (infraestructura): eventos, llamadas a los SA simulados y errores, en orden</td></tr>
+  </tbody>
+</table>
+
+<h2 id="cobros-y-deposito">Contexto Cobros y depósito</h2>
+<table>
+  <thead><tr><th>Método</th><th>Ruta</th><th>Qué es</th></tr></thead>
+  <tbody>
+    <tr><td class="metodo">GET</td><td><code>/cobros-y-deposito/consultas/consultar-el-estado-de-cuenta-del-arriendo/{numeroDelArriendo}</code></td><td>Consulta SB-18 &#34;Consultar el estado de cuenta del arriendo&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/cobrar-alquiler-y-seguro</code></td><td>Comando SB-13 &#34;Cobrar alquiler y seguro&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/liquidar-y-cobrar-los-cargos-del-cierre</code></td><td>Comando SB-14 &#34;Liquidar y cobrar los cargos del cierre&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/reembolsar-una-cancelacion</code></td><td>Comando SB-15 &#34;Reembolsar una cancelación&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/reclamar-el-excedente-de-danos-a-la-aseguradora</code></td><td>Comando SB-16 &#34;Reclamar el excedente de daños a la aseguradora&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/cerrar-las-cuentas-del-arriendo</code></td><td>Comando SB-17 &#34;Cerrar las cuentas del arriendo&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/bloquear-el-deposito</code></td><td>Comando SB-19 &#34;Bloquear el depósito&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/liberar-el-deposito</code></td><td>Comando SB-20 &#34;Liberar el depósito&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/comandos/descontar-danos-del-deposito</code></td><td>Comando SB-21 &#34;Descontar daños del depósito&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/eventos-externos/diferencias-determinadas</code></td><td>Evento &#34;Diferencias determinadas&#34; de Contexto Operación del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/eventos-externos/reserva-cancelada</code></td><td>Evento &#34;Reserva cancelada&#34; de Contexto Gestión del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/cobros-y-deposito/sa/contratos-con-propietarios-y-clientes/contrato-del-cliente-firmado</code></td><td>Mensaje que recibe Contratos con propietarios y clientes: Contrato del cliente firmado</td></tr>
+    <tr><td class="metodo">GET</td><td><a href="/cobros-y-deposito/bitacora"><code>/cobros-y-deposito/bitacora</code></a></td><td>Bitácora (infraestructura): eventos, llamadas a los SA simulados y errores, en orden</td></tr>
+  </tbody>
+</table>
+
+<h2 id="disponibilidad-de-yates">Contexto Disponibilidad de yates</h2>
+<table>
+  <thead><tr><th>Método</th><th>Ruta</th><th>Qué es</th></tr></thead>
+  <tbody>
+    <tr><td class="metodo">GET</td><td><code>/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=...&amp;inicio=...&amp;fin=...</code></td><td>Consulta SB-04 &#34;Consultar yates disponibles&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/disponibilidad-de-yates/comandos/registrar-yate-en-el-inventario</code></td><td>Comando SB-01 &#34;Registrar yate en el inventario&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/disponibilidad-de-yates/comandos/definir-las-fechas-bloqueadas-del-yate</code></td><td>Comando SB-03 &#34;Definir las fechas bloqueadas del yate&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/disponibilidad-de-yates/comandos/gestionar-la-ocupacion-del-calendario</code></td><td>Comando SB-05 &#34;Gestionar la ocupación del calendario&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/disponibilidad-de-yates/eventos-externos/arriendo-no-realizado-por-riesgo-alto</code></td><td>Evento &#34;Arriendo no realizado por riesgo alto&#34; de Contexto Gestión del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/disponibilidad-de-yates/eventos-externos/reserva-cancelada</code></td><td>Evento &#34;Reserva cancelada&#34; de Contexto Gestión del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/disponibilidad-de-yates/eventos-externos/reserva-confirmada</code></td><td>Evento &#34;Reserva confirmada&#34; de Contexto Gestión del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/disponibilidad-de-yates/eventos-externos/reserva-solicitada</code></td><td>Evento &#34;Reserva solicitada&#34; de Contexto Gestión del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">GET</td><td><a href="/disponibilidad-de-yates/bitacora"><code>/disponibilidad-de-yates/bitacora</code></a></td><td>Bitácora (infraestructura): eventos, llamadas a los SA simulados y errores, en orden</td></tr>
+  </tbody>
+</table>
+
+<h2 id="gestion-del-arriendo">Contexto Gestión del arriendo</h2>
+<table>
+  <thead><tr><th>Método</th><th>Ruta</th><th>Qué es</th></tr></thead>
+  <tbody>
+    <tr><td class="metodo">GET</td><td><code>/gestion-del-arriendo/consultas/consultar-el-arriendo/{numeroDelArriendo}</code></td><td>Consulta SB-10 &#34;Consultar el arriendo&#34;</td></tr>
+    <tr><td class="metodo">GET</td><td><code>/gestion-del-arriendo/consultas/verificar-los-requisitos-del-cliente/{numeroDelArriendo}</code></td><td>Consulta SB-11 &#34;Verificar los requisitos del cliente&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/comandos/registrar-la-solicitud-de-reserva</code></td><td>Comando SB-06 &#34;Registrar la solicitud de reserva&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/comandos/confirmar-la-reserva</code></td><td>Comando SB-07 &#34;Confirmar la reserva&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/comandos/cancelar-la-reserva</code></td><td>Comando SB-08 &#34;Cancelar la reserva&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/comandos/registrar-el-avance-del-arriendo</code></td><td>Comando SB-09 &#34;Registrar el avance del arriendo&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/comandos/obtener-el-nivel-de-riesgo-del-cliente</code></td><td>Comando SB-12 &#34;Obtener el nivel de riesgo del cliente&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/comandos/enviar-el-aviso-de-reserva-confirmada</code></td><td>Comando SB-31 &#34;Enviar el aviso de reserva confirmada&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/eventos-externos/alquiler-y-seguro-cobrados</code></td><td>Evento &#34;Alquiler y seguro cobrados&#34; de Contexto Cobros y depósito (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/eventos-externos/cuenta-del-arriendo-cerrada</code></td><td>Evento &#34;Cuenta del arriendo cerrada&#34; de Contexto Cobros y depósito (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/eventos-externos/deposito-bloqueado</code></td><td>Evento &#34;Depósito bloqueado&#34; de Contexto Cobros y depósito (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/eventos-externos/inspeccion-de-devolucion-registrada</code></td><td>Evento &#34;Inspección de devolución registrada&#34; de Contexto Operación del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/eventos-externos/yate-entregado-al-cliente</code></td><td>Evento &#34;Yate entregado al cliente&#34; de Contexto Operación del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/gestion-del-arriendo/eventos-externos/yate-registrado</code></td><td>Evento &#34;Yate registrado&#34; de Contexto Disponibilidad de yates (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">GET</td><td><a href="/gestion-del-arriendo/bitacora"><code>/gestion-del-arriendo/bitacora</code></a></td><td>Bitácora (infraestructura): eventos, llamadas a los SA simulados y errores, en orden</td></tr>
+  </tbody>
+</table>
+
+<h2 id="operacion-del-arriendo">Contexto Operación del arriendo</h2>
+<table>
+  <thead><tr><th>Método</th><th>Ruta</th><th>Qué es</th></tr></thead>
+  <tbody>
+    <tr><td class="metodo">GET</td><td><code>/operacion-del-arriendo/consultas/consultar-ubicacion-y-combustible-del-yate?numeroDelArriendo=...</code></td><td>Consulta SB-26 &#34;Consultar ubicación y combustible del yate&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/comandos/registrar-el-acta-de-entrega</code></td><td>Comando SB-22 &#34;Registrar el acta de entrega&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/comandos/registrar-la-inspeccion-de-devolucion</code></td><td>Comando SB-23 &#34;Registrar la inspección de devolución&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/comandos/determinar-las-diferencias-entre-entrega-y-devolucion</code></td><td>Comando SB-24 &#34;Determinar las diferencias entre entrega y devolución&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/comandos/registrar-lecturas-de-ubicacion-y-combustible</code></td><td>Comando SB-25 &#34;Registrar lecturas de ubicación y combustible&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/comandos/detectar-la-perdida-de-senal</code></td><td>Comando SB-27 &#34;Detectar la pérdida de señal&#34;</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/eventos-externos/reserva-confirmada</code></td><td>Evento &#34;Reserva confirmada&#34; de Contexto Gestión del arriendo (para pruebas: por el bus llega solo)</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/sa/avisos-y-actas-de-las-marinas/acta-de-entrega-recibida</code></td><td>Mensaje que recibe Avisos y actas de las marinas: Acta de entrega recibida</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/sa/avisos-y-actas-de-las-marinas/acta-de-inspeccion-recibida</code></td><td>Mensaje que recibe Avisos y actas de las marinas: Acta de inspección recibida</td></tr>
+    <tr><td class="metodo">POST</td><td><code>/operacion-del-arriendo/sa/ubicacion-y-combustible-del-proveedor/lectura-del-proveedor</code></td><td>Mensaje que recibe Ubicación y combustible del proveedor: Lectura del proveedor</td></tr>
+    <tr><td class="metodo">GET</td><td><a href="/operacion-del-arriendo/bitacora"><code>/operacion-del-arriendo/bitacora</code></a></td><td>Bitácora (infraestructura): eventos, llamadas a los SA simulados y errores, en orden</td></tr>
+  </tbody>
+</table>
+</body>
+</html>

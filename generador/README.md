@@ -88,19 +88,20 @@ La primera vez crea el entorno de Python (`.venv`) e instala sus librerías; es 
 powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1
 ```
 
-Escribe la dirección de cada contexto y se queda corriendo en `http://localhost:5080` hasta que se detiene con Ctrl+C. Déjala abierta y sigue en el navegador o en otra terminal. Los datos viven en memoria: al detenerla se pierden.
+Escribe la dirección de la página de inicio y la de cada contexto, y se queda corriendo en `http://localhost:5080` hasta que se detiene con Ctrl+C. Déjala abierta y sigue en el navegador o en otra terminal. Los datos viven en memoria: al detenerla se pierden.
 
-**5. Verla en el navegador.** Las consultas y las rutas de infraestructura son GET, así que se abren directamente y devuelven JSON:
+**5. Verla en el navegador.** Empieza por la página de inicio. Las consultas y las rutas de infraestructura son GET, así que se abren directamente y devuelven JSON:
 
 | Qué | Dirección |
 |---|---|
+| La página de inicio: todas las rutas de cada contexto, con su método y el elemento del modelo del que salen | http://localhost:5080/ |
 | Los contextos que levantó el programa | http://localhost:5080/contextos |
 | Los eventos que pasaron entre contextos, y los errores del bus | http://localhost:5080/eventos-entre-contextos |
 | La bitácora de un contexto: sus eventos, las llamadas a los SA simulados y los errores | http://localhost:5080/gestion-del-arriendo/bitacora |
 | Una consulta sobre todas las raíces (con filtros en la dirección) | http://localhost:5080/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-10&fin=2026-03-12 |
 | Una consulta por identidad | http://localhost:5080/gestion-del-arriendo/consultas/consultar-el-arriendo/ARR-0001 |
 
-Al levantarla no hay datos: las listas salen vacías y una consulta por identidad responde 404 hasta que un comando cree esa raíz (paso 6). En `http://localhost:5080/` no hay página, y la API no tiene Swagger ("Fuera de alcance"): sus rutas están en los `pruebas.http` y en el `Registro.g.cs` de cada contexto.
+Al levantarla no hay datos: las listas salen vacías y una consulta por identidad responde 404 hasta que un comando cree esa raíz (paso 6). En la página de inicio, las rutas que se pueden abrir directo son enlaces; las que llevan datos en la ruta (`{numeroDelArriendo}`) o en la consulta (`?dato=...`) se escriben a mano en la barra. La dirección de cada contexto (por ejemplo http://localhost:5080/gestion-del-arriendo) lleva a su parte de la página.
 
 **6. Enviar comandos.** Los comandos, los eventos de otros contextos y los mensajes de los SA son POST con un cuerpo JSON, así que no se escriben en la barra del navegador. Hay tres formas:
 
@@ -275,7 +276,7 @@ Cada YAML empieza con un comentario que explica sus secciones; `specs/gestion-de
 | Elemento del modelo | Qué genera en `salida/` |
 |---|---|
 | Contexto (con YAML) | Un proyecto biblioteca, `<Proyecto>/<Proyecto>.csproj`, con `Registro.g.cs` (servicios, políticas y endpoints), su referencia en el host y su entrada en la `.sln`. El nombre del proyecto sale del contexto sin "Contexto ": "Contexto Gestión del arriendo" --> `GestionDelArriendo`. |
-| Modelo | La solución `<Modelo>.sln`, el host `<Modelo>/` (un solo programa que registra todos los contextos, con un solo puerto) y `contextos.json`, que dice a los scripts qué hay. |
+| Modelo | La solución `<Modelo>.sln`, el host `<Modelo>/` (un solo programa que registra todos los contextos, con un solo puerto) y `contextos.json`, que dice a los scripts qué hay. Además, la página de inicio de la API (`<Modelo>/wwwroot/index.html`), con las rutas de cada contexto; es infraestructura, como la bitácora. |
 | Agregado y raíz | Clase parcial con su identidad, su `Estado` (enum) y sus campos, y una propiedad por composición: Uno --> `T`, Cero o uno --> `T?`, Muchos --> `List<T>`. Si la identidad se forma con datos que no son campos, también una propiedad por cada uno. |
 | Objeto de valor | `sealed record` con sus campos. |
 | Entidad (G9) | `sealed record` con sus campos que implementa `IEntidad` con su identidad. La raíz la guarda en una lista y `Entidades.Agregar` responde 409 si ya hay una con la misma identidad. |
@@ -610,7 +611,7 @@ De la integración en los YAML de los otros contextos:
 
 El generador construye una primera versión de referencia que demuestra el camino del modelo al código. Estas cosas quedan fuera a propósito (la revisión del 9 de noviembre de 2026 está en la sección 7 de [PENDIENTES.md](PENDIENTES.md)):
 
-- **De la aplicación generada:** autenticación (por eso no se revisa quién llama: GEN-SUP-46 y 79), base de datos (todo en memoria: GEN-SUP-02), microservicios (un solo programa: D1), paginación, Swagger u OpenAPI (la API está en los `pruebas.http`), errores en formato `ProblemDetails` (las respuestas de error tienen su propio contrato, el que afirman los escenarios) y la traducción del formato propio de cada sistema externo.
+- **De la aplicación generada:** autenticación (por eso no se revisa quién llama: GEN-SUP-46 y 79), base de datos (todo en memoria: GEN-SUP-02), microservicios (un solo programa: D1), paginación, Swagger u OpenAPI (la página de inicio lista las rutas, y los `pruebas.http` tienen los cuerpos de cada llamada), errores en formato `ProblemDetails` (las respuestas de error tienen su propio contrato, el que afirman los escenarios) y la traducción del formato propio de cada sistema externo.
 - **Del generador:** una versión del formato del YAML (el generador y los YAML cambian juntos, en el mismo repositorio), un archivo de configuración (el puerto ya se cambia con `-Puerto`, y los prefijos y las propiedades en español son la convención misma), empaquetarlo como una herramienta instalable, integración continua y un asistente que escriba el YAML a partir de la documentación.
 
 ## Limitaciones conocidas

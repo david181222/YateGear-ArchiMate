@@ -2,6 +2,7 @@ Biblioteca.sln
 Biblioteca/Biblioteca.csproj
 Biblioteca/Program.g.cs
 Biblioteca/Properties/launchSettings.json
+Biblioteca/wwwroot/index.html
 Integracion/BusEntreContextos.g.cs
 Integracion/Integracion.csproj
 Prestamos/Anticorrupcion/CatalogoDeLaBiblioteca.g.cs

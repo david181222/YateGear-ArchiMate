@@ -1349,11 +1349,15 @@ class Generador:
                     cmd_paso = cmd.get(nombre) or (cmd[msjs[nombre]["comando"]] if nombre in msjs else None)
                     crea_aqui = (cmd_paso is not None and (cmd_paso["crea"] or cmd_paso["si_no_existe"])) or \
                                 (nombre in ext and ext[nombre]["comando"] and cmd[ext[nombre]["comando"]]["si_no_existe"])
+                    # Un evento cuyos comandos llevan todos si_existe no le aplica a una raíz que no existe: responde 2xx.
+                    se_paso = (self.s.get("eventos_de_otros_contextos") or {}).get(nombre)
+                    no_aplica = isinstance(se_paso, dict) and "dispara" in se_paso and \
+                        all(op.get("si_existe") for _, op in specs.disparos(se_paso))
                     if cmd_paso is not None and cmd_paso["crea"]:
                         if clave in creadas and espera_codigo != 409:
                             self.avisos_escenarios.append(f'{donde}: crea "{ident}", que ya creó {creadas[clave]}; '
                                                           "si se espera el rechazo, escribe espera: 409")
-                    elif not crea_aqui and clave not in creadas and espera_codigo != 404:
+                    elif not crea_aqui and clave not in creadas and espera_codigo != 404 and not no_aplica:
                         self.avisos_escenarios.append(f'{donde}: usa "{ident}" ({raiz_paso}), que ningún paso anterior creó; '
                                                       "si se espera que no exista, escribe espera: 404")
                     if not rechazo:
@@ -1589,6 +1593,26 @@ class Generador:
                                for h in self.huerfanos])
         return self
 
+    def rutas(self) -> list[dict]:
+        """Las rutas del contexto para la página de inicio de la API (index.html): método, ruta, qué es y si se puede
+        abrir directo en el navegador (un GET sin datos en la ruta ni en la consulta)."""
+        out = []
+        for q in sorted(self.consultas, key=lambda x: x["codigo"]):
+            params = "&".join(f'{nombres.camel(c["nombre"])}=...' for c in q["entrada_campos"])
+            ruta = q["ruta"] + (f"?{params}" if params else "")
+            out.append({"metodo": "GET", "ruta": ruta, "enlace": "{" not in ruta and "?" not in ruta,
+                        "que": f'Consulta {q["codigo"]} "{q["nombre"]}"'})
+        for c in sorted(self.comandos, key=lambda x: x["codigo"]):
+            out.append({"metodo": "POST", "ruta": c["ruta"], "enlace": False, "que": f'Comando {c["codigo"]} "{c["nombre"]}"'})
+        for x in self.externos:
+            out.append({"metodo": "POST", "ruta": x["ruta"], "enlace": False,
+                        "que": f'Evento "{x["nombre"]}" de {x["de"]} (para pruebas: por el bus llega solo)'})
+        for m in sorted(self.mensajes, key=lambda x: x["ruta"]):
+            out.append({"metodo": "POST", "ruta": m["ruta"], "enlace": False, "que": f'Mensaje que recibe {m["titulo"]}'})
+        out.append({"metodo": "GET", "ruta": f"{self.ruta_base}/bitacora", "enlace": True,
+                    "que": "Bitácora (infraestructura): eventos, llamadas a los SA simulados y errores, en orden"})
+        return out
+
     def trazabilidad_csv(self) -> str:
         buf = io.StringIO()
         w = csv.writer(buf, lineterminator="\n")
@@ -1685,12 +1709,15 @@ class Solucion:
         cab = Generador.cabecera("Model", self.modelo_nombre, mid)
         ns_integracion = f"{self.host}.{INTEGRACION}"
         contextos = [{"nombre": g.ctx["nombre"], "id": g.ctx["id"], "proyecto": g.proyecto, "ns": g.ns,
-                      "ruta_base": g.ruta_base} for g in gs]
+                      "ruta_base": g.ruta_base, "ancla": g.ruta_base.lstrip("/"), "rutas": g.rutas()} for g in gs]
         h, i = self.host, INTEGRACION
         archivos[f"{h}/{h}.csproj"] = self.render("host.csproj.j2", cabecera=cab, contextos=contextos, integracion=i)
         archivos[f"{h}/Program.g.cs"] = self.render("host_program.g.cs.j2", cabecera=cab, contextos=contextos,
                                                      ns_integracion=ns_integracion)
         archivos[f"{h}/Properties/launchSettings.json"] = self.render("launchSettings.json.j2", proyecto=h)
+        # Página de inicio de la API (infraestructura): las rutas de cada contexto, servida como archivo estático.
+        archivos[f"{h}/wwwroot/index.html"] = self.render("index.html.j2", cabecera=cab, contextos=contextos,
+                                                          modelo=self.modelo_nombre)
         archivos[f"{i}/{i}.csproj"] = self.render("integracion.csproj.j2", cabecera=cab, ns_integracion=ns_integracion)
         archivos[f"{i}/BusEntreContextos.g.cs"] = self.render("integracion.g.cs.j2", cabecera=cab,
                                                                ns_integracion=ns_integracion)
@@ -1722,7 +1749,8 @@ class Solucion:
             manifiesto["entre_contextos"] = f"{PRUEBAS_ENTRE_CONTEXTOS}/escenarios.json"
         archivos["contextos.json"] = json.dumps(manifiesto, ensure_ascii=False, indent=2) + "\n"
         for g in gs:
-            for archivo in (f"{h}/Program.g.cs", f"{h}/{h}.csproj", sln, "global.json", "contextos.json"):
+            for archivo in (f"{h}/Program.g.cs", f"{h}/{h}.csproj", f"{h}/wwwroot/index.html", sln, "global.json",
+                            "contextos.json"):
                 g.traza_de(g.ctx["id"], "ApplicationComponent", g.ctx["nombre"], archivo, "")
             archivos[f"trazabilidad/{g.proyecto}.csv"] = g.trazabilidad_csv()
 

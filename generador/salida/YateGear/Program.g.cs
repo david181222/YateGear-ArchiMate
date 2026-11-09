@@ -17,6 +17,9 @@ YateGear.GestionDelArriendo.Registro.AgregarServicios(builder.Services);        
 YateGear.OperacionDelArriendo.Registro.AgregarServicios(builder.Services);         // Contexto Operación del arriendo
 
 var app = builder.Build();
+// Página de inicio (infraestructura, no sale del modelo): wwwroot/index.html, con las rutas de cada contexto.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 YateGear.Calificaciones.Registro.MapearEndpoints(app);
 YateGear.CobrosYDeposito.Registro.MapearEndpoints(app);
 YateGear.DisponibilidadDeYates.Registro.MapearEndpoints(app);
@@ -33,5 +36,11 @@ app.MapGet("/contextos", () => new[]
     new { nombre = "Contexto Operación del arriendo", ruta = "/operacion-del-arriendo" },
 });
 app.MapGet("/eventos-entre-contextos", (BusEntreContextos bus) => bus.Historial());
+// La ruta de cada contexto lleva a su parte de la página de inicio.
+app.MapGet("/calificaciones", () => Results.Redirect("/#calificaciones"));
+app.MapGet("/cobros-y-deposito", () => Results.Redirect("/#cobros-y-deposito"));
+app.MapGet("/disponibilidad-de-yates", () => Results.Redirect("/#disponibilidad-de-yates"));
+app.MapGet("/gestion-del-arriendo", () => Results.Redirect("/#gestion-del-arriendo"));
+app.MapGet("/operacion-del-arriendo", () => Results.Redirect("/#operacion-del-arriendo"));
 
 app.Run();

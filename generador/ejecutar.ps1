@@ -45,7 +45,9 @@ if (-not $libre) {
     exit 1
 }
 
-Write-Host "Aplicación en http://localhost:$Puerto  (Ctrl+C para detener). Contextos:" -ForegroundColor Green
+Write-Host "Aplicación en http://localhost:$Puerto  (Ctrl+C para detener)." -ForegroundColor Green
+Write-Host "Rutas de la API, en el navegador: http://localhost:$Puerto/" -ForegroundColor Green
+Write-Host "Contextos:" -ForegroundColor Green
 foreach ($c in $solucion.contextos) { Write-Host "  http://localhost:$Puerto$($c.ruta_base)  $($c.nombre)" -ForegroundColor Green }
 # Desde la carpeta de salida, para que dotnet use el global.json (SDK 8).
 Set-Location $Salida

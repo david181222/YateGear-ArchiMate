@@ -143,6 +143,7 @@ YateGear.sln
 YateGear/Program.g.cs
 YateGear/Properties/launchSettings.json
 YateGear/YateGear.csproj
+YateGear/wwwroot/index.html
 contextos.json
 global.json
 pruebas/Calificaciones/escenarios.json
