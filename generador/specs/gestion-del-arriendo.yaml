@@ -210,18 +210,17 @@ consultas:
       cumple: bool
       motivo: string?
 
-# Eventos entre dominios de la V6 que disparan un comando de este contexto.
-# Los datos van con los nombres de Gestión del arriendo.
-# supuesto: en un Partnership los dos contextos acuerdan los datos del evento
-# (V8-SUP-02); se revisan al generar el otro contexto.
+# Eventos entre dominios de la V6 que disparan un comando de este contexto. Llegan por el bus entre contextos (G12).
+# Los datos van con los nombres del contexto que publica (D2); donde no calzan con la entrada del comando, una
+# correspondencia dice de cuál dato sale: {dato de la entrada: dato del evento}.
 eventos_de_otros_contextos:
 
   Alquiler y seguro cobrados:
     de: Contexto Cobros y depósito
     dispara: Confirmar la reserva                 # SB-07 recibe los comprobantes y la autorización del depósito
     junto_con: [Depósito bloqueado]               # los dos traen las pruebas de pago; el comando corre cuando llegaron los dos
-    datos:
-      comprobante del alquiler: string            # supuesto: en Cobros cada Cobro tiene su "comprobante"; el evento trae los dos con su concepto en el nombre
+    datos:                                        # los nombres de "Alquiler y seguro cobrados" en cobros-y-deposito.yaml
+      comprobante del alquiler: string
       comprobante del seguro: string
 
   Depósito bloqueado:
@@ -229,28 +228,32 @@ eventos_de_otros_contextos:
     dispara: Confirmar la reserva
     junto_con: [Alquiler y seguro cobrados]
     datos:
-      autorización del bloqueo del depósito: string   # supuesto: en Cobros es "código de autorización de la pasarela"
+      código de autorización de la pasarela: string
+    correspondencias: {autorización del bloqueo del depósito: código de autorización de la pasarela}
 
   Yate entregado al cliente:
     de: Contexto Operación del arriendo
     dispara: Registrar el avance del arriendo     # "Arriendo iniciado"
     con: {nuevo estado: en curso}
     datos:
-      fecha y hora del cambio: DateTime           # supuesto: en Operación es "hora de entrega"
+      hora de entrega: DateTime
+    correspondencias: {fecha y hora del cambio: hora de entrega}
 
   Inspección de devolución registrada:
     de: Contexto Operación del arriendo
     dispara: Registrar el avance del arriendo     # "Yate devuelto"
     con: {nuevo estado: devuelto}
     datos:
-      fecha y hora del cambio: DateTime           # supuesto: en Operación es "hora de regreso"
+      hora de regreso: DateTime
+    correspondencias: {fecha y hora del cambio: hora de regreso}
 
   Cuenta del arriendo cerrada:
     de: Contexto Cobros y depósito
     dispara: Registrar el avance del arriendo     # "Arriendo cerrado"
     con: {nuevo estado: cerrado}
     datos:
-      fecha y hora del cambio: DateTime           # supuesto: la Cuenta del arriendo no tiene ese campo; el evento trae la hora del cierre
+      hora del cierre: DateTime                   # Cobros y depósito la calcula al cerrar las cuentas (SB-17)
+    correspondencias: {fecha y hora del cambio: hora del cierre}
 
 servicios_sa:
 
@@ -282,6 +285,16 @@ servicios_sa:
       estado del contrato: firmado
       fecha de firma: "2026-01-10"
       condiciones de cancelación: Condiciones de prueba
+    envia:                                        # V6: "Riesgo aceptable obtenido" -> SA-02 envía el contrato al cliente (G11)
+      Datos para el contrato del cliente:         # "cliente, yate, fechas y valores, después del riesgo aceptable" (SA-02)
+        cuando: Riesgo aceptable obtenido
+        datos:
+          número del arriendo: string
+          referencia al CRM: string
+          identificador del yate: string
+          inicio: DateOnly
+          fin: DateOnly
+          precio por día: decimal
 
   Nivel de riesgo de la evaluadora:               # contrato SA-04
     entrada:

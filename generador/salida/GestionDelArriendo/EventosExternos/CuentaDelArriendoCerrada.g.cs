@@ -6,7 +6,7 @@ namespace YateGear.GestionDelArriendo;
 /// <summary>Evento "Cuenta del arriendo cerrada" de "Contexto Cobros y depósito", con los datos que declara el YAML. Dispara "Registrar el avance del arriendo".</summary>
 public sealed record CuentaDelArriendoCerrada(
     string NumeroDelArriendo,
-    DateTime FechaYHoraDelCambio
+    DateTime HoraDelCierre
 ) : IEvento
 {
     /// <summary>Nombre del evento en el modelo.</summary>

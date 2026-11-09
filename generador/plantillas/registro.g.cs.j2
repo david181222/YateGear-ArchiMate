@@ -33,6 +33,9 @@ public static class Registro
 {% for s in sas %}
         servicios.AddSingleton<{{ s.interfaz }}, {{ s.simulado }}>();
 {% endfor %}
+{% for e in emisores %}
+        servicios.AddSingleton<{{ e.interfaz }}, {{ e.simulado }}>();          // solo envía (G11)
+{% endfor %}
 
         // Manejadores de comandos y consultas.
 {% for c in comandos %}
@@ -60,6 +63,10 @@ public static class Registro
         // Eventos de otros contextos (capa 3): receptor y espera de los que deben llegar juntos.
         servicios.AddSingleton<EsperaDeEventos>();
         servicios.AddSingleton<ReceptorDeEventosExternos>();
+{% elif grupos %}
+
+        // Espera de los eventos que deben llegar juntos (políticas con varios disparos, G10).
+        servicios.AddSingleton<EsperaDeEventos>();
 {% endif %}
     }
 
@@ -67,6 +74,17 @@ public static class Registro
     public static void MapearEndpoints(WebApplication app)
     {
         Politicas.Registrar(app.Services);
+{% if externos %}
+
+        // Eventos de otros contextos que llegan por el bus entre contextos (G12, D1): cada uno va a su receptor, por el
+        // nombre del contexto que lo publica y su nombre en el modelo. Si el receptor falla, el error queda en el bus.
+        var entreContextos = app.Services.GetRequiredService<BusEntreContextos>();
+        var receptorEntreContextos = app.Services.GetRequiredService<ReceptorDeEventosExternos>();
+{% for x in externos %}
+        entreContextos.Suscribir({{ x.de | cadena }}, {{ x.nombre | cadena }},
+            m => receptorEntreContextos.Recibir{{ x.clase }}(m.DatosConIdentidad({{ x.id_json | cadena }})));
+{% endfor %}
+{% endif %}
 
         // Comandos: POST con el comando en JSON.
 {% for c in comandos %}

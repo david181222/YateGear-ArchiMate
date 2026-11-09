@@ -14,8 +14,11 @@ public sealed partial class CancelarLaReservaManejador
     {
     }
 
-    // PENDIENTE: valor provisional de "días de anticipación" (int), dato calculado del evento "Reserva cancelada".
+    // Dato calculado "días de anticipación" (int) del evento "Reserva cancelada".
     // Regla de la que sale: contrato SB-08, salida:
     //   Arriendo cancelado y días de anticipación frente a la fecha de inicio.
-    private partial int DiasDeAnticipacion(CancelarLaReservaDatos datos) => 0;
+    // Escrito a mano (S3): los días entre la cancelación y el inicio del arriendo. Con él Cobros y depósito decide el
+    // reembolso (SB-15), así que ya no puede quedar en 0.
+    private partial int DiasDeAnticipacion(CancelarLaReservaDatos datos) =>
+        datos.Arriendo.FechasDelArriendo.Inicio.DayNumber - datos.Comando.FechaDeLaCancelacion.DayNumber;
 }

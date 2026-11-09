@@ -4,7 +4,9 @@
 #nullable enable
 namespace {{ ns }};
 
-{% if x.comando %}
+{% if x.disparos %}
+/// <summary>Evento "{{ x.nombre | xml }}" de "{{ x.de | xml }}", con los datos que declara el YAML. Dispara {% for d in x.disparos %}"{{ d.comando | xml }}"{{ ", " if not loop.last }}{% endfor %}.</summary>
+{% elif x.comando %}
 /// <summary>Evento "{{ x.nombre | xml }}" de "{{ x.de | xml }}", con los datos que declara el YAML. Dispara "{{ x.comando | xml }}".</summary>
 {% else %}
 /// <summary>Evento "{{ x.nombre | xml }}" de "{{ x.de | xml }}", con los datos que declara el YAML. Se recuerda para los comandos que lo requieren.</summary>

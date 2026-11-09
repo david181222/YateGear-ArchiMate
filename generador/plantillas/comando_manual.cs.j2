@@ -20,6 +20,12 @@ public sealed partial class {{ c.manejador }}
     // Regla de la que sale: contrato {{ c.codigo }}, reglas (arriba).
     private partial IEnumerable<{{ raiz.clase }}> Seleccionar({{ c.datos }} datos) => [];
 {% endif %}
+{% for k in c.calculados_comando %}
+
+    // PENDIENTE: valor provisional de "{{ k.nombre }}" ({{ k.tipo_yaml }}), dato calculado del comando; sale de {{ k.de | join(", ") }}.
+    // Regla de la que sale: contrato {{ c.codigo }} (arriba).
+    private partial {{ k.cs }} {{ k.metodo }}({{ k.params | join(", ") }}) => {{ k.provisional }};
+{% endfor %}
 {% for k in c.calculados %}
 
     // PENDIENTE: valor provisional de "{{ k.nombre }}" ({{ k.tipo_yaml }}), dato calculado del evento "{{ k.evento }}".

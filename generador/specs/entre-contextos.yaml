@@ -1,0 +1,110 @@
+# Escenarios de punta a punta entre contextos (S4)
+#
+# Qué es este archivo: ver la sección "Escenarios entre contextos" del README del generador. No especifica un contexto:
+# usa los comandos, consultas y mensajes de los SA de los YAML de los contextos (en, el contexto de cada paso), y los
+# eventos entre contextos llegan solos por el bus (G12): ningún paso los envía a mano.
+#
+# Cada paso: con fija datos de su entrada; un dato que se llama como una identidad ya creada en el escenario toma su
+# valor (el yate YATE-0001, el arriendo ARR-0001); espera es un evento o una lista de eventos de cualquier contexto,
+# o de mensajes que envía un SA (G11), que deben ocurrir durante el paso; o un código, o datos de una consulta.
+#
+# Los tres escenarios recorren los 11 eventos entre dominios de la V6, el envío del contrato al cliente (SA-02) y el
+# de los arriendos cerrados a Finanzas (SA-08). Corren en orden contra la aplicación recién levantada.
+
+escenarios_entre_contextos:
+
+  Del inventario al envío a Finanzas:             # YATE-0001 y ARR-0001
+    - Registrar yate en el inventario:
+        en: Contexto Disponibilidad de yates
+        con: {propietario: PROP-0001, identificador de la marina: MAR-01, precio por día: 500, documentos al día ante la DIMAR: true}
+        espera: Yate registrado
+    - Consultar yates disponibles:
+        en: Contexto Disponibilidad de yates
+        con: {identificador de la marina: MAR-01, inicio: "2026-03-10", fin: "2026-03-12"}
+        espera: {yates disponibles: 1}
+    - Registrar la solicitud de reserva:           # Disponibilidad aparta las fechas
+        en: Contexto Gestión del arriendo
+        con: {cliente: CLI-0001, propietario: PROP-0001, precio por día: 500, marina: MAR-01, inicio: "2026-03-10", fin: "2026-03-12"}
+        espera: [Reserva solicitada, Fechas apartadas]
+    - Obtener el nivel de riesgo del cliente:      # con el riesgo aceptable, SA-02 envía los datos para el contrato
+        en: Contexto Gestión del arriendo
+        espera: [Riesgo aceptable obtenido, Datos para el contrato del cliente]
+    - Contrato del cliente firmado:                # Cobros bloquea y cobra; Gestión confirma; Disponibilidad ocupa; sale el aviso
+        en: Contexto Cobros y depósito
+        con: {propietario: PROP-0001, referencia al CRM: CRM-0001, inicio: "2026-03-10", fin: "2026-03-12", días: 3, precio por día: 500, valor del seguro: 120, valor del depósito: 1000, medio de pago: TARJETA-0001}
+        espera: [Depósito bloqueado, Alquiler y seguro cobrados, Reserva confirmada, Fechas ocupadas, Aviso de reserva enviado]
+    - Consultar yates disponibles:                 # ocupado en esas fechas
+        en: Contexto Disponibilidad de yates
+        con: {identificador de la marina: MAR-01, inicio: "2026-03-10", fin: "2026-03-12"}
+        espera: {yates disponibles: 0}
+    - Acta de entrega recibida:                    # Operación recordó la reserva confirmada; Gestión inicia el arriendo
+        en: Contexto Operación del arriendo
+        con: {fotos: [entrega-1.jpg], nivel de combustible: 100, hora de entrega: "2026-03-10T09:00:00"}
+        espera: [Yate entregado al cliente, Arriendo iniciado]
+    - Lectura del proveedor:
+        en: Contexto Operación del arriendo
+        con: {nivel de combustible: 90, hora de la lectura: "2026-03-10T10:00:00"}
+        espera: Lectura registrada
+    - Consultar ubicación y combustible del yate:
+        en: Contexto Operación del arriendo
+        espera: {recorrido: 1}
+    - Acta de inspección recibida:                 # todo el cierre: devolución, diferencias, cargos, depósito, reclamo y cuentas
+        en: Contexto Operación del arriendo
+        con: {fotos: [regreso-1.jpg], nivel de combustible: 60, hora de regreso: "2026-03-13T15:00:00", daños encontrados: [{descripción: Rayón en el casco, valor: 1500}]}
+        espera:
+          - Inspección de devolución registrada
+          - Yate devuelto
+          - Diferencias determinadas
+          - Cargos del cierre cobrados
+          - Daños descontados del depósito
+          - Reclamo enviado a la aseguradora
+          - Cuenta del arriendo cerrada
+          - Arriendo cerrado
+          - Arriendo cerrado para Finanzas        # SA-08
+    - Consultar el arriendo:
+        en: Contexto Gestión del arriendo
+        espera: {estado: cerrado}
+    - Consultar el estado de cuenta del arriendo:  # alquiler, seguro, combustible y tiempo adicional; comisión del 20 %
+        en: Contexto Cobros y depósito
+        espera: {estado: cerrada, movimientos: 4, comisión: 300, valor del propietario: 1200, estado del depósito: descontado}
+    - Calificar al propietario:                    # Calificaciones recordó el arriendo cerrado
+        en: Contexto Calificaciones
+        con: {calificación dada: 5}
+        espera: Propietario calificado
+    - Consultar calificaciones promedio:
+        en: Contexto Calificaciones
+        con: {calificado: PROP-0001}
+        espera: {calificación promedio: 5, número de calificaciones: 1}
+
+  Cancelación con reembolso:                      # ARR-0002
+    - Registrar la solicitud de reserva:
+        en: Contexto Gestión del arriendo
+        con: {cliente: CLI-0002, identificador del yate: YATE-0001, propietario: PROP-0001, precio por día: 500, marina: MAR-01, inicio: "2026-03-20", fin: "2026-03-22"}
+        espera: [Reserva solicitada, Fechas apartadas]
+    - Obtener el nivel de riesgo del cliente:
+        en: Contexto Gestión del arriendo
+        espera: Riesgo aceptable obtenido
+    - Contrato del cliente firmado:
+        en: Contexto Cobros y depósito
+        con: {identificador del yate: YATE-0001, propietario: PROP-0001, inicio: "2026-03-20", fin: "2026-03-22", días: 3, precio por día: 500, valor del seguro: 120, valor del depósito: 1000, medio de pago: TARJETA-0001}
+        espera: [Reserva confirmada, Fechas ocupadas]
+    - Cancelar la reserva:                         # 9 días antes: Disponibilidad suelta las fechas y Cobros devuelve el alquiler
+        en: Contexto Gestión del arriendo
+        con: {fecha de la cancelación: "2026-03-11"}
+        espera: [Reserva cancelada, Fechas liberadas, Depósito liberado, Cancelación reembolsada]
+    - Consultar el estado de cuenta del arriendo:
+        en: Contexto Cobros y depósito
+        espera: {estado: cerrada, movimientos: 3, estado del depósito: liberado}
+
+  Riesgo alto:                                    # ARR-0003
+    - Registrar la solicitud de reserva:
+        en: Contexto Gestión del arriendo
+        con: {cliente: CLI-RIESGO-ALTO, identificador del yate: YATE-0001, propietario: PROP-0001, marina: MAR-01, inicio: "2026-03-24", fin: "2026-03-25"}
+        espera: [Reserva solicitada, Fechas apartadas]
+    - Obtener el nivel de riesgo del cliente:      # no se arrienda: Disponibilidad suelta las fechas
+        en: Contexto Gestión del arriendo
+        espera: [Arriendo no realizado por riesgo alto, Fechas liberadas]
+    - Consultar yates disponibles:
+        en: Contexto Disponibilidad de yates
+        con: {identificador de la marina: MAR-01, inicio: "2026-03-24", fin: "2026-03-25"}
+        espera: {yates disponibles: 1}

@@ -39,4 +39,12 @@ public sealed partial class DeterminarLasDiferenciasEntreEntregaYDevolucionManej
     // Escrito a mano: la suma de los daños encontrados, con el valor que trae la inspección (V4-SUP-03).
     private partial decimal ValorDeLosDanos(DeterminarLasDiferenciasEntreEntregaYDevolucionDatos datos) =>
         datos.ActaDeInspeccion.DanoEncontrado.Sum(d => d.Valor);
+
+    // Dato calculado "evidencia" (List<string>) del evento "Diferencias determinadas".
+    // Regla de la que sale: contrato SB-24, salida:
+    //   Combustible consumido, horas adicionales y daños, con la evidencia de cada uno.
+    // Escrito a mano (S3): las fotos del acta de entrega y las del acta de inspección, que respaldan los cargos del
+    // cierre y el descuento del depósito en Cobros y depósito (H-13; supuesto GEN-SUP-83).
+    private partial List<string> Evidencia(DeterminarLasDiferenciasEntreEntregaYDevolucionDatos datos) =>
+        [.. datos.ActaDeEntrega.Fotos, .. datos.ActaDeInspeccion.Fotos];
 }

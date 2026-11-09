@@ -42,6 +42,11 @@ public sealed partial class {{ c.manejador }}(
     /// <summary>Elige las raíces por las que se publica un evento (comando sobre todas, G8). Se escribe en el archivo manual.</summary>
     private partial IEnumerable<{{ raiz.clase }}> Seleccionar({{ c.datos }} datos);
 {% endif %}
+{% for k in c.calculados_comando %}
+
+    /// <summary>Dato calculado "{{ k.nombre | xml }}" del comando: sale de {{ k.de | join(", ") | xml }}. Se escribe en el archivo manual.</summary>
+    private partial {{ k.cs }} {{ k.metodo }}({{ k.params | join(", ") }});
+{% endfor %}
 {% for k in c.calculados %}
 
     /// <summary>Dato calculado "{{ k.nombre | xml }}" del evento "{{ k.evento | xml }}". Se escribe en el archivo manual.</summary>
@@ -107,9 +112,21 @@ public sealed partial class {{ c.manejador }}(
 {% endif %}
 {% if c.llamadas %}
 
+{% if c.con_calculos %}
+        // 2. Servicios SA que usa, en orden, y los datos calculados (archivo manual) en cuanto están sus datos.
+{% else %}
         // 2. Servicios SA que usa, en orden.
+{% endif %}
 {% for l in c.llamadas %}
+{% if l.tipo == "calculo" %}
+        var {{ l.var }} = {{ l.metodo }}({{ l.args | join(", ") }});
+{% elif l.condicion %}
+        {{ l.salida }}? {{ l.var }} = {{ l.condicion }}
+            ? {{ l.servicio }}.Llamar(new {{ l.entrada }}({{ l.args | join(", ") }}))
+            : null;
+{% else %}
         var {{ l.var }} = {{ l.servicio }}.Llamar(new {{ l.entrada }}({{ l.args | join(", ") }}));
+{% endif %}
 {% endfor %}
 {% endif %}
 {% if c.resultados %}

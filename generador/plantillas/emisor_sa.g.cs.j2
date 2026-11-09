@@ -1,0 +1,43 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// Capa anticorrupción, lo que sale (G11): lo que YateGear envía por este servicio SA cuando ocurre un evento del
+// contexto (envia del YAML). No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+{% for x in e.mensajes %}
+
+/// <summary>Mensaje "{{ x.nombre | xml }}" que YateGear envía por "{{ sa.nombre | xml }}" cuando ocurre "{{ x.evento | xml }}".</summary>
+{{ m.record(x.clase, x.datos, ";") }}
+{% endfor %}
+
+/// <summary>Lo que YateGear envía a "{{ sa.contraparte.nombre | xml }}" por "{{ sa.nombre | xml }}" ({{ sa.codigo }}). No espera respuesta
+/// (lenguaje publicado).</summary>
+/// <remarks>
+/// <para>Interfaz: "{{ sa.interfaz.nombre | xml }}" ({{ sa.interfaz.id }}).
+/// Contraparte: {{ sa.contraparte.tipo }} "{{ sa.contraparte.nombre | xml }}" ({{ sa.contraparte.id }}){{ ", sistema externo" if sa.contraparte.externo }}.</para>
+/// <para>Flujos:{% for f in sa.flujos %} {{ f.direccion }} "{{ f.nombre | xml }}" ({{ f.id }}){{ ";" if not loop.last else "." }}{% endfor %}</para>
+/// <para>{{ sa.contrato.nombre | xml }} ({{ sa.contrato.id }}). Entrada: {{ sa.contrato.entrada | xml }}
+/// Salida: {{ sa.contrato.salida | xml }} Reglas: {{ (sa.contrato.reglas or "sin reglas.") | xml }}</para>
+/// </remarks>
+public interface {{ e.interfaz }}
+{
+{% for x in e.mensajes %}
+{% if not loop.first %}
+
+{% endif %}
+    /// <summary>Envía "{{ x.nombre | xml }}".</summary>
+    void Enviar({{ x.clase }} mensaje);
+{% endfor %}
+}
+
+/// <summary>"{{ sa.contraparte.nombre | xml }}" simulado: anota cada envío en la bitácora.</summary>
+public sealed class {{ e.simulado }}(Bitacora bitacora) : {{ e.interfaz }}
+{
+{% for x in e.mensajes %}
+{% if not loop.first %}
+
+{% endif %}
+    /// <inheritdoc />
+    public void Enviar({{ x.clase }} mensaje) => bitacora.Anotar("envío por servicio SA", {{ x.titulo | cadena }}, mensaje);
+{% endfor %}
+}

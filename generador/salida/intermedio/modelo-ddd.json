@@ -316,6 +316,22 @@
             "nombre": "Cuenta del arriendo",
             "campos": [
               {
+                "nombre": "identificador del yate",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "propietario",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
                 "nombre": "comisión",
                 "tipo": "decimal?",
                 "base": "decimal",
@@ -663,7 +679,12 @@
           "raiz_id": "id-97138119487d4fa1aa1837e907129ad1",
           "acceso": "escritura",
           "acceso_id": "id-d7053c02c4b44be0aa367bbe1323af82",
-          "lee_tambien": [],
+          "lee_tambien": [
+            {
+              "raiz_id": "id-cc25b8b2503f4df286f2f28f1c7ab12b",
+              "acceso_id": "id-5c0b6f3e2a8d4e71b9f04c6d2e8a13f7"
+            }
+          ],
           "eventos": [
             "id-b13f9d27ed8d4bdd8d84224b82a64673"
           ],

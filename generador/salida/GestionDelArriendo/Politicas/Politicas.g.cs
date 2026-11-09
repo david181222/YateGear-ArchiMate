@@ -15,5 +15,9 @@ public static class Politicas
         // "Reserva confirmada" dispara "Enviar el aviso de reserva confirmada" (relación id-4bb3be2830b946619f18bcacda5e4eb4).
         bus.Suscribir<ReservaConfirmada>(e => servicios.GetRequiredService<EnviarElAvisoDeReservaConfirmadaManejador>()
             .Manejar(new EnviarElAvisoDeReservaConfirmada(e.NumeroDelArriendo)));
+
+        // "Riesgo aceptable obtenido": "Contratos con propietarios y clientes" envía "Datos para el contrato del cliente" (lenguaje publicado, G11).
+        bus.Suscribir<RiesgoAceptableObtenido>(e => servicios.GetRequiredService<IEmisorDeContratosConPropietariosYClientes>()
+            .Enviar(new DatosParaElContratoDelCliente(e.NumeroDelArriendo, e.ReferenciaAlCRM, e.IdentificadorDelYate, e.Inicio, e.Fin, e.PrecioPorDia)));
     }
 }

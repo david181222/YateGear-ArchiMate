@@ -4,6 +4,7 @@
 // este archivo.
 #nullable enable
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace YateGear.Integracion;
@@ -23,11 +24,26 @@ public static class Json
 }
 
 /// <summary>Un evento que pasó por el bus entre contextos.</summary>
-public sealed record EventoEntreContextos(int Orden, string Contexto, string Evento, string Identidad, JsonElement Datos);
+public sealed record EventoEntreContextos(int Orden, string Contexto, string Evento, string Identidad, JsonElement Datos)
+{
+    /// <summary>Los datos del evento con su identidad también en la propiedad que usa quien lo recibe (G12). Si el
+    /// contexto que publica llama a su identidad con otro nombre, quien recibe la encuentra igual.</summary>
+    public JsonElement DatosConIdentidad(string propiedad)
+    {
+        if (Datos.ValueKind != JsonValueKind.Object
+            || Datos.EnumerateObject().Any(p => string.Equals(p.Name, propiedad, StringComparison.OrdinalIgnoreCase)))
+        {
+            return Datos;
+        }
+        var objeto = JsonNode.Parse(Datos.GetRawText())!.AsObject();
+        objeto[propiedad] = Identidad;
+        return JsonSerializer.SerializeToElement(objeto, Json.Opciones);
+    }
+}
 
 /// <summary>Bus entre contextos, en memoria y síncrono. Cada contexto publica aquí sus eventos, y un contexto
-/// se suscribe a un evento por su nombre. Si un suscriptor falla, el error queda en el historial y no deshace
-/// el comando que publicó el evento, porque el evento ya ocurrió.</summary>
+/// se suscribe a un evento por el nombre del contexto que lo publica y el nombre del evento (G12). Si un suscriptor
+/// falla, el error queda en el historial y no deshace el comando que publicó el evento, porque el evento ya ocurrió.</summary>
 public sealed class BusEntreContextos
 {
     private readonly Dictionary<string, List<Action<EventoEntreContextos>>> suscriptores = new();
@@ -35,15 +51,16 @@ public sealed class BusEntreContextos
     private readonly List<string> errores = new();
     private readonly object candado = new();
 
-    /// <summary>Suscribe una acción al evento con ese nombre en el modelo.</summary>
-    public void Suscribir(string evento, Action<EventoEntreContextos> accion)
+    /// <summary>Suscribe una acción al evento con ese nombre en el modelo, publicado por ese contexto.</summary>
+    public void Suscribir(string contexto, string evento, Action<EventoEntreContextos> accion)
     {
         lock (candado)
         {
-            if (!suscriptores.TryGetValue(evento, out var lista))
+            var clave = contexto + "|" + evento;
+            if (!suscriptores.TryGetValue(clave, out var lista))
             {
                 lista = new List<Action<EventoEntreContextos>>();
-                suscriptores[evento] = lista;
+                suscriptores[clave] = lista;
             }
             lista.Add(accion);
         }
@@ -59,7 +76,7 @@ public sealed class BusEntreContextos
             mensaje = new EventoEntreContextos(historial.Count + 1, contexto, evento, identidad,
                 JsonSerializer.SerializeToElement(datos, datos.GetType(), Json.Opciones));
             historial.Add(mensaje);
-            lista = suscriptores.TryGetValue(evento, out var s) ? s.ToList() : [];
+            lista = suscriptores.TryGetValue(contexto + "|" + evento, out var s) ? s.ToList() : [];
         }
         foreach (var suscriptor in lista)
         {
@@ -71,7 +88,7 @@ public sealed class BusEntreContextos
             {
                 lock (candado)
                 {
-                    errores.Add($"{mensaje.Orden} {evento}: {e.Message}");
+                    errores.Add($"{mensaje.Orden} {evento} ({contexto}): {e.Message}");
                 }
             }
         }

@@ -1,0 +1,14 @@
+{% import "_macros.j2" as m %}
+// {{ cabecera }}
+// No editar: el generador reescribe este archivo.
+#nullable enable
+namespace {{ ns }};
+
+/// <summary>Entidad "{{ v.nombre | xml }}" de la raíz "{{ raiz.nombre | xml }}", Cardinalidad {{ v.card }} (G9). Su identidad
+/// dentro de la raíz es "{{ v.identidad | xml }}": la raíz no admite dos con la misma.
+/// Campos:{% for c in v.campos %} {{ c.nombre | xml }} ({{ c.tipo_yaml | xml }}){{ ";" if not loop.last else "." }}{% endfor %}</summary>
+{{ m.record(v.clase, v.campos, " : IEntidad") }}
+{
+    /// <summary>Identidad de la entidad dentro de su raíz: "{{ v.identidad | xml }}".</summary>
+    string IEntidad.Identidad => {{ v.identidad_expr }};
+}

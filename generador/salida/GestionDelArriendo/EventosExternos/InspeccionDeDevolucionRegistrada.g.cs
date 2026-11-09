@@ -6,7 +6,7 @@ namespace YateGear.GestionDelArriendo;
 /// <summary>Evento "Inspección de devolución registrada" de "Contexto Operación del arriendo", con los datos que declara el YAML. Dispara "Registrar el avance del arriendo".</summary>
 public sealed record InspeccionDeDevolucionRegistrada(
     string NumeroDelArriendo,
-    DateTime FechaYHoraDelCambio
+    DateTime HoraDeRegreso
 ) : IEvento
 {
     /// <summary>Nombre del evento en el modelo.</summary>

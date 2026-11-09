@@ -25,7 +25,9 @@ public sealed class ReceptorDeEventosExternos(
 {% if not loop.first %}
 
 {% endif %}
-{% if x.comando %}
+{% if x.disparos %}
+    /// <summary>"{{ x.nombre | xml }}" de "{{ x.de | xml }}" ({{ x.id }}). Dispara {% for d in x.disparos %}"{{ d.comando | xml }}"{{ " (si se cumple su condición)" if d.condicion }}{{ ", " if not loop.last }}{% endfor %}.</summary>
+{% elif x.comando %}
     /// <summary>"{{ x.nombre | xml }}" de "{{ x.de | xml }}" ({{ x.id }}). Dispara "{{ x.comando | xml }}"{% if x.junto_con %} junto con {{ x.junto_con | join(", ") | xml }}{% endif %}.</summary>
 {% else %}
     /// <summary>"{{ x.nombre | xml }}" de "{{ x.de | xml }}" ({{ x.id }}). Se recuerda para los comandos que lo requieren.</summary>
@@ -38,6 +40,20 @@ public sealed class ReceptorDeEventosExternos(
 {% endif %}
 {% if not x.comando %}
         return RespuestaDeEventoExterno.Recordado();
+{% elif x.disparos %}
+        // Dispara varios comandos, en orden; si uno falla, los siguientes no corren.
+        var respuestas = new List<RespuestaDeComando>();
+{% for d in x.disparos %}
+{% if d.condicion %}
+        if ({{ d.condicion }})
+        {
+            respuestas.Add({{ d.manejador_var }}.Manejar(new {{ d.comando_clase }}({{ d.args | join(", ") }})));
+        }
+{% else %}
+        respuestas.Add({{ d.manejador_var }}.Manejar(new {{ d.comando_clase }}({{ d.args | join(", ") }})));
+{% endif %}
+{% endfor %}
+        return RespuestaDeEventoExterno.Ejecutado(RespuestaDeComando.Juntar(evento.Identidad, respuestas));
 {% else %}
 {% if x.grupo %}
         var juntos = espera.Anotar({{ x.grupo_nombre }}, [{{ x.grupo | join(", ") }}], evento, out var faltan);

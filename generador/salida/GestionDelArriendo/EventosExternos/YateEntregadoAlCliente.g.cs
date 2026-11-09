@@ -6,7 +6,7 @@ namespace YateGear.GestionDelArriendo;
 /// <summary>Evento "Yate entregado al cliente" de "Contexto Operación del arriendo", con los datos que declara el YAML. Dispara "Registrar el avance del arriendo".</summary>
 public sealed record YateEntregadoAlCliente(
     string NumeroDelArriendo,
-    DateTime FechaYHoraDelCambio
+    DateTime HoraDeEntrega
 ) : IEvento
 {
     /// <summary>Nombre del evento en el modelo.</summary>

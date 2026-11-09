@@ -43,6 +43,9 @@ public sealed partial class DeterminarLasDiferenciasEntreEntregaYDevolucionManej
     /// <summary>Dato calculado "valor de los daños" del evento "Diferencias determinadas". Se escribe en el archivo manual.</summary>
     private partial decimal ValorDeLosDanos(DeterminarLasDiferenciasEntreEntregaYDevolucionDatos datos);
 
+    /// <summary>Dato calculado "evidencia" del evento "Diferencias determinadas". Se escribe en el archivo manual.</summary>
+    private partial List<string> Evidencia(DeterminarLasDiferenciasEntreEntregaYDevolucionDatos datos);
+
     /// <summary>Ejecuta el comando.</summary>
     public RespuestaDeComando Manejar(DeterminarLasDiferenciasEntreEntregaYDevolucion comando)
     {
@@ -70,7 +73,7 @@ public sealed partial class DeterminarLasDiferenciasEntreEntregaYDevolucionManej
 
         // 7. Publicar los eventos.
         var eventos = new List<string>();
-        Publicar(new DiferenciasDeterminadas(actaDeInspeccion.NumeroDelArriendo, CombustibleConsumido(datos), HorasAdicionales(datos), ValorDeLosDanos(datos)), eventos);
+        Publicar(new DiferenciasDeterminadas(actaDeInspeccion.NumeroDelArriendo, actaDeInspeccion.HoraDeRegreso, CombustibleConsumido(datos), HorasAdicionales(datos), ValorDeLosDanos(datos), Evidencia(datos)), eventos);
         return new RespuestaDeComando(actaDeInspeccion.NumeroDelArriendo, eventos);
     }
 

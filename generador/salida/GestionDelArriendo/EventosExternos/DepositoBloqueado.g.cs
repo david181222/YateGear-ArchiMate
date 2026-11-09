@@ -6,7 +6,7 @@ namespace YateGear.GestionDelArriendo;
 /// <summary>Evento "Depósito bloqueado" de "Contexto Cobros y depósito", con los datos que declara el YAML. Dispara "Confirmar la reserva".</summary>
 public sealed record DepositoBloqueado(
     string NumeroDelArriendo,
-    string AutorizacionDelBloqueoDelDeposito
+    string CodigoDeAutorizacionDeLaPasarela
 ) : IEvento
 {
     /// <summary>Nombre del evento en el modelo.</summary>

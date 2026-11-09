@@ -18,6 +18,28 @@ public interface IRaiz
     void AsignarIdentidad(string identidad);
 }
 
+/// <summary>Entidad con identidad propia dentro de una raíz (G9). La raíz la guarda en una lista y no admite dos con
+/// la misma identidad.</summary>
+public interface IEntidad
+{
+    /// <summary>Identidad de la entidad dentro de su raíz.</summary>
+    string Identidad { get; }
+}
+
+/// <summary>Operaciones sobre las listas de entidades de una raíz (G9).</summary>
+public static class Entidades
+{
+    /// <summary>Agrega la entidad. Si la lista ya tiene una con la misma identidad, IdentidadRepetida (409).</summary>
+    public static void Agregar<T>(List<T> lista, T entidad) where T : IEntidad
+    {
+        if (lista.Any(e => e.Identidad == entidad.Identidad))
+        {
+            throw new IdentidadRepetida(entidad.Identidad);
+        }
+        lista.Add(entidad);
+    }
+}
+
 /// <summary>Evento del contexto.</summary>
 public interface IEvento
 {
@@ -160,7 +182,13 @@ public sealed class BusDeEventos(Bitacora bitacora, BusEntreContextos entreConte
 }
 
 /// <summary>Respuesta de un comando: la identidad de la raíz y los eventos que publicó.</summary>
-public sealed record RespuestaDeComando(string Identidad, IReadOnlyList<string> Eventos);
+public sealed record RespuestaDeComando(string Identidad, IReadOnlyList<string> Eventos)
+{
+    /// <summary>Junta las respuestas de varios comandos disparados por lo mismo (un evento o un mensaje): la identidad
+    /// del primero que corrió (o la que se da, si no corrió ninguno) y todos los eventos, en orden.</summary>
+    public static RespuestaDeComando Juntar(string identidad, IReadOnlyList<RespuestaDeComando> respuestas) =>
+        new(respuestas.Count > 0 ? respuestas[0].Identidad : identidad, respuestas.SelectMany(r => r.Eventos).ToList());
+}
 
 /// <summary>Se incumplió una regla del contrato. Responde 422.</summary>
 public sealed class ReglaIncumplida(string regla, string motivo) : Exception($"{regla}: {motivo}")
@@ -227,17 +255,18 @@ public static class Estados
     }
 }
 
-/// <summary>Eventos de otros contextos que deben llegar juntos para disparar un comando (junto_con, capa 3).
-/// Los que ya llegaron se guardan en memoria por la identidad de la raíz.</summary>
+/// <summary>Eventos que deben llegar juntos para disparar un comando: los de otros contextos (junto_con, capa 3) y los
+/// de las políticas internas con varios disparos (junto_con y uno_de, G10). Los que ya llegaron se guardan en
+/// memoria por la identidad de la raíz.</summary>
 public sealed class EsperaDeEventos
 {
     private readonly Dictionary<string, Dictionary<string, IEvento>> llegados = new();
     private readonly object candado = new();
 
-    /// <summary>Anota el evento. Si ya llegaron todos los del grupo para esa identidad, los devuelve y los
-    /// quita de la espera; si no, devuelve null y en faltan los que todavía no llegan.</summary>
+    /// <summary>Anota el evento. Si ya llegaron todos los del grupo para esa identidad (y, si hay unoDe, al menos uno de
+    /// esos), los devuelve y los quita de la espera; si no, devuelve null y en faltan los que todavía no llegan.</summary>
     public IReadOnlyDictionary<string, IEvento>? Anotar(string grupo, IReadOnlyList<string> eventosDelGrupo, IEvento evento,
-        out IReadOnlyList<string> faltan)
+        out IReadOnlyList<string> faltan, IReadOnlyList<string>? unoDe = null)
     {
         lock (candado)
         {
@@ -248,7 +277,12 @@ public sealed class EsperaDeEventos
                 llegados[clave] = ya;
             }
             ya[evento.NombreEnElModelo] = evento;
-            faltan = eventosDelGrupo.Where(n => !ya.ContainsKey(n)).ToList();
+            var lista = eventosDelGrupo.Where(n => !ya.ContainsKey(n)).ToList();
+            if (unoDe is { Count: > 0 } && !unoDe.Any(ya.ContainsKey))
+            {
+                lista.Add("uno de: " + string.Join(", ", unoDe));
+            }
+            faltan = lista;
             if (faltan.Count > 0)
             {
                 return null;

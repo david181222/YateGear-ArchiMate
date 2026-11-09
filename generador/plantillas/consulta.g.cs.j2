@@ -25,8 +25,8 @@ namespace {{ ns }};
 {% endif %}
 public sealed record {{ q.datos }}({{ q.clase }} Consulta, IReadOnlyList<{{ raiz.clase }}> Raices{% for o in q.otras %}, IReadOnlyList<{{ o.clase }}> {{ o.clase }}{% endfor %});
 {% else %}
-/// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y la raíz.</summary>
-public sealed record {{ q.datos }}({{ q.clase }} Consulta, {{ raiz.clase }} {{ raiz.clase }});
+/// <summary>Lo que reciben ValidarReglas y los datos calculados: la consulta y la raíz{{ "; y las demás raíces que lee, con la misma identidad (null si no existen)" if q.otras }}.</summary>
+public sealed record {{ q.datos }}({{ q.clase }} Consulta, {{ raiz.clase }} {{ raiz.clase }}{% for o in q.otras %}, {{ o.clase }}? {{ o.clase }}{% endfor %});
 {% endif %}
 
 /// <summary>Manejador de la consulta "{{ q.nombre | xml }}" ({{ q.codigo }}). No cambia la raíz.</summary>
@@ -63,7 +63,10 @@ public sealed partial class {{ q.manejador }}(Repositorio<{{ raiz.clase }}> repo
 {% else %}
         var {{ raiz.var }} = repositorio.Obtener(consulta.{{ raiz.id_prop }})
             ?? throw new NoEncontrado($"No existe {{ raiz.nombre | lower }} {consulta.{{ raiz.id_prop }}}.");
-        var datos = new {{ q.datos }}(consulta, {{ raiz.var }});
+{% for o in q.otras %}
+        var {{ o.var }} = {{ o.repositorio }}.Obtener(consulta.{{ raiz.id_prop }});
+{% endfor %}
+        var datos = new {{ q.datos }}(consulta, {{ raiz.var }}{% for o in q.otras %}, {{ o.var }}{% endfor %});
 {% endif %}
         ValidarReglas(datos);
 {% if q.lista %}

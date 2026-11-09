@@ -63,7 +63,7 @@ Content-Type: application/json
 
 {
   "numeroDelArriendo": "ARR-0001",
-  "autorizacionDelBloqueoDelDeposito": "autorización del bloqueo del depósito"
+  "codigoDeAutorizacionDeLaPasarela": "código de autorización de la pasarela"
 }
 
 ### Principal hasta el cierre · paso 6: Consultar el arriendo
@@ -86,7 +86,7 @@ Content-Type: application/json
 
 {
   "numeroDelArriendo": "ARR-0001",
-  "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+  "horaDeEntrega": "2026-02-01T09:00:00"
 }
 
 ### Principal hasta el cierre · paso 9: Inspección de devolución registrada
@@ -96,7 +96,7 @@ Content-Type: application/json
 
 {
   "numeroDelArriendo": "ARR-0001",
-  "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+  "horaDeRegreso": "2026-02-01T09:00:00"
 }
 
 ### Principal hasta el cierre · paso 10: Cuenta del arriendo cerrada
@@ -106,7 +106,7 @@ Content-Type: application/json
 
 {
   "numeroDelArriendo": "ARR-0001",
-  "fechaYHoraDelCambio": "2026-02-01T09:00:00"
+  "horaDelCierre": "2026-02-01T09:00:00"
 }
 
 ### Principal hasta el cierre · paso 11: Consultar el arriendo
