@@ -53,7 +53,7 @@ Las herramientas de Python se llaman con `.\.venv\Scripts\python.exe` en Windows
 
 Los dos leen de `salida/contextos.json` qué proyecto levantar, en qué puerto y qué contextos hay, así que no tienen escrito ningún nombre del modelo. Los dos aceptan `-Salida`, para otra carpeta generada.
 
-`verificar.ps1` revisa en un solo comando lo de "Cuándo está terminado un contexto" ([PENDIENTES.md](PENDIENTES.md)): genera y compila (una advertencia es un error), genera otra vez y compara la huella (determinismo), revisa la trazabilidad, corre las pruebas del validador (`pruebas-validador/casos.yaml`) y prueba los escenarios. Al final muestra una tabla con cada revisión y termina con código 1 si alguna falla. Acepta `-Modelo`, `-Specs`, `-Archi`, `-Salida` y `-Puerto`, y `-SinPruebasDelValidador` para otro modelo, como el de ejemplo:
+`verificar.ps1` revisa en un solo comando lo de "Cuándo está terminado un contexto" ([PENDIENTES.md](PENDIENTES.md)): genera y compila (una advertencia es un error), genera otra vez y compara la huella (determinismo), revisa la trazabilidad, corre las pruebas del validador (`pruebas-validador/casos.yaml`), revisa que ningún archivo manual conserve un valor provisional (`PENDIENTE`) y prueba los escenarios. Al final muestra una tabla con cada revisión y termina con código 1 si alguna falla. Acepta `-Modelo`, `-Specs`, `-Archi`, `-Salida` y `-Puerto`, y `-SinPruebasDelValidador` para otro modelo, como el de ejemplo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\verificar.ps1 -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida -SinPruebasDelValidador
@@ -259,11 +259,12 @@ Gestión del arriendo:
 
 | Escenario | Arriendo | Qué prueba |
 |---|---|---|
-| Principal hasta el cierre | ARR-0001 | Llega "Yate registrado" (se recuerda la copia del yate); solicitud con esa copia, riesgo aceptable, los dos eventos de Cobros (`junto_con`: el primero responde 202), confirmación con REG-01 activa, aviso por la política, entrega, devolución y cierre. |
+| Principal hasta el cierre | ARR-0001 | Llega "Yate registrado" (se recuerda la copia del yate); solicitud con esa copia, riesgo aceptable, el cliente cumple los requisitos (SB-11), los dos eventos de Cobros (`junto_con`: el primero responde 202), confirmación con REG-01 activa, aviso por la política, entrega, devolución y cierre. |
 | Riesgo alto | ARR-0002 | El cliente de prueba `CLI-RIESGO-ALTO` termina en "no realizado por riesgo alto". |
 | Cancelación | ARR-0003 | Cancelar, y luego registrar el avance de un arriendo cancelado: 409 a propósito. |
 | Confirmar sin riesgo evaluado | ARR-0004 | Confirmar sin evaluar el riesgo: 422 por REG-01, escrita a mano. |
 | Yate fuera del inventario | - | Una solicitud para un yate del que no llegó "Yate registrado": 409 a propósito (`requiere`), sin gastar consecutivo. |
+| Licencia vencida | ARR-0005 | La licencia vence antes del fin del arriendo: SB-11 responde que no cumple, con el motivo (H-09, NOR-01). |
 
 Calificaciones:
 
@@ -489,6 +490,7 @@ De la integración en los YAML de los otros contextos:
 | GEN-SUP-82 | gestion-del-arriendo.yaml: servicios_sa > Contratos con propietarios y clientes > envia | Con "Riesgo aceptable obtenido", SA-02 envía los datos para el contrato del cliente (arriendo, cliente, yate, fechas y precio por día); la gestión de contratos está simulada. |
 | GEN-SUP-83 | operacion-del-arriendo.yaml: Diferencias determinadas, y `DeterminarLasDiferenciasEntreEntregaYDevolucion.cs` | El evento lleva la hora de regreso y la evidencia: las fotos del acta de entrega y las del acta de inspección. |
 | GEN-SUP-84 | operacion-del-arriendo.yaml: servicios_sa > Avisos y actas de las marinas > envia | La alerta de pérdida de señal lleva el yate y su última lectura; SA-05 la lleva a la marina que guarda el yate, porque Operación del arriendo no guarda la marina. |
+| GEN-SUP-85 | `VerificarLosRequisitosDelCliente.cs` | La licencia de navegación está vigente si vence el día del fin del arriendo o después; no se compara con la fecha de hoy (como GEN-SUP-54, sin reloj). Sin terceros autorizados, el cliente no autorizó compartir sus datos (H-19). |
 
 ## Fuera de alcance
 
@@ -505,6 +507,7 @@ El generador construye una primera versión de referencia que demuestra el camin
 - Cada comando calcula sus valores con sus propias tarifas de prueba (archivos manuales); no hay una tabla de tarifas compartida.
 - Un mensaje que recibe un SA llega con los nombres de los datos del arriendo: la traducción del formato propio del sistema externo (SA-05, SA-07) no se genera. La alerta de pérdida de señal sale por SA-05 cuando ocurre el evento "Pérdida de señal del yate" (`envia`); el comando no llama al SA.
 - Una política interna entre raíces con distinta identidad todavía no se genera (`specs.py` lo dice).
+- E2E-01 (no se cierra el arriendo antes de los ajustes de dinero) la cumple el flujo: el arriendo se cierra con "Cuenta del arriendo cerrada", que publica Cobros al cerrar las cuentas. Una llamada directa al endpoint de SB-09 con `nuevo estado: cerrado` no lo revisa, porque Gestión del arriendo no guarda el estado de la cuenta.
 - Los servicios SA se llaman antes de `ValidarReglas`, porque las reglas usan sus respuestas (REG-01 necesita el estado del contrato). Por eso una solicitud rechazada por una regla ya consultó al CRM simulado.
 - Los escenarios de cada contexto siguen enviando los eventos de otros contextos por sus endpoints de prueba; el recorrido completo por el bus se prueba en los escenarios entre contextos.
 - Si se quita el YAML de un contexto, el generador borra sus archivos generados pero no su código a mano: avisa que esa carpeta quedó suelta.

@@ -51,7 +51,7 @@ Content-Type: application/json
 }
 
 ### Principal hasta el cierre · paso 4: Verificar los requisitos del cliente
-# Consulta. Espera: HTTP 2xx.
+# Consulta. Espera: HTTP 2xx y cumple = True.
 GET {{base}}/consultas/verificar-los-requisitos-del-cliente/ARR-0001
 
 ### Principal hasta el cierre · paso 5: Alquiler y seguro cobrados
@@ -256,3 +256,29 @@ Content-Type: application/json
     "terceros autorizados"
   ]
 }
+
+# ==============================================================================
+# Escenario 6: Licencia vencida (ARR-0005)
+# ==============================================================================
+
+### Licencia vencida · paso 1: Registrar la solicitud de reserva
+# Comando. Espera: HTTP 2xx.
+POST {{base}}/comandos/registrar-la-solicitud-de-reserva
+Content-Type: application/json
+
+{
+  "cliente": "cliente",
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-02-01",
+  "fin": "2026-02-03",
+  "numeroDeLaLicencia": "número de la licencia",
+  "vigenciaDeLaLicencia": "2026-02-02",
+  "fechaDeLaAutorizacion": "2026-02-01",
+  "tercerosAutorizados": [
+    "terceros autorizados"
+  ]
+}
+
+### Licencia vencida · paso 2: Verificar los requisitos del cliente
+# Consulta. Espera: HTTP 2xx y cumple = False, motivo = No cumple: la licencia de navegación vence el 2026-02-02, antes del fin del arriendo (H-09, NOR-01)..
+GET {{base}}/consultas/verificar-los-requisitos-del-cliente/ARR-0005

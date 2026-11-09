@@ -77,8 +77,11 @@
           "ruta": "/consultas/verificar-los-requisitos-del-cliente/ARR-0001",
           "cuerpo": null,
           "espera": {
-            "tipo": "exito",
-            "texto": "HTTP 2xx"
+            "tipo": "salida",
+            "valores": {
+              "cumple": true
+            },
+            "texto": "HTTP 2xx y cumple = True"
           }
         },
         {
@@ -446,6 +449,55 @@
               "requiere": "Yate registrado"
             },
             "texto": "HTTP 409 y requiere = Yate registrado"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Licencia vencida",
+      "identidad": "ARR-0005",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0005",
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "cliente",
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-02-01",
+            "fin": "2026-02-03",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-02",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Verificar los requisitos del cliente",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0005",
+          "metodo": "GET",
+          "ruta": "/consultas/verificar-los-requisitos-del-cliente/ARR-0005",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "cumple": false,
+              "motivo": "No cumple: la licencia de navegación vence el 2026-02-02, antes del fin del arriendo (H-09, NOR-01)."
+            },
+            "texto": "HTTP 2xx y cumple = False, motivo = No cumple: la licencia de navegación vence el 2026-02-02, antes del fin del arriendo (H-09, NOR-01)."
           }
         }
       ]

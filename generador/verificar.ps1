@@ -5,7 +5,8 @@
 #   2. Determinismo: generar.ps1 otra vez y la misma huella de la carpeta de salida.
 #   3. Trazabilidad completa: cada elemento de los contextos generados está en su CSV.
 #   4. Pruebas del validador: cada copia rota a propósito de un YAML da el error esperado (pruebas-validador/casos.yaml).
-#   5. probar.ps1: los escenarios de cada contexto y los de punta a punta, sin errores en el bus.
+#   5. Código a mano completo: ningún archivo manual conserva un valor provisional del generador (PENDIENTE).
+#   6. probar.ps1: los escenarios de cada contexto y los de punta a punta, sin errores en el bus.
 # Al final muestra una tabla con cada revisión y termina con código 1 si alguna falla.
 #
 # Uso (desde la carpeta generador):
@@ -80,7 +81,17 @@ if (-not $SinPruebasDelValidador) {
     Revision "Pruebas del validador" $ok $(if ($ok) { "specs.py detecta cada copia rota de $casos." } else { "Algún caso no da el error esperado (ver arriba)." })
 }
 
-# 5. Escenarios.
+# 5. Código a mano completo: el generador marca con PENDIENTE cada valor provisional que deja en un archivo manual
+# (un dato calculado, un filtro o las raíces de un comando sobre todas). Si queda alguno, la aplicación responde con
+# ese valor provisional y un escenario que no lo afirme no lo nota.
+$pendientes = @(Get-ChildItem $Salida -Recurse -Filter "*.cs" -File |
+    Where-Object { $_.Name -notlike "*.g.cs" -and $_.FullName -notmatch "[\\/](bin|obj)[\\/]" } |
+    Select-String -Pattern "PENDIENTE" -SimpleMatch)
+foreach ($x in $pendientes) { Write-Host "  PENDIENTE en $($x.Filename), línea $($x.LineNumber): $($x.Line.Trim())" -ForegroundColor Yellow }
+$ok = $pendientes.Count -eq 0
+Revision "Código a mano completo" $ok $(if ($ok) { "Ningún archivo manual tiene un valor provisional (PENDIENTE)." } else { "$($pendientes.Count) valor(es) provisional(es) por escribir a mano (ver arriba)." })
+
+# 6. Escenarios.
 $argumentos = @("-ExecutionPolicy", "Bypass", "-File", "./probar.ps1", "-Salida", $Salida)
 if ($Puerto) { $argumentos += @("-Puerto", $Puerto) }
 & $shell @argumentos | Out-Host

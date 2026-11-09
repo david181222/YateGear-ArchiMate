@@ -17,13 +17,13 @@ Las cifras de esta sección son las de la entrega del piloto (3 de noviembre); l
 | Qué | Hoy | Cómo se recalcula |
 |---|---|---|
 | Contextos generados | 5 de 5: Calificaciones, Cobros y depósito, Disponibilidad de yates, Gestión del arriendo y Operación del arriendo, en un solo programa y comunicados por el bus entre contextos (G12). | `generar.py` lista los generados y los que no tienen YAML. |
-| Pasos de los escenarios | 110, todos en verde: 10, 20, 18, 21 y 16 de los contextos, y 25 de los escenarios entre contextos. Ningún error en el bus, y `probar.py` lo comprueba (S7). | `probar.ps1` |
+| Pasos de los escenarios | 112, todos en verde: 10, 20, 18, 23 y 16 de los contextos, y 25 de los escenarios entre contextos. Ningún error en el bus, y `probar.py` lo comprueba (S7). | `probar.ps1` |
 | Trazabilidad | 592 filas: 47, 171, 86, 175 y 113; todos los elementos de los cinco contextos están. | `src/revisar_trazabilidad.py salida/intermedio/modelo-ddd.json salida` |
-| Supuestos | 75 vigentes: GEN-SUP-02 a 84, sin GEN-SUP-09 a 11 (retirados con la discrepancia 13) ni GEN-SUP-20 a 24 (retirados en G12). GEN-SUP-01 también se retiró. | Tablas "Supuestos" del README. |
+| Supuestos | 76 vigentes: GEN-SUP-02 a 85, sin GEN-SUP-09 a 11 (retirados con la discrepancia 13) ni GEN-SUP-20 a 24 (retirados en G12). GEN-SUP-01 también se retiró. | Tablas "Supuestos" del README. |
 | Discrepancias | 13, ninguna abierta: la 1, la 3 y la 13 cerradas sin cambiar el modelo, y las otras 10 corregidas en el modelo. | Tabla "Discrepancias encontradas" del README. |
 | Modelo | 425 elementos, 913 relaciones y 27 vistas. | Sección "Totales del modelo" del README principal. |
 | Pruebas del validador | 34 copias rotas a propósito de los YAML: `specs.py` da el error esperado en cada una (S8). | `src/probar_validador.py salida/intermedio/modelo-ddd.json pruebas-validador/casos.yaml` |
-| Verificación | **9 nov 2026, Windows (.NET 8.0.404, Archi 5):** `verificar.ps1` da las cinco revisiones en ✓ (compila sin advertencias, la misma huella en dos generaciones, trazabilidad completa, pruebas del validador y escenarios). El modelo de ejemplo también (sin las pruebas del validador, que son de YateGear). | `verificar.ps1` |
+| Verificación | **9 nov 2026, Windows (.NET 8.0.404, Archi 5):** `verificar.ps1` da las seis revisiones en ✓ (compila sin advertencias, la misma huella en dos generaciones, trazabilidad completa, pruebas del validador, código a mano completo y escenarios). El modelo de ejemplo también (sin las pruebas del validador, que son de YateGear). | `verificar.ps1` |
 
 Si se cambia el modelo o un YAML, `verificar.ps1` vuelve a dar estas cifras y esta tabla se actualiza.
 
@@ -98,7 +98,7 @@ Con S1 a S5 el generador ya estaba completo. Esta iteración lo dejó sólido (u
 | S6 | **Contratos entre contextos (D2):** `specs.py` revisa que lo que un contexto declara recibir de otro llegue en el evento tal como lo publica el YAML de ese contexto (el dato con que llega, cada dato con su tipo, y ningún obligatorio publicado como opcional). Lo hacen `specs.py` (contra los YAML de su carpeta) y `generar.py`, antes de escribir nada. | Antes, un dato renombrado en quien recibe pasaba la revisión y solo fallaba al ejecutar (probado el 9 nov). Ahora se detiene con el dato y los dos contextos. |
 | S7 | **El bus no falla en silencio:** en los escenarios entre contextos, un paso falla si durante él falla un suscriptor del bus, y al final se dice cuántos errores hubo. Además, `si_existe` en `dispara`: un evento que no le aplica a un comando (no existe su raíz) no es un error; Cobros lo usa con "Reserva cancelada" antes del pago (GEN-SUP-81). | Un suscriptor roto a propósito hace fallar el paso. 0 errores en el bus. |
 | S8 | **Pruebas del validador:** `pruebas-validador/casos.yaml` y `src/probar_validador.py`. Cada caso rompe en memoria una copia de un YAML y dice qué error debe dar `specs.py`. | 34 casos, al menos uno por capacidad (G1 a G12, D2, D5, S6, `si_existe` y la discrepancia 13). |
-| S9 | **`verificar.ps1`:** lo de la sección 5 en un solo comando, con una tabla al final. Los `.csproj` tratan las advertencias como errores. `generar.ps1 -SoloValidar` revisa sin tocar `salida/`, y los tres comandos aceptan `-Salida`. | Las cinco revisiones en ✓. |
+| S9 | **`verificar.ps1`:** lo de la sección 5 en un solo comando, con una tabla al final. Revisa también que ningún archivo manual conserve un valor provisional (`PENDIENTE`): así apareció SB-11, que respondía siempre "no cumple" sin motivo y ahora revisa la licencia y la autorización (GEN-SUP-85, escenario "Licencia vencida"). Los `.csproj` tratan las advertencias como errores. `generar.ps1 -SoloValidar` revisa sin tocar `salida/`, y los tres comandos aceptan `-Salida`. | Las seis revisiones en ✓. |
 | S10 | **Lo que le faltaba al modelo de YateGear:** discrepancia 12 corregida en el modelo (el Cobro tiene `fecha`, la de la orden que confirma la pasarela, y SB-18 la devuelve); discrepancia 13 (Gestión del arriendo toma la copia del yate de "Yate registrado", como dice la V8, y no de quien llama: GEN-SUP-09 a 11 retirados); la alerta de pérdida de señal sale por SA-05 (`envia`), como dice el flujo del modelo. | Las dos discrepancias, cerradas. Los escenarios lo prueban, también el de punta a punta. |
 | S11 | **G13:** la guía de modelado, el modelo de ejemplo y "la aplicación" en lugar de "YateGear" en lo que se genera y en los mensajes. | G13 cerrado. |
 | S12 | **Cierre:** el README del generador (con "Fuera de alcance"), el README principal y este archivo. | `verificar.ps1` en verde. |
@@ -109,11 +109,11 @@ Nada para la entrega. Lo que el generador todavía no expresa está en "Limitaci
 
 ## 5. Cuándo está terminado un contexto
 
-- [ ] `verificar.ps1` da las cinco revisiones en ✓: compila sin advertencias, la misma huella en dos generaciones, la trazabilidad completa, las pruebas del validador y todos los escenarios (sin errores en el bus).
+- [ ] `verificar.ps1` da las seis revisiones en ✓: compila sin advertencias, la misma huella en dos generaciones, la trazabilidad completa, las pruebas del validador, ningún valor provisional (`PENDIENTE`) en los archivos manuales y todos los escenarios (sin errores en el bus).
 - [ ] `specs/<contexto>.yaml` lleva `# supuesto` en cada dato que no salga del README. Sus escenarios incluyen al menos un rechazo a propósito (409 o 422), con su motivo.
 - [ ] Las reglas de contrato que necesitan los escenarios están escritas a mano en los archivos manuales (`.cs`, nunca en los `.g.cs`).
 - [ ] Cada clave nueva del YAML tiene su caso en `pruebas-validador/casos.yaml` y su fila en "Formato del YAML" del README.
-- [ ] El README del generador está al día: supuestos nuevos (desde GEN-SUP-85, sin repetir números), discrepancias nuevas y la tabla "qué genera" si hay elementos nuevos.
+- [ ] El README del generador está al día: supuestos nuevos (desde GEN-SUP-86, sin repetir números), discrepancias nuevas y la tabla "qué genera" si hay elementos nuevos.
 
 ## 6. Cosas que conviene saber
 

@@ -14,14 +14,14 @@ public sealed partial class DeterminarLasDiferenciasEntreEntregaYDevolucionManej
     {
     }
 
-    // PENDIENTE: valor provisional de "combustible consumido" (decimal), dato calculado del evento "Diferencias determinadas".
+    // "combustible consumido" (decimal), dato calculado del evento "Diferencias determinadas".
     // Regla de la que sale: contrato SB-24, salida:
     //   Combustible consumido, horas adicionales y daños, con la evidencia de cada uno.
     // Escrito a mano: lo que bajó el nivel entre la entrega (tanque lleno, H-13) y la devolución; nunca negativo.
     private partial decimal CombustibleConsumido(DeterminarLasDiferenciasEntreEntregaYDevolucionDatos datos) =>
         Math.Max(0m, datos.ActaDeEntrega.NivelDeCombustible - datos.ActaDeInspeccion.NivelDeCombustible);
 
-    // PENDIENTE: valor provisional de "horas adicionales" (decimal), dato calculado del evento "Diferencias determinadas".
+    // "horas adicionales" (decimal), dato calculado del evento "Diferencias determinadas".
     // Regla de la que sale: contrato SB-24, salida:
     //   Combustible consumido, horas adicionales y daños, con la evidencia de cada uno.
     // Escrito a mano: horas completas desde el fin acordado hasta el regreso; nunca negativas. El fin acordado es el
@@ -33,7 +33,7 @@ public sealed partial class DeterminarLasDiferenciasEntreEntregaYDevolucionManej
         return horas <= 0 ? 0m : (decimal)Math.Ceiling(horas);
     }
 
-    // PENDIENTE: valor provisional de "valor de los daños" (decimal), dato calculado del evento "Diferencias determinadas".
+    // "valor de los daños" (decimal), dato calculado del evento "Diferencias determinadas".
     // Regla de la que sale: contrato SB-24, salida:
     //   Combustible consumido, horas adicionales y daños, con la evidencia de cada uno.
     // Escrito a mano: la suma de los daños encontrados, con el valor que trae la inspección (V4-SUP-03).

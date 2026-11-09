@@ -339,7 +339,8 @@ escenarios:
         con: {identificador del yate: YATE-0001}
     - Obtener el nivel de riesgo del cliente:
         espera: Riesgo aceptable obtenido
-    - Verificar los requisitos del cliente
+    - Verificar los requisitos del cliente:       # licencia vigente hasta el fin y terceros autorizados (H-09, H-19)
+        espera: {cumple: true}
     - Alquiler y seguro cobrados:
         espera: 202                               # queda esperando "Depósito bloqueado" (junto_con)
     - Depósito bloqueado:
@@ -383,3 +384,9 @@ escenarios:
     - Registrar la solicitud de reserva:          # rechazo a propósito: el yate no está en el inventario (no llegó "Yate registrado")
         con: {identificador del yate: YATE-0099}
         espera: {código: 409, requiere: Yate registrado}
+
+  Licencia vencida:                               # ARR-0005
+    - Registrar la solicitud de reserva:
+        con: {identificador del yate: YATE-0001, inicio: "2026-02-01", fin: "2026-02-03", vigencia de la licencia: "2026-02-02"}
+    - Verificar los requisitos del cliente:       # la licencia vence antes del fin del arriendo (H-09, NOR-01)
+        espera: {cumple: false, motivo: "No cumple: la licencia de navegación vence el 2026-02-02, antes del fin del arriendo (H-09, NOR-01)."}

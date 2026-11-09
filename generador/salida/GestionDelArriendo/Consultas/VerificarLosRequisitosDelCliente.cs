@@ -14,13 +14,36 @@ public sealed partial class VerificarLosRequisitosDelClienteManejador
     {
     }
 
-    // PENDIENTE: valor provisional de "cumple" (bool), dato calculado de la consulta.
-    // Regla de la que sale: contrato SB-11, salida:
+    // "cumple" (bool), dato calculado de la consulta. Regla de la que sale: contrato SB-11, salida:
     //   Cumple o no cumple, con el motivo.
-    private partial bool Cumple(VerificarLosRequisitosDelClienteDatos datos) => false;
+    // Escrito a mano: cumple si no le falta ningún requisito (ver Faltan).
+    private partial bool Cumple(VerificarLosRequisitosDelClienteDatos datos) => Faltan(datos).Count == 0;
 
-    // PENDIENTE: valor provisional de "motivo" (string?), dato calculado de la consulta.
-    // Regla de la que sale: contrato SB-11, salida:
+    // "motivo" (string?), dato calculado de la consulta. Regla de la que sale: contrato SB-11, salida:
     //   Cumple o no cumple, con el motivo.
-    private partial string? Motivo(VerificarLosRequisitosDelClienteDatos datos) => null;
+    // Escrito a mano: los requisitos que faltan; null si cumple.
+    private partial string? Motivo(VerificarLosRequisitosDelClienteDatos datos)
+    {
+        var faltan = Faltan(datos);
+        return faltan.Count == 0 ? null : "No cumple: " + string.Join("; ", faltan) + ".";
+    }
+
+    // Escrito a mano: los requisitos de la ficha del cliente que guarda el arriendo (V6-SUP-01) que no se cumplen.
+    private static List<string> Faltan(VerificarLosRequisitosDelClienteDatos datos)
+    {
+        var ficha = datos.Arriendo.FichaDelCliente;
+        var faltan = new List<string>();
+        // H-09, NOR-01: licencia vigente durante todo el arriendo (supuesto GEN-SUP-85: hasta su fin, sin la fecha de hoy).
+        if (ficha.VigenciaDeLaLicencia < datos.Arriendo.FechasDelArriendo.Fin)
+        {
+            var vence = ficha.VigenciaDeLaLicencia.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            faltan.Add($"la licencia de navegación vence el {vence}, antes del fin del arriendo (H-09, NOR-01)");
+        }
+        // Ley 1581, H-19: autorización para compartir sus datos con terceros (la evaluadora y la aseguradora).
+        if (ficha.TercerosAutorizados.Count == 0)
+        {
+            faltan.Add("el cliente no autorizó compartir sus datos con terceros (Ley 1581, H-19)");
+        }
+        return faltan;
+    }
 }
