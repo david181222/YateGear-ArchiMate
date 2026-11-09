@@ -23,7 +23,89 @@ Las librerías de Python tienen versión fija en `requirements.txt`: pyArchimate
 
 En Linux todo se instala en la carpeta del usuario, sin sudo: el SDK con `dotnet-install.sh --channel 8.0 --install-dir ~/.dotnet`, Python con `uv python install 3.13`, y PowerShell y Archi descomprimiendo sus `.tar.gz` en `~/.local/opt` (con `pwsh` enlazado en `~/.local/bin`). Probado en Ubuntu 26.04 con .NET 8.0.427, PowerShell 7.6.9 y Archi 5.10: genera exactamente los mismos archivos que en Windows (misma huella).
 
-## Cómo ejecutarlo
+## Paso a paso: del modelo a la API corriendo
+
+En Windows, desde cero. En Linux es igual, con `pwsh ./<comando>.ps1` en lugar de `powershell -ExecutionPolicy Bypass -File .\<comando>.ps1`.
+
+**1. Instalar los requisitos** de la tabla anterior y comprobarlos:
+
+```powershell
+py -3.13 --version                              # Python 3.13
+dotnet --list-sdks                              # debe aparecer una versión 8.0.x
+Test-Path "C:\Program Files\Archi\Archi.exe"    # True
+```
+
+**2. Clonar el repositorio y entrar a la carpeta del generador:**
+
+```powershell
+git clone https://github.com/david181222/YateGear-ArchiMate.git
+cd YateGear-ArchiMate\generador
+```
+
+**3. Generar la solución .NET:**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\generar.ps1
+```
+
+La primera vez crea el entorno de Python (`.venv`) e instala sus librerías; es el único paso que usa la red. Después exporta el modelo con Archi, lo revisa, revisa los YAML, genera la solución y la compila. Termina con "Listo."; si algo falla, se detiene y dice en qué paso. Lo generado queda en `salida/`: `YateGear.sln`, con un proyecto por contexto, el host `YateGear` (el programa que se ejecuta) y `Integracion` (el bus entre contextos).
+
+**4. Levantar la API:**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1
+```
+
+Escribe la dirección de cada contexto y se queda corriendo en `http://localhost:5080` hasta que se detiene con Ctrl+C. Déjala abierta y sigue en el navegador o en otra terminal. Los datos viven en memoria: al detenerla se pierden.
+
+**5. Verla en el navegador.** Las consultas y las rutas de infraestructura son GET, así que se abren directamente y devuelven JSON:
+
+| Qué | Dirección |
+|---|---|
+| Los contextos que levantó el programa | http://localhost:5080/contextos |
+| Los eventos que pasaron entre contextos, y los errores del bus | http://localhost:5080/eventos-entre-contextos |
+| La bitácora de un contexto: sus eventos, las llamadas a los SA simulados y los errores | http://localhost:5080/gestion-del-arriendo/bitacora |
+| Una consulta sobre todas las raíces (con filtros en la dirección) | http://localhost:5080/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-10&fin=2026-03-12 |
+| Una consulta por identidad | http://localhost:5080/gestion-del-arriendo/consultas/consultar-el-arriendo/ARR-0001 |
+
+Al levantarla no hay datos: las listas salen vacías y una consulta por identidad responde 404 hasta que un comando cree esa raíz (paso 6). En `http://localhost:5080/` no hay página, y la API no tiene Swagger ("Fuera de alcance"): sus rutas están en los `pruebas.http` y en el `Registro.g.cs` de cada contexto.
+
+**6. Enviar comandos.** Los comandos, los eventos de otros contextos y los mensajes de los SA son POST con un cuerpo JSON, así que no se escriben en la barra del navegador. Hay tres formas:
+
+- Los archivos `salida/pruebas/<Proyecto>/pruebas.http` tienen una llamada por cada paso de los escenarios del contexto, con su cuerpo. Se abren en VS Code con la extensión REST Client ("Send Request" encima de cada llamada) o en Visual Studio 2022.
+- PowerShell. Por ejemplo, registrar un yate:
+
+  ```powershell
+  $yate = @{ propietario = "PROP-0001"; identificadorDeLaMarina = "MAR-01"; nombre = "Brisa"; matricula = "CB-123"
+             capacidad = 8; precioPorDia = 500; documentosAlDiaAnteLaDIMAR = $true } | ConvertTo-Json
+  Invoke-RestMethod -Method Post http://localhost:5080/disponibilidad-de-yates/comandos/registrar-yate-en-el-inventario `
+      -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes($yate))
+  ```
+
+  Responde `identidad: YATE-0001` y `eventos: Yate registrado`. Después, la consulta de yates disponibles del paso 5 ya lo muestra, y `/eventos-entre-contextos` muestra el evento con el que Gestión del arriendo guarda su copia del yate. Los datos del JSON se llaman como en el modelo, en camelCase y sin tildes: "precio por día" es `precioPorDia`.
+- Todos los escenarios de una vez, con `probar.ps1` (paso 8).
+
+**7. Detener la API** con Ctrl+C en la terminal de `ejecutar.ps1`. Si después la compilación dice que `YateGear.exe` "está siendo usado por otro proceso", quedó viva: `Get-Process YateGear | Stop-Process`.
+
+**8. Probar y verificar todo**, con la API detenida, porque usan el mismo puerto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\probar.ps1       # los escenarios de los YAML: cada paso con ✓ o ✗
+powershell -ExecutionPolicy Bypass -File .\verificar.ps1    # todo: generar, determinismo, trazabilidad, validador, código a mano y escenarios
+```
+
+**9. Abrirla en Visual Studio o Rider (opcional):** `salida/YateGear.sln`. El proyecto de inicio es `YateGear`; con F5 corre en el mismo puerto (perfil de `launchSettings.json`). El código a mano va en los `.cs`, nunca en los `.g.cs`, que el generador reescribe.
+
+**Con el modelo de ejemplo** son los mismos pasos, con su modelo, su YAML y su carpeta:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\generar.ps1 -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida
+powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1 -Salida ejemplo/salida
+```
+
+Y en el navegador, después de prestar un libro (`ejemplo/salida/pruebas/Prestamos/pruebas.http`): http://localhost:5080/prestamos/consultas/consultar-el-prestamo/PRE-0001.
+
+## Los comandos y sus parámetros
 
 Desde la carpeta `generador`:
 
@@ -45,7 +127,7 @@ pwsh ./verificar.ps1
 
 Las herramientas de Python se llaman con `.\.venv\Scripts\python.exe` en Windows y con `./.venv/bin/python` en Linux.
 
-`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`) `-Archi` y `-Salida` (la carpeta de lo generado, por defecto `salida`). Con `-SoloValidar` hace solo los pasos 1 a 4 (exportar, extraer y revisar los YAML) sin tocar la carpeta de salida: es el modo para quien está escribiendo un YAML o modelando. Ojo: `salida/` queda con exactamente los contextos que se generan, así que con `-Specs` se borran los archivos generados de los demás (nunca su código a mano); vuelven al generar todo.
+`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`), `-Archi` y `-Salida` (la carpeta de lo generado, por defecto `salida`). Con `-SoloValidar` hace solo los pasos 1 a 4 (exportar, extraer y revisar los YAML) sin tocar la carpeta de salida: es el modo para quien está escribiendo un YAML o modelando. Ojo: `salida/` queda con exactamente los contextos que se generan, así que con `-Specs` se borran los archivos generados de los demás (nunca su código a mano); vuelven al generar todo.
 
 `ejecutar.ps1` levanta la aplicación (el host, con todos los contextos) desde `salida/`, para que `dotnet` use el SDK 8 de `salida/global.json`. Con la aplicación arriba, cada `salida/pruebas/<Proyecto>/pruebas.http` se puede ejecutar llamada por llamada con la extensión REST Client de VS Code o con Visual Studio.
 
