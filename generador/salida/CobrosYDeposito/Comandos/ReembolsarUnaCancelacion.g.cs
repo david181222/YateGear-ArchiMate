@@ -86,7 +86,7 @@ public sealed partial class ReembolsarUnaCancelacionManejador(
         switch (resultado)
         {
             case ReembolsarUnaCancelacionResultado.CancelacionReembolsada:
-                Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.Reembolso, calculadoValorDelReembolso, (respuestaCobrosPorLaPasarelaDePagos?.Comprobante ?? throw new DatoFaltante("comprobante del reembolso")), []));
+                Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.Reembolso, calculadoValorDelReembolso, (respuestaCobrosPorLaPasarelaDePagos?.Comprobante ?? throw new DatoFaltante("comprobante del reembolso")), [], (respuestaCobrosPorLaPasarelaDePagos?.FechaDeLaOrden ?? throw new DatoFaltante("fecha del reembolso"))));
                 break;
         }
         switch (resultado)

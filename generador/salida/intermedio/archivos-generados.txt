@@ -107,12 +107,14 @@ GestionDelArriendo/EventosExternos/DepositoBloqueado.g.cs
 GestionDelArriendo/EventosExternos/InspeccionDeDevolucionRegistrada.g.cs
 GestionDelArriendo/EventosExternos/ReceptorDeEventosExternos.g.cs
 GestionDelArriendo/EventosExternos/YateEntregadoAlCliente.g.cs
+GestionDelArriendo/EventosExternos/YateRegistrado.g.cs
 GestionDelArriendo/GestionDelArriendo.csproj
 GestionDelArriendo/Infraestructura/Infraestructura.g.cs
 GestionDelArriendo/Politicas/Politicas.g.cs
 GestionDelArriendo/Registro.g.cs
 Integracion/BusEntreContextos.g.cs
 Integracion/Integracion.csproj
+OperacionDelArriendo/Anticorrupcion/EmisorDeAvisosYActasDeLasMarinas.g.cs
 OperacionDelArriendo/Anticorrupcion/ReceptorDeAvisosYActasDeLasMarinas.g.cs
 OperacionDelArriendo/Anticorrupcion/ReceptorDeUbicacionYCombustibleDelProveedor.g.cs
 OperacionDelArriendo/Comandos/DetectarLaPerdidaDeSenal.g.cs
@@ -141,6 +143,7 @@ YateGear.sln
 YateGear/Program.g.cs
 YateGear/Properties/launchSettings.json
 YateGear/YateGear.csproj
+YateGear/wwwroot/index.html
 contextos.json
 global.json
 pruebas/Calificaciones/escenarios.json

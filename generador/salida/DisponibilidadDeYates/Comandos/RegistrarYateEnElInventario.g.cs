@@ -64,7 +64,7 @@ public sealed partial class RegistrarYateEnElInventarioManejador(
 
         // 7. Publicar los eventos.
         var eventos = new List<string>();
-        Publicar(new YateRegistrado(yate.IdentificadorDelYate, comando.IdentificadorDeLaMarina, comando.PrecioPorDia), eventos);
+        Publicar(new YateRegistrado(yate.IdentificadorDelYate, comando.Propietario, comando.IdentificadorDeLaMarina, comando.PrecioPorDia), eventos);
         return new RespuestaDeComando(yate.IdentificadorDelYate, eventos);
     }
 

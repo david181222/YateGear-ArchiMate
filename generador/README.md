@@ -2,7 +2,41 @@
 
 Este generador construye la primera versión de la aplicación de YateGear a partir del modelo de Archi (`../modelo/YateGear.archimate`) y de un archivo de especificaciones por contexto (`specs/*.yaml`). Es determinista: no usa IA ni red, y el mismo modelo con el mismo YAML da siempre los mismos archivos.
 
-Genera un proyecto por cada contexto que tiene YAML en `specs/`, y los levanta todos en un solo programa (D1), comunicados por el bus entre contextos (G12). Hoy tienen YAML los cinco contextos del modelo, y `specs/entre-contextos.yaml` tiene los escenarios de punta a punta entre ellos (S4). Lo que falta, las decisiones y el reparto del trabajo están en [PENDIENTES.md](PENDIENTES.md).
+Genera un proyecto por cada contexto que tiene YAML en `specs/`, y los levanta todos en un solo programa (D1), comunicados por el bus entre contextos (G12). Hoy tienen YAML los cinco contextos del modelo, y `specs/entre-contextos.yaml` tiene los escenarios de punta a punta entre ellos (S4). Las decisiones, lo que se hizo y lo que queda abierto están en [PENDIENTES.md](PENDIENTES.md).
+
+El generador no conoce YateGear: sirve para cualquier modelo que siga sus convenciones. La [guía de modelado](GUIA-DE-MODELADO.md) dice qué dibujar en Archi y en qué orden trabajar, y `ejemplo/` tiene un modelo mínimo de otro dominio (una biblioteca) que se genera y se prueba igual que YateGear.
+
+## Índice
+
+Para generar y levantar la API por primera vez: [Paso a paso](#paso-a-paso-del-modelo-a-la-api-corriendo). Para modelar otro sistema: [GUIA-DE-MODELADO.md](GUIA-DE-MODELADO.md).
+
+- [Tecnología](#tecnología)
+- [Requisitos](#requisitos)
+- [Paso a paso: del modelo a la API corriendo](#paso-a-paso-del-modelo-a-la-api-corriendo)
+- [Los comandos y sus parámetros](#los-comandos-y-sus-parámetros)
+  - [Puerto](#puerto)
+- [Cómo funciona](#cómo-funciona)
+  - [Carpetas](#carpetas)
+- [Qué se lee del modelo](#qué-se-lee-del-modelo)
+- [Formato del YAML](#formato-del-yaml)
+- [Qué genera cada elemento del modelo](#qué-genera-cada-elemento-del-modelo)
+  - [Comunicación entre contextos (D1)](#comunicación-entre-contextos-d1)
+- [Reglas del generador](#reglas-del-generador)
+  - [Generalidad: el generador no conoce YateGear](#generalidad-el-generador-no-conoce-yategear)
+  - [Regla de los datos](#regla-de-los-datos)
+  - [Pasos de un comando](#pasos-de-un-comando)
+  - [Capas](#capas)
+  - [Qué borra el generador](#qué-borra-el-generador)
+  - [Archivos manuales](#archivos-manuales)
+  - [Bitácora](#bitácora)
+- [Escenarios y pruebas](#escenarios-y-pruebas)
+  - [Escenarios entre contextos](#escenarios-entre-contextos)
+- [Reproducibilidad y trazabilidad](#reproducibilidad-y-trazabilidad)
+- [Validaciones](#validaciones)
+- [Discrepancias encontradas](#discrepancias-encontradas)
+- [Supuestos](#supuestos)
+- [Fuera de alcance](#fuera-de-alcance)
+- [Limitaciones conocidas](#limitaciones-conocidas)
 
 ## Tecnología
 
@@ -21,7 +55,90 @@ Las librerías de Python tienen versión fija en `requirements.txt`: pyArchimate
 
 En Linux todo se instala en la carpeta del usuario, sin sudo: el SDK con `dotnet-install.sh --channel 8.0 --install-dir ~/.dotnet`, Python con `uv python install 3.13`, y PowerShell y Archi descomprimiendo sus `.tar.gz` en `~/.local/opt` (con `pwsh` enlazado en `~/.local/bin`). Probado en Ubuntu 26.04 con .NET 8.0.427, PowerShell 7.6.9 y Archi 5.10: genera exactamente los mismos archivos que en Windows (misma huella).
 
-## Cómo ejecutarlo
+## Paso a paso: del modelo a la API corriendo
+
+En Windows, desde cero. En Linux es igual, con `pwsh ./<comando>.ps1` en lugar de `powershell -ExecutionPolicy Bypass -File .\<comando>.ps1`.
+
+**1. Instalar los requisitos** de la tabla anterior y comprobarlos:
+
+```powershell
+py -3.13 --version                              # Python 3.13
+dotnet --list-sdks                              # debe aparecer una versión 8.0.x
+Test-Path "C:\Program Files\Archi\Archi.exe"    # True
+```
+
+**2. Clonar el repositorio y entrar a la carpeta del generador:**
+
+```powershell
+git clone https://github.com/david181222/YateGear-ArchiMate.git
+cd YateGear-ArchiMate\generador
+```
+
+**3. Generar la solución .NET:**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\generar.ps1
+```
+
+La primera vez crea el entorno de Python (`.venv`) e instala sus librerías; es el único paso que usa la red. Después exporta el modelo con Archi, lo revisa, revisa los YAML, genera la solución y la compila. Termina con "Listo."; si algo falla, se detiene y dice en qué paso. Lo generado queda en `salida/`: `YateGear.sln`, con un proyecto por contexto, el host `YateGear` (el programa que se ejecuta) y `Integracion` (el bus entre contextos).
+
+**4. Levantar la API:**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1
+```
+
+Escribe la dirección de la página de inicio y la de cada contexto, y se queda corriendo en `http://localhost:5080` hasta que se detiene con Ctrl+C. Déjala abierta y sigue en el navegador o en otra terminal. Los datos viven en memoria: al detenerla se pierden.
+
+**5. Verla en el navegador.** Empieza por la página de inicio. Las consultas y las rutas de infraestructura son GET, así que se abren directamente y devuelven JSON:
+
+| Qué | Dirección |
+|---|---|
+| La página de inicio: todas las rutas de cada contexto, con su método y el elemento del modelo del que salen | http://localhost:5080/ |
+| Los contextos que levantó el programa | http://localhost:5080/contextos |
+| Los eventos que pasaron entre contextos, y los errores del bus | http://localhost:5080/eventos-entre-contextos |
+| La bitácora de un contexto: sus eventos, las llamadas a los SA simulados y los errores | http://localhost:5080/gestion-del-arriendo/bitacora |
+| Una consulta sobre todas las raíces (con filtros en la dirección) | http://localhost:5080/disponibilidad-de-yates/consultas/consultar-yates-disponibles?identificadorDeLaMarina=MAR-01&inicio=2026-03-10&fin=2026-03-12 |
+| Una consulta por identidad | http://localhost:5080/gestion-del-arriendo/consultas/consultar-el-arriendo/ARR-0001 |
+
+Al levantarla no hay datos: las listas salen vacías y una consulta por identidad responde 404 hasta que un comando cree esa raíz (paso 6). En la página de inicio, las rutas que se pueden abrir directo son enlaces; las que llevan datos en la ruta (`{numeroDelArriendo}`) o en la consulta (`?dato=...`) se escriben a mano en la barra. La dirección de cada contexto (por ejemplo http://localhost:5080/gestion-del-arriendo) lleva a su parte de la página.
+
+**6. Enviar comandos.** Los comandos, los eventos de otros contextos y los mensajes de los SA son POST con un cuerpo JSON, así que no se escriben en la barra del navegador. Hay tres formas:
+
+- Los archivos `salida/pruebas/<Proyecto>/pruebas.http` tienen una llamada por cada paso de los escenarios del contexto, con su cuerpo. Se abren en VS Code con la extensión REST Client ("Send Request" encima de cada llamada) o en Visual Studio 2022.
+- PowerShell. Por ejemplo, registrar un yate:
+
+  ```powershell
+  $yate = @{ propietario = "PROP-0001"; identificadorDeLaMarina = "MAR-01"; nombre = "Brisa"; matricula = "CB-123"
+             capacidad = 8; precioPorDia = 500; documentosAlDiaAnteLaDIMAR = $true } | ConvertTo-Json
+  Invoke-RestMethod -Method Post http://localhost:5080/disponibilidad-de-yates/comandos/registrar-yate-en-el-inventario `
+      -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes($yate))
+  ```
+
+  Responde `identidad: YATE-0001` y `eventos: Yate registrado`. Después, la consulta de yates disponibles del paso 5 ya lo muestra, y `/eventos-entre-contextos` muestra el evento con el que Gestión del arriendo guarda su copia del yate. Los datos del JSON se llaman como en el modelo, en camelCase y sin tildes: "precio por día" es `precioPorDia`.
+- Todos los escenarios de una vez, con `probar.ps1` (paso 8).
+
+**7. Detener la API** con Ctrl+C en la terminal de `ejecutar.ps1`. Si después la compilación dice que `YateGear.exe` "está siendo usado por otro proceso", quedó viva: `Get-Process YateGear | Stop-Process`.
+
+**8. Probar y verificar todo**, con la API detenida, porque usan el mismo puerto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\probar.ps1       # los escenarios de los YAML: cada paso con ✓ o ✗
+powershell -ExecutionPolicy Bypass -File .\verificar.ps1    # todo: generar, determinismo, trazabilidad, validador, código a mano y escenarios
+```
+
+**9. Abrirla en Visual Studio o Rider (opcional):** `salida/YateGear.sln`. El proyecto de inicio es `YateGear`; con F5 corre en el mismo puerto (perfil de `launchSettings.json`). El código a mano va en los `.cs`, nunca en los `.g.cs`, que el generador reescribe.
+
+**Con el modelo de ejemplo** son los mismos pasos, con su modelo, su YAML y su carpeta:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\generar.ps1 -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida
+powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1 -Salida ejemplo/salida
+```
+
+Y en el navegador, después de prestar un libro (`ejemplo/salida/pruebas/Prestamos/pruebas.http`): http://localhost:5080/prestamos/consultas/consultar-el-prestamo/PRE-0001.
+
+## Los comandos y sus parámetros
 
 Desde la carpeta `generador`:
 
@@ -29,6 +146,7 @@ Desde la carpeta `generador`:
 powershell -ExecutionPolicy Bypass -File .\generar.ps1     # exporta, lee, valida, genera y compila
 powershell -ExecutionPolicy Bypass -File .\ejecutar.ps1    # levanta la aplicación (Ctrl+C para detenerla)
 powershell -ExecutionPolicy Bypass -File .\probar.ps1      # ejecuta los escenarios y marca cada paso con ✓ o ✗
+powershell -ExecutionPolicy Bypass -File .\verificar.ps1   # todo lo anterior, más determinismo, trazabilidad y pruebas del validador
 ```
 
 En Linux, lo mismo con `pwsh`:
@@ -37,17 +155,24 @@ En Linux, lo mismo con `pwsh`:
 pwsh ./generar.ps1
 pwsh ./ejecutar.ps1
 pwsh ./probar.ps1      # la salida de la aplicación queda en salida/intermedio/aplicacion*.log
+pwsh ./verificar.ps1
 ```
 
 Las herramientas de Python se llaman con `.\.venv\Scripts\python.exe` en Windows y con `./.venv/bin/python` en Linux.
 
-`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`) y `-Archi`. Ojo: `salida/` queda con exactamente los contextos que se generan, así que con `-Specs` se borran los archivos generados de los demás (nunca su código a mano); vuelven al generar todo.
+`generar.ps1` se detiene en el primer paso que falle y dice cuál. Sus parámetros, todos con valor por defecto, son `-Modelo` (por defecto, el único `.archimate` de `../modelo`), `-Specs` (por defecto, todos los `specs/*.yaml`; para generar solo algunos: `-Specs specs/uno.yaml,specs/otro.yaml`), `-Archi` y `-Salida` (la carpeta de lo generado, por defecto `salida`). Con `-SoloValidar` hace solo los pasos 1 a 4 (exportar, extraer y revisar los YAML) sin tocar la carpeta de salida: es el modo para quien está escribiendo un YAML o modelando. Ojo: `salida/` queda con exactamente los contextos que se generan, así que con `-Specs` se borran los archivos generados de los demás (nunca su código a mano); vuelven al generar todo.
 
 `ejecutar.ps1` levanta la aplicación (el host, con todos los contextos) desde `salida/`, para que `dotnet` use el SDK 8 de `salida/global.json`. Con la aplicación arriba, cada `salida/pruebas/<Proyecto>/pruebas.http` se puede ejecutar llamada por llamada con la extensión REST Client de VS Code o con Visual Studio.
 
 `probar.ps1` compila y, para cada contexto (`salida/pruebas/<Proyecto>/escenarios.json`) y después para los escenarios entre contextos (`salida/pruebas/EntreContextos/escenarios.json`), levanta la aplicación, ejecuta sus escenarios y la detiene; termina con código 1 si algún paso falla. Con `-Contexto "<nombre del contexto o del proyecto>"` prueba solo ese, y con `-Contexto "entre contextos"`, solo los de punta a punta.
 
-Los dos leen de `salida/contextos.json` qué proyecto levantar, en qué puerto y qué contextos hay, así que no tienen escrito ningún nombre del modelo.
+Los dos leen de `salida/contextos.json` qué proyecto levantar, en qué puerto y qué contextos hay, así que no tienen escrito ningún nombre del modelo. Los dos aceptan `-Salida`, para otra carpeta generada.
+
+`verificar.ps1` revisa en un solo comando lo de "Cuándo está terminado un contexto" ([PENDIENTES.md](PENDIENTES.md)): genera y compila (una advertencia es un error), genera otra vez y compara la huella (determinismo), revisa la trazabilidad, corre las pruebas del validador (`pruebas-validador/casos.yaml`), revisa que ningún archivo manual conserve un valor provisional (`PENDIENTE`) y prueba los escenarios. Al final muestra una tabla con cada revisión y termina con código 1 si alguna falla. Acepta `-Modelo`, `-Specs`, `-Archi`, `-Salida` y `-Puerto`, y `-SinPruebasDelValidador` para otro modelo, como el de ejemplo:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\verificar.ps1 -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida -SinPruebasDelValidador
+```
 
 ### Puerto
 
@@ -82,22 +207,25 @@ Se lee el XML de intercambio y no el `.archimate` directo, porque los dos dan lo
 
 | Carpeta o archivo | Qué es |
 |---|---|
-| `generar.ps1`, `ejecutar.ps1`, `probar.ps1` | Los tres comandos. Van en UTF-8 con BOM, porque Windows PowerShell 5.1 lee sin BOM como ANSI y rompería la "ó" de "Gestión". |
-| `src/` | El generador en Python: `leer.py`, `tipos.py`, `extraer.py`, `specs.py`, `nombres.py`, `generar.py`, y las herramientas de prueba `comparar_lectura.py`, `huella.py`, `revisar_trazabilidad.py` y `probar.py`. |
+| `generar.ps1`, `ejecutar.ps1`, `probar.ps1`, `verificar.ps1` | Los comandos. Van en UTF-8 con BOM, porque Windows PowerShell 5.1 lee sin BOM como ANSI y rompería la "ó" de "Gestión". |
+| `src/` | El generador en Python: `leer.py`, `tipos.py`, `extraer.py`, `specs.py`, `nombres.py`, `generar.py`, y las herramientas de prueba `comparar_lectura.py`, `huella.py`, `revisar_trazabilidad.py`, `probar.py` y `probar_validador.py`. |
 | `plantillas/` | Una plantilla Jinja2 por tipo de archivo generado. |
 | `specs/` | Un YAML de especificaciones por contexto. Su comentario inicial explica cada sección. |
 | `salida/` | Lo generado. Se versiona todo, salvo `bin/`, `obj/`, el XML exportado (`intermedio/*.xml`) y los registros de la aplicación (`intermedio/*.log`). |
+| `pruebas-validador/` | `casos.yaml`: copias rotas a propósito de los YAML de `specs/` y el error que `specs.py` debe dar en cada una (ver "Validaciones"). |
+| `ejemplo/` | Un modelo mínimo que no es YateGear (`Biblioteca.archimate`, Contexto Préstamos), su YAML (`specs/prestamos.yaml`) y lo generado (`salida/`, con su regla escrita a mano). Es el ejemplo de la guía de modelado y prueba que el generador no conoce YateGear. |
+| `GUIA-DE-MODELADO.md` | Qué dibujar en Archi para que el generador lo lea, en qué orden trabajar y qué significa cada error del modelo. |
 
 ## Qué se lee del modelo
 
-Todo se busca por tipo y por relación, nunca solo por nombre, porque hay nombres repetidos entre capas (por ejemplo, el objeto de negocio y el objeto de datos "Arriendo"). El único nombre que se usa para buscar es el del contexto. No se leen los anidamientos de las vistas: los objetos de valor se dibujan dentro de su raíz, pero lo que cuenta es su composición.
+Todo se busca por tipo y por relación, nunca solo por nombre, porque hay nombres repetidos entre capas (por ejemplo, el objeto de negocio y el objeto de datos "Arriendo"). El único nombre que se usa para buscar es el del contexto. No se leen los anidamientos de las vistas: los objetos de valor se dibujan dentro de su raíz, pero lo que cuenta es su composición. La [guía de modelado](GUIA-DE-MODELADO.md) explica estas convenciones paso a paso, con un ejemplo y los errores de cada una.
 
 | Concepto | Cómo se encuentra en el modelo |
 |---|---|
 | Contexto | Componente de aplicación "Contexto `<dominio>`". |
-| Comandos | Asignación contexto --> proceso de aplicación con la propiedad `Servicio básico V4`. |
-| Consultas | Realización contexto --> servicio de aplicación con `Servicio básico V4`. |
-| Servicios SA | Servicio SA --> servicio --> contexto, con la propiedad `Servicio anticorrupción V4`. Su interfaz es la que se le asigna. Su contraparte es el único elemento con el que esa interfaz intercambia flujos, y entre los dos hay una relación de servicio en cualquier sentido (en SA-08 el SA le sirve a la contraparte). |
+| Comandos | Asignación contexto --> proceso de aplicación con la propiedad `Código del servicio` (o `Servicio básico V4`, el nombre que usa el modelo de YateGear, de su vista V4). El valor es libre, pero único. |
+| Consultas | Realización contexto --> servicio de aplicación con `Código del servicio` (o `Servicio básico V4`). |
+| Servicios SA | Servicio SA --> servicio --> contexto, con la propiedad `Código del servicio anticorrupción` (o `Servicio anticorrupción V4`). Su interfaz es la que se le asigna. Su contraparte es el único elemento con el que esa interfaz intercambia flujos, y entre los dos hay una relación de servicio en cualquier sentido (en SA-08 el SA le sirve a la contraparte). |
 | Agregado | Agrupación cuyo nombre empieza por "Agregado " y que agrega exactamente un objeto de datos con `Tipo DDD` = Raíz. Las agrupaciones del canvas de la V11 no cuentan. |
 | Raíz, entidad y objeto de valor | Objeto de datos con `Tipo DDD`. La raíz compone a sus entidades y objetos de valor, y cada composición tiene `Cardinalidad`. La identidad de una entidad (uno de sus campos) se declara en el YAML. |
 | Campos | Propiedades `Campo: <nombre>` con su tipo, en el orden del modelo. |
@@ -123,7 +251,7 @@ Cada contexto que se quiere generar tiene un `specs/<contexto>.yaml`. El modelo 
 | `comandos > <comando> > entrada` | Datos que recibe. La identidad de la raíz se agrega sola, salvo en el que la crea. | `cliente: string` |
 | `... > crea` | `true` si el comando crea la raíz: lleva `a` (estado inicial) y no lleva `desde` ni `resultados`; si la identidad es recibida, la trae en su entrada. `si_no_existe` si carga la raíz y, cuando no existe, la crea vacía con la identidad del comando y el primer estado de su lista (solo con identidad recibida, y si la raíz no tiene campos obligatorios). | `crea: true`; `crea: si_no_existe` |
 | `... > valores` | Datos fijos del comando, para campos de la raíz o de sus objetos de valor. | `quién califica: cliente` |
-| `... > requiere` | Eventos de otros contextos que deben haber llegado para la identidad del comando (se buscan con el dato que es su identidad). Si no, 409. Sus datos quedan disponibles para el comando. | `[Arriendo cerrado]` |
+| `... > requiere` | Eventos de otros contextos que deben haber llegado para la identidad del comando (se buscan con el dato que es su identidad). Si no, 409. Sus datos quedan disponibles para el comando y, si el evento solo se recuerda, también los de sus `correspondencias`. | `[Arriendo cerrado]`; `[Yate registrado]` |
 | `... > usa` | Servicios SA que llama, en orden. Sus salidas quedan disponibles. Cada llamada puede ser `{SA: {con, entrada, salida, si, salvo}}`: `con` fija datos de la entrada del SA, `entrada` los toma de un dato con otro nombre (`{dato del SA: dato del comando}`), `salida` renombra lo que devuelve (`{dato del SA: nombre nuevo}`) y `si` o `salvo` la hacen solo si se cumple la condición (si no, su salida queda en null). Así un comando llama varias veces al mismo SA. Un dato opcional de la entrada del SA que el comando no tiene va en null. | `[Clientes del CRM]`; `- Cobros por la pasarela de pagos: {con: {tipo de orden: alquiler}, entrada: {valor: valor del alquiler}, salida: {comprobante: comprobante del alquiler}}` |
 | `... > calculados` | Datos que salen de una regla y se escriben a mano, cada uno con su `tipo` y los datos de los que sale (`de`: datos por su nombre o una raíz que el comando tiene). Se calculan en cuanto están sus datos: antes de llamar a los SA, o después del SA que da el último. Quedan disponibles por su nombre para los SA que siguen, las condiciones, `guarda` y los eventos, y llegan a `ValidarReglas` en `datos`. | `valor del alquiler: {tipo: decimal, de: [días, precio por día]}` |
 | `... > guarda` | Lo que escribe en la raíz: objetos de valor y campos por su nombre, o `{campo: dato}` para guardar un dato con otro nombre. En un objeto de valor o una entidad con Cardinalidad Muchos (una lista): `{lista: agregar}`, `{lista: {agregar: {campo: dato}, valores: {campo: valor}, si, salvo}}` (un elemento con datos de otro nombre, valores fijos y, si se pide, solo si se cumple la condición; puede repetirse), `{lista: {reemplazar: [claves]}}` (404 si ningún elemento tiene esa clave) o `{lista: {quitar: [claves]}}` (no falla si no había ninguno) o `{lista: {todos: dato}}` (la lista entera, con un dato `List<objeto de valor>`). Un campo de lista que el comando no tiene queda vacío. | `[Fechas del arriendo, calificado: propietario]`; `[Rango de fechas: {quitar: [número del arriendo]}]`; `- Cobro: {agregar: {valor: valor del seguro}, valores: {concepto: seguro}}` |
@@ -135,7 +263,7 @@ Cada contexto que se quiere generar tiene un `specs/<contexto>.yaml`. El modelo 
 | `consultas > <consulta> > entrada`, `salida`, `calculados` | Datos que recibe y devuelve. Por defecto lee una raíz (la que lee en el modelo) por su identidad. | `estado: enum ...` |
 | `... > de` (sin `sobre`) | G5: una consulta por identidad que lee varias raíces dice con `de` por la identidad de cuál consulta. Las demás se cargan con la misma identidad (deben tener el mismo nombre de identidad) y pueden no existir: sus datos llegan opcionales y en `datos`, con `null` si no existe. | `de: Cuenta del arriendo` (SB-18 lee también el depósito) |
 | `... > sobre: todas`, `de`, `filtro`, `filtro_manual`, `agrega`, `lista` | Consulta sobre todas las raíces (si lee varias, `de` dice cuál recorre; las demás le llegan en `datos`). `filtro` las compara por igualdad con datos de la entrada del mismo nombre, y `filtro_manual: true` agrega un filtro escrito a mano (`Incluir`, en el archivo manual). Con `agrega`, cada dato de la salida es una agregación: `conteo`, o `promedio`, `suma`, `mínimo` o `máximo` `de <dato de la raíz>` (sin raíces no hay promedio, mínimo ni máximo: esos van con `?`). Sin `agrega`, devuelve una lista llamada `lista`, con los datos de la salida de cada raíz, ordenada por los datos de `orden` (de menor a mayor). | `calificación promedio: promedio de calificación dada`; `lista: yates disponibles`; `orden: [hora de la lectura]` |
-| `eventos_de_otros_contextos > <evento>` | `de` (contexto que lo publica), `datos` (con los nombres del contexto que lo publica, D2), e `identidad` si llega con un dato distinto de la identidad de la raíz (obligatoria si el contexto tiene varias raíces y el evento no dispara). Con `dispara`, ejecuta ese comando; si llega con otra identidad, la de la raíz debe venir en sus `datos`, por su nombre, y la del evento queda disponible para el comando. `con` fija valores de su entrada, `correspondencias` toma un dato del evento con otro nombre (`{dato de la entrada: dato del evento}`; con `junto_con` valen para todo el grupo) y `junto_con` espera a otros eventos. `dispara` también puede ser una lista de comandos o `{comando: {con, correspondencias, si, salvo}}`: los corre en orden y si uno falla los siguientes no corren. Sin `dispara`, solo se recuerda para los comandos que lo `requiere`n. Llega por el bus entre contextos (G12) y por su endpoint de prueba. | `Arriendo cerrado: {de: ..., identidad: número del arriendo}`; `correspondencias: {fecha y hora del cambio: hora de entrega}` |
+| `eventos_de_otros_contextos > <evento>` | `de` (contexto que lo publica), `datos` (con los nombres del contexto que lo publica, D2), e `identidad` si llega con un dato distinto de la identidad de la raíz (obligatoria si el contexto tiene varias raíces y el evento no dispara). Con `dispara`, ejecuta ese comando; si llega con otra identidad, la de la raíz debe venir en sus `datos`, por su nombre, y la del evento queda disponible para el comando. `con` fija valores de su entrada, `correspondencias` toma un dato del evento con otro nombre (`{dato de la entrada: dato del evento}`; con `junto_con` valen para todo el grupo) y `junto_con` espera a otros eventos. `dispara` también puede ser una lista de comandos o `{comando: {con, correspondencias, si, salvo, si_existe}}`: los corre en orden y si uno falla los siguientes no corren. Con `si_existe: true`, el comando corre solo si su raíz ya existe; si no, el evento no le aplica y no es un error (en Cobros, una reserva cancelada antes del contrato firmado). Sin `dispara`, solo se recuerda para los comandos que lo `requiere`n, y sus `correspondencias` valen para ellos (Gestión del arriendo toma `marina` de `identificador de la marina` en "Yate registrado"). Llega por el bus entre contextos (G12) y por su endpoint de prueba. | `Arriendo cerrado: {de: ..., identidad: número del arriendo}`; `correspondencias: {fecha y hora del cambio: hora de entrega}` |
 | `politicas > <comando>` | G10 y D7: cómo disparan las políticas internas del modelo (evento --> comando del mismo contexto). Sin entrada, cada evento dispara el comando por su cuenta. Con `si` o `salvo`, solo si se cumple la condición sobre los datos del evento; con `con` y `correspondencias`, como en un evento de otro contexto. Con varios disparos: `junto_con` (deben llegar todos) y `uno_de` (y además uno de estos, cada uno con su `con`), que nombran, sin repetir, todos los eventos que disparan el comando en el modelo; el comando corre cuando llegan, para la misma identidad. Un comando que crea la raíz también puede dispararse por una política. | `Cerrar las cuentas del arriendo: {junto_con: [Cargos del cierre cobrados], uno_de: {Depósito liberado: {con: ...}, ...}}`; `Reclamar ...: {salvo: {valor que excede el depósito: [0]}}` |
 | `servicios_sa > <servicio>` | Si YateGear lo llama: `entrada`, `salida`, `respuesta_por_defecto` y `casos` (con `si`) del sistema externo simulado, todo fijo (sin azar ni fecha de hoy); el modelo debe tener un flujo que entra (la respuesta). Si el sistema externo le envía datos a YateGear (G7): `recibe`, con los mensajes que llegan, cada uno con `dispara` (uno o varios comandos, como un evento de otro contexto), `datos`, `con` y `correspondencias`, y pueden crear la raíz. Si YateGear solo le envía datos, sin esperar respuesta (G11, lenguaje publicado): `envia`, con los mensajes que salen, cada uno con `cuando` (el evento del contexto que lo dispara) y `datos` (del evento, por su nombre). Un SA puede tener varias partes; con `recibe`, el modelo debe tener un flujo que entra por su interfaz, y con `envia`, uno que sale. | `respuesta_por_defecto: {nivel: medio}`; `recibe: {Lectura del proveedor: {dispara: ..., datos: ...}}`; `envia: {Arriendo cerrado para Finanzas: {cuando: Cuenta del arriendo cerrada, datos: ...}}` |
 | `escenarios > <escenario>` | Lista de pasos (comando, consulta o evento de otro contexto), cada uno con `con` y `espera` (ver "Escenarios y pruebas"). | `- Cancelar la reserva: {espera: Reserva cancelada}` |
@@ -148,7 +276,7 @@ Cada YAML empieza con un comentario que explica sus secciones; `specs/gestion-de
 | Elemento del modelo | Qué genera en `salida/` |
 |---|---|
 | Contexto (con YAML) | Un proyecto biblioteca, `<Proyecto>/<Proyecto>.csproj`, con `Registro.g.cs` (servicios, políticas y endpoints), su referencia en el host y su entrada en la `.sln`. El nombre del proyecto sale del contexto sin "Contexto ": "Contexto Gestión del arriendo" --> `GestionDelArriendo`. |
-| Modelo | La solución `<Modelo>.sln`, el host `<Modelo>/` (un solo programa que registra todos los contextos, con un solo puerto) y `contextos.json`, que dice a los scripts qué hay. |
+| Modelo | La solución `<Modelo>.sln`, el host `<Modelo>/` (un solo programa que registra todos los contextos, con un solo puerto) y `contextos.json`, que dice a los scripts qué hay. Además, la página de inicio de la API (`<Modelo>/wwwroot/index.html`), con las rutas de cada contexto; es infraestructura, como la bitácora. |
 | Agregado y raíz | Clase parcial con su identidad, su `Estado` (enum) y sus campos, y una propiedad por composición: Uno --> `T`, Cero o uno --> `T?`, Muchos --> `List<T>`. Si la identidad se forma con datos que no son campos, también una propiedad por cada uno. |
 | Objeto de valor | `sealed record` con sus campos. |
 | Entidad (G9) | `sealed record` con sus campos que implementa `IEntidad` con su identidad. La raíz la guarda en una lista y `Entidades.Agregar` responde 409 si ya hay una con la misma identidad. |
@@ -186,7 +314,7 @@ El generador debe servir para cualquier modelo ArchiMate que siga las convencion
 - Si a un contexto le falta algo que el código no puede inferir ni declarar en el YAML, se amplía el formato del YAML (y `specs.py` lo revisa) y se documenta. No se escribe a mano en el generador.
 - Si el modelo tiene un error o le falta un dato, se corrige el modelo en Archi, no el generador. Las correcciones quedan en "Discrepancias encontradas".
 
-Los nombres del modelo que antes estaban escritos en los scripts (el proyecto, el contexto, el YAML y el XML del piloto) se quitaron en G1: hoy salen del modelo, de `specs/` o de `salida/contextos.json`.
+Los nombres del modelo que antes estaban escritos en los scripts (el proyecto, el contexto, el YAML y el XML del piloto) se quitaron en G1: hoy salen del modelo, de `specs/` o de `salida/contextos.json`. Desde G13, lo generado tampoco menciona YateGear (dice "la aplicación"), y el modelo de `ejemplo/` lo prueba: se genera, compila y pasa sus escenarios, y nada de lo que se genera para él nombra a YateGear ni a su dominio.
 
 ### Regla de los datos
 
@@ -224,6 +352,8 @@ Cada comando y cada consulta tiene un archivo `.cs` que el generador crea **una 
 
 El código generado va en los `.g.cs`, que el generador sí reescribe. Ejemplo: REG-01 está escrita a mano en `salida/GestionDelArriendo/Comandos/ConfirmarLaReserva.cs` y sobrevive a la regeneración.
 
+Los `.csproj` tratan las advertencias como errores (`TreatWarningsAsErrors`): una advertencia en un archivo manual también detiene la compilación.
+
 Si un manual queda sin su `.g.cs` (por ejemplo, porque se quitó un comando), el generador no lo borra: avisa al final y lo saca de la compilación en el `.csproj`, con un comentario que dice cuál es y por qué. Los `.g.cs` que ya no corresponden sí se borran.
 
 ### Bitácora
@@ -238,16 +368,18 @@ Cada paso tiene su identidad. Un comando que crea la raíz recibe la siguiente (
 
 `specs.py` revisa que los escenarios estén bien escritos: que los nombres existan, que los valores de `con` sean válidos y que `espera` sea un evento que ese paso puede publicar, un código permitido o datos de la salida de la consulta con valores válidos (una lista, por cuántos elementos tiene). No simula los datos. De los escenarios salen `pruebas/<Proyecto>/pruebas.http` y `escenarios.json`, y `probar.ps1` los ejecuta.
 
-`probar.ps1` prueba cada contexto, y después los escenarios entre contextos, con la aplicación recién levantada: con la integración (G12) un evento de un contexto llega a los demás, y así los escenarios de uno no cambian los de otro. Los eventos que un contexto publica en sus propios escenarios también llegan a los demás contextos; ahí pueden fallar (por ejemplo, porque el arriendo no existe en Gestión del arriendo), y ese error queda en el bus sin cambiar el resultado del paso.
+`probar.ps1` prueba cada contexto, y después los escenarios entre contextos, con la aplicación recién levantada: con la integración (G12) un evento de un contexto llega a los demás, y así los escenarios de uno no cambian los de otro. Los eventos que un contexto publica en sus propios escenarios también llegan a los demás contextos; ahí pueden fallar (por ejemplo, porque el arriendo no existe en Gestión del arriendo), y ese error queda en el bus sin cambiar el resultado del paso. En los escenarios entre contextos, en cambio, un error en el bus hace fallar el paso (ver abajo).
 
 Gestión del arriendo:
 
 | Escenario | Arriendo | Qué prueba |
 |---|---|---|
-| Principal hasta el cierre | ARR-0001 | Solicitud, riesgo aceptable, los dos eventos de Cobros (`junto_con`: el primero responde 202), confirmación con REG-01 activa, aviso por la política, entrega, devolución y cierre. |
+| Principal hasta el cierre | ARR-0001 | Llega "Yate registrado" (se recuerda la copia del yate); solicitud con esa copia, riesgo aceptable, el cliente cumple los requisitos (SB-11), los dos eventos de Cobros (`junto_con`: el primero responde 202), confirmación con REG-01 activa, aviso por la política, entrega, devolución y cierre. |
 | Riesgo alto | ARR-0002 | El cliente de prueba `CLI-RIESGO-ALTO` termina en "no realizado por riesgo alto". |
 | Cancelación | ARR-0003 | Cancelar, y luego registrar el avance de un arriendo cancelado: 409 a propósito. |
 | Confirmar sin riesgo evaluado | ARR-0004 | Confirmar sin evaluar el riesgo: 422 por REG-01, escrita a mano. |
+| Yate fuera del inventario | - | Una solicitud para un yate del que no llegó "Yate registrado": 409 a propósito (`requiere`), sin gastar consecutivo. |
+| Licencia vencida | ARR-0005 | La licencia vence antes del fin del arriendo: SB-11 responde que no cumple, con el motivo (H-09, NOR-01). |
 
 Calificaciones:
 
@@ -280,32 +412,34 @@ Cobros y depósito (los eventos de Gestión del arriendo y de Operación del arr
 
 | Escenario | Arriendo | Qué prueba |
 |---|---|---|
-| Reserva pagada y cierre sin daños | ARR-0001 | El contrato firmado (SA-02) bloquea el depósito y cobra el alquiler (3 días a 500) y el seguro: dos cobros. "Diferencias determinadas" sin daños cobra el combustible y 15 horas adicionales, libera el depósito (`si`) y, con los cargos y la decisión sobre el depósito (`junto_con` y `uno_de`), cierra la cuenta: 4 movimientos, comisión 300 y 1200 para el propietario. |
+| Reserva pagada y cierre sin daños | ARR-0001 | El contrato firmado (SA-02) bloquea el depósito y cobra el alquiler (3 días a 500) y el seguro: dos cobros. "Diferencias determinadas" sin daños cobra el combustible y 15 horas adicionales, libera el depósito (`si`) y, con los cargos y la decisión sobre el depósito (`junto_con` y `uno_de`), cierra la cuenta: 4 movimientos, cada uno con la fecha de la orden que confirmó la pasarela, comisión 300 y 1200 para el propietario. |
 | Daños mayores que el depósito | ARR-0002 | Daños por 1500 con un depósito de 1000: se descuenta todo (`salvo`), el excedente de 500 se reclama a la aseguradora (la política con `salvo`) y la cuenta se cierra; sin horas adicionales no hay cobro del tiempo adicional (la llamada con `si`). |
 | Cancelación con anticipación | ARR-0003 | "Reserva cancelada" 9 días antes (el contrato pide 7): se libera el depósito y se reembolsa el alquiler; la cuenta queda cerrada con 3 movimientos. |
 | Cancelación tardía | ARR-0004 | 2 días antes: "Cancelación no reembolsada". |
+| Cancelación antes del pago | ARR-0008 | Una reserva cancelada sin contrato firmado: no hay depósito ni cuenta, así que no se libera ni se devuelve nada (`si_existe`), y responde 2xx. |
 | Cobros rechazados | ARR-0005 a 0007 | La pasarela rechaza la tarjeta: 422 (INT-PAG). El bloqueo vencería antes del cierre: 422 (V4-SUP-07). El depósito de ARR-0001 ya existe: 409. Cerrar las cuentas sin cargos del cierre: 422 (E2E-01). Cargos sin evidencia: 422 (V1). Una cuenta que no existe: 404. |
 
 ### Escenarios entre contextos
 
-`specs/entre-contextos.yaml` tiene escenarios de punta a punta (S4). Cada paso es un comando, una consulta o un mensaje de un SA del contexto que dice `en`; los eventos entre contextos no se envían a mano: llegan por el bus (G12). `con` fija datos de su entrada, y un dato que no está en `con` y se llama como una identidad ya creada en el escenario toma su valor (regla de los datos): así el yate YATE-0001 y el arriendo ARR-0001 pasan de un contexto a otro. `espera` es un evento o una lista de eventos de cualquier contexto, y de mensajes que envía un SA (G11), que deben ocurrir durante el paso (se buscan en `GET /eventos-entre-contextos` y en la bitácora del contexto que envía); o un código, o datos de una consulta. `specs.py` revisa el archivo contra los YAML de los contextos de la misma carpeta, y de él salen `pruebas/EntreContextos/pruebas.http` y `escenarios.json`.
+`specs/entre-contextos.yaml` tiene escenarios de punta a punta (S4). Cada paso es un comando, una consulta o un mensaje de un SA del contexto que dice `en`; los eventos entre contextos no se envían a mano: llegan por el bus (G12). `con` fija datos de su entrada, y un dato que no está en `con` y se llama como una identidad ya creada en el escenario toma su valor (regla de los datos): así el yate YATE-0001 y el arriendo ARR-0001 pasan de un contexto a otro. `espera` es un evento o una lista de eventos de cualquier contexto, y de mensajes que envía un SA (G11), que deben ocurrir durante el paso (se buscan en `GET /eventos-entre-contextos` y en la bitácora del contexto que envía). Un paso falla también si durante él falla un suscriptor del bus (los `errores` de `GET /eventos-entre-contextos`), y `probar.py` dice al final cuántos hubo; o un código, o datos de una consulta. `specs.py` revisa el archivo contra los YAML de los contextos de la misma carpeta, y de él salen `pruebas/EntreContextos/pruebas.http` y `escenarios.json`.
 
 | Escenario | Qué prueba |
 |---|---|
-| Del inventario al envío a Finanzas | Se registra el yate y está disponible; la solicitud aparta las fechas; con el riesgo aceptable, SA-02 envía los datos para el contrato; el contrato firmado bloquea el depósito y cobra, Gestión del arriendo confirma, Disponibilidad ocupa las fechas y sale el aviso a la marina; la marina entrega el yate y Gestión inicia el arriendo; llega una lectura y el recorrido la muestra; la inspección con daños dispara la devolución, las diferencias, los cargos del cierre, el descuento del depósito, el reclamo a la aseguradora, el cierre de las cuentas, el arriendo cerrado y el envío a Finanzas (SA-08); el arriendo queda cerrado y el cliente califica al propietario. |
+| Del inventario al envío a Finanzas | Se registra el yate (Gestión del arriendo recuerda su copia) y está disponible; la solicitud aparta las fechas; con el riesgo aceptable, SA-02 envía los datos para el contrato; el contrato firmado bloquea el depósito y cobra, Gestión del arriendo confirma, Disponibilidad ocupa las fechas y sale el aviso a la marina; la marina entrega el yate y Gestión inicia el arriendo; llega una lectura y el recorrido la muestra; una hora sin lecturas, Operación avisa la pérdida de señal y SA-05 envía la alerta a la marina; la inspección con daños dispara la devolución, las diferencias, los cargos del cierre, el descuento del depósito, el reclamo a la aseguradora, el cierre de las cuentas, el arriendo cerrado y el envío a Finanzas (SA-08); el arriendo queda cerrado y el cliente califica al propietario. |
 | Cancelación con reembolso | Otro arriendo del mismo yate se paga y se cancela 9 días antes: Disponibilidad suelta las fechas y Cobros libera el depósito y devuelve el alquiler. |
 | Riesgo alto | El cliente de prueba de riesgo alto: no se arrienda y las fechas se sueltan. |
+| Cancelación antes del pago | Una solicitud se cancela antes del contrato firmado: Disponibilidad suelta las fechas, y en Cobros no aplica (`si_existe`), sin errores en el bus. |
 
-Entre los tres pasan los 11 eventos entre dominios de la V6 (Reserva solicitada, confirmada y cancelada, Arriendo no realizado por riesgo alto, Riesgo aceptable obtenido, Alquiler y seguro cobrados, Depósito bloqueado, Yate entregado al cliente, Inspección de devolución registrada, Diferencias determinadas y Cuenta del arriendo cerrada), además de "Arriendo cerrado" hacia Calificaciones. En la prueba no queda ningún error en el bus.
+Entre los cuatro pasan los 11 eventos entre dominios de la V6 (Reserva solicitada, confirmada y cancelada, Arriendo no realizado por riesgo alto, Riesgo aceptable obtenido, Alquiler y seguro cobrados, Depósito bloqueado, Yate entregado al cliente, Inspección de devolución registrada, Diferencias determinadas y Cuenta del arriendo cerrada), además de "Arriendo cerrado" hacia Calificaciones y "Yate registrado" hacia Gestión del arriendo. En la prueba no queda ningún error en el bus, y `probar.py` lo comprueba.
 
 ## Reproducibilidad y trazabilidad
 
-- El mismo modelo y el mismo YAML dan los mismos archivos. Para comprobarlo: `.\.venv\Scripts\python.exe src\huella.py salida`, después de generar dos veces, o con dos carpetas para compararlas.
+- El mismo modelo y el mismo YAML dan los mismos archivos. `verificar.ps1` lo comprueba solo (dos generaciones seguidas con la misma huella). A mano: `.\.venv\Scripts\python.exe src\huella.py salida`, después de generar dos veces, o con dos carpetas para compararlas.
 - Todo se ordena por nombre o por ID. Hay dos excepciones, porque ahí el orden tiene significado: los campos van en el orden del modelo, y los pasos de las pruebas en el orden del YAML.
 - Sin fechas ni horas en lo generado. Todo en UTF-8 sin BOM y con fin de línea LF. `.gitattributes` (`* text=auto eol=lf`) hace que git entregue LF en todas las máquinas.
 - Cada archivo generado empieza con `// Generado desde ArchiMate: <tipo> "<nombre>" (<código>, <ID>).`. En `.csproj` y `.sln` va en la segunda y en la tercera línea, porque su formato lo exige. Los `.json` y el `.csv` no admiten comentarios.
 - `salida/trazabilidad/<Proyecto>.csv` tiene una fila por cada elemento o relación del contexto. El proyecto `Integracion` (el bus entre contextos) no tiene filas, porque es infraestructura y no sale de ningún elemento del modelo, y tampoco `pruebas/EntreContextos/`, que sale de los escenarios; el host sí aparece, en la fila del contexto que registra. Las columnas son ID ArchiMate, tipo, nombre, archivo generado y clase. Para revisarlo: `.\.venv\Scripts\python.exe src\revisar_trazabilidad.py salida\intermedio\modelo-ddd.json salida`.
-- El código generado compila con cero advertencias.
+- El código generado compila con cero advertencias, y una advertencia es un error de compilación.
 
 ## Validaciones
 
@@ -314,7 +448,9 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 | Dónde | Qué revisa |
 |---|---|
 | `extraer.py` (modelo) | La regla del agregado. Cada objeto de valor tiene exactamente una composición desde su raíz o entidad, con Cardinalidad. Cada `Campo:` tiene un tipo permitido. No hay nombres repetidos dentro del mismo tipo entre los elementos del contexto. Cada comando tiene exactamente un acceso a la raíz de su agregado; además puede leer otras raíces del contexto, y escribir otra raíz es error. Cada evento lo dispara al menos un comando del contexto. Cada comando, consulta y servicio SA tiene un solo contrato. |
-| `specs.py` (YAML) | Cada comando, evento, consulta y servicio SA del contexto está en el YAML, y el YAML no nombra nada que no exista. Hay claves conocidas y no repetidas, tipos permitidos y estados de la lista cerrada. Los eventos de cada comando son exactamente los del modelo. Se cumple la regla de los datos. Las políticas, `junto_con` y `con` están completos. La identidad es un consecutivo o se forma con datos que el comando que crea tiene; los `valores` son válidos; cada evento de `requiere` está declarado y el comando tiene su identidad; las correspondencias de `guarda` tienen el mismo tipo; un evento sin `dispara` lo requiere algún comando; las consultas sobre todas filtran por datos de su entrada y sus agregaciones tienen el tipo correcto; una lista tiene nombre y sus datos son de la raíz. Con varios agregados, cada comando, evento y consulta se revisa contra la raíz de su agregado; `crea: si_no_existe` necesita una identidad recibida; las operaciones sobre listas tienen claves que son campos de la lista; un evento que dispara con otra identidad trae la de la raíz en sus datos. Un mensaje de un SA cubre la entrada del comando que dispara (y trae la identidad si el comando no crea); un SA que recibe tiene en el modelo un flujo que entra; un comando sobre todas no escribe y su temporizador cubre su entrada; `List<objeto de valor>` nombra un objeto de valor del contexto; `orden` usa datos de la raíz. Desde Cobros y depósito: la identidad de cada entidad es uno de sus campos; los `calculados` de un comando salen de datos que el comando tiene (antes o después de sus SA); en `usa`, `con`, `entrada` y `salida` nombran datos del SA, y un SA al que se llama tiene en el modelo un flujo que entra (uno que solo sale va con `envia`, G11); `agregar` con correspondencias nombra campos de la lista; `si` y `salvo` usan datos disponibles; `correspondencias` toman datos que llegan; los comandos de un mensaje o de un evento existen y usan la misma identidad; `politicas` nombra comandos con políticas en el modelo, y `junto_con` y `uno_de` todos sus eventos, sin repetir; `envia` sale con un evento del contexto que trae sus datos; una consulta por identidad que lee varias raíces dice con `de` cuál, y las demás tienen la misma identidad. Los escenarios están bien escritos, y los escenarios entre contextos, contra los YAML de sus contextos. |
+| `specs.py` (YAML) | Cada comando, evento, consulta y servicio SA del contexto está en el YAML, y el YAML no nombra nada que no exista. Hay claves conocidas y no repetidas, tipos permitidos y estados de la lista cerrada. Los eventos de cada comando son exactamente los del modelo. Se cumple la regla de los datos. Las políticas, `junto_con` y `con` están completos. La identidad es un consecutivo o se forma con datos que el comando que crea tiene; los `valores` son válidos; cada evento de `requiere` está declarado y el comando tiene su identidad; las correspondencias de `guarda` tienen el mismo tipo; un evento sin `dispara` lo requiere algún comando; las consultas sobre todas filtran por datos de su entrada y sus agregaciones tienen el tipo correcto; una lista tiene nombre y sus datos son de la raíz. Con varios agregados, cada comando, evento y consulta se revisa contra la raíz de su agregado; `crea: si_no_existe` necesita una identidad recibida; las operaciones sobre listas tienen claves que son campos de la lista; un evento que dispara con otra identidad trae la de la raíz en sus datos. Un mensaje de un SA cubre la entrada del comando que dispara (y trae la identidad si el comando no crea); un SA que recibe tiene en el modelo un flujo que entra; un comando sobre todas no escribe y su temporizador cubre su entrada; `List<objeto de valor>` nombra un objeto de valor del contexto; `orden` usa datos de la raíz. Desde Cobros y depósito: la identidad de cada entidad es uno de sus campos; los `calculados` de un comando salen de datos que el comando tiene (antes o después de sus SA); en `usa`, `con`, `entrada` y `salida` nombran datos del SA, y un SA al que se llama tiene en el modelo un flujo que entra (uno que solo sale va con `envia`, G11); `agregar` con correspondencias nombra campos de la lista; `si` y `salvo` usan datos disponibles; `correspondencias` toman datos que llegan; los comandos de un mensaje o de un evento existen y usan la misma identidad; `politicas` nombra comandos con políticas en el modelo, y `junto_con` y `uno_de` todos sus eventos, sin repetir; `envia` sale con un evento del contexto que trae sus datos; una consulta por identidad que lee varias raíces dice con `de` cuál, y las demás tienen la misma identidad. Los escenarios están bien escritos, y los escenarios entre contextos, contra los YAML de sus contextos. **Contratos entre contextos (D2):** lo que un YAML declara recibir de otro contexto llega en el evento tal como lo publica el YAML de ese contexto: el dato con que llega, cada dato con el mismo tipo, y ningún dato obligatorio que se publique como opcional. Se revisa contra los YAML de la misma carpeta, en `specs.py` y en `generar.py` antes de escribir nada. |
+
+Las validaciones tienen sus propias pruebas: `pruebas-validador/casos.yaml` tiene copias rotas a propósito de los YAML de `specs/` (al menos una por capacidad, de G1 a G12, y las de los contratos entre contextos), cada una con el error que debe dar, y `src/probar_validador.py` comprueba que salga (lo corre `verificar.ps1`). Cada clave nueva del YAML trae su caso: si un caso deja de fallar, `specs.py` dejó de revisar algo.
 
 ## Discrepancias encontradas
 
@@ -331,7 +467,8 @@ Si una falla, el generador se detiene y dice cuál, con el nombre y el ID del el
 | 9 | SB-26 y SB-27 solo actúan con un arriendo en curso (V8), pero en el modelo solo leían la Lectura: no tenían cómo saber qué arriendos están en curso. | Accesos de SB-26 y SB-27 (V6, V8). | **Corregida en el modelo (5 nov 2026):** SB-26 y SB-27 leen también el Acta de entrega y el Acta de inspección (un arriendo está en curso si tiene la primera y no la segunda). |
 | 10 | SA-08 envía a Finanzas, por cada arriendo cerrado, el propietario y el yate, pero la Cuenta del arriendo no los guardaba y Cobros y depósito no los recibe de nadie. | Raíz Cuenta del arriendo (V6.2), contrato SA-08 (V4). | **Corregida en el modelo (7 nov 2026):** campos `identificador del yate` y `propietario` (string) en la Cuenta del arriendo, que llegan con el contrato del cliente firmado (SB-13), en Archi y en el README principal. |
 | 11 | El reclamo a la aseguradora (SB-16) lleva el número de la póliza, que guarda la Cuenta del arriendo, pero SB-16 solo accedía al Reclamo. | Accesos de SB-16 (V6.2). | **Corregida en el modelo (7 nov 2026):** SB-16 lee también la Cuenta del arriendo (G6), en Archi y en el README principal. |
-| 12 | SB-18 devuelve "movimientos con fecha, concepto, valor y evidencia", pero el Cobro no tiene fecha. | Contrato SB-18 (V4) y entidad Cobro (V6.2). | Abierta. La consulta devuelve los movimientos en el orden en que se cobraron, sin fecha. Para corregirla, el Cobro tendría un campo `fecha` que llegue con cada orden de la pasarela; se decide en equipo. |
+| 12 | SB-18 devuelve "movimientos con fecha, concepto, valor y evidencia", pero el Cobro no tiene fecha. | Contrato SB-18 (V4) y entidad Cobro (V6.2). | **Corregida en el modelo (9 nov 2026):** campo `fecha` (DateOnly) en la entidad Cobro, la fecha de la orden que confirma la pasarela; la salida del contrato de SA-06 la incluye, en Archi y en el README principal. SB-18 devuelve los movimientos por fecha. |
+| 13 | La V8 dice que Disponibilidad de yates le da a Gestión del arriendo el yate, su propietario y su marina para registrar la solicitud (SB-06), y el objeto de valor "Yate del arriendo" los copia del inventario; pero ningún evento entre dominios de la V6 los llevaba y el contrato de SB-06 no los pide. El YAML los recibía de quien llama (GEN-SUP-09 a 11), así que el precio por día lo fijaba quien hacía la solicitud. | V8 (Disponibilidad de yates y Gestión del arriendo), contrato SB-06 (V4) y "Yate del arriendo" (V6.1). | **Corregida (9 nov 2026), sin cambiar el modelo:** Gestión del arriendo recuerda los "Yate registrado" que publica Disponibilidad (que ahora lleva también el propietario), y SB-06 los `requiere` por el identificador del yate: 409 si el yate no está en el inventario. La marina llega con una correspondencia (D2). En el README principal, la relación de la V8 nombra el evento. GEN-SUP-09 a 11 se retiraron. |
 
 Si la ACLI de Archi escribe `IllegalArgumentException` al exportar, alguna caja tiene una fuente sin nombre (como `|9|1`). La exportación termina y valida igual, y solo se pierde esa fuente, que el generador no usa; se arregla en Archi dándole una fuente explícita. Así se arreglaron las 6 agrupaciones de área de la V2 (D8).
 
@@ -357,9 +494,9 @@ Del YAML del piloto. Cada uno está marcado `# supuesto` en `specs/gestion-del-a
 | GEN-SUP-06 | raices > Arriendo > identidad | Es un consecutivo predecible: ARR-0001, ARR-0002, ... |
 | GEN-SUP-07 | raices > Arriendo > identidad | Tiene 4 dígitos. |
 | GEN-SUP-08 | raices > Arriendo > estado | El enum se llama "Estado del arriendo"; los estados son los de la V6.1. |
-| GEN-SUP-09 | Registrar la solicitud de reserva > entrada | En el piloto, quien llama envía la copia del yate (propietario), porque el Contexto Disponibilidad de yates todavía no se genera (V8-DEC-04). |
-| GEN-SUP-10 | Registrar la solicitud de reserva > entrada | Igual para el precio por día. |
-| GEN-SUP-11 | Registrar la solicitud de reserva > entrada | Igual para la marina. |
+| GEN-SUP-09 | Registrar la solicitud de reserva > entrada | Retirado (discrepancia 13): el propietario llega con "Yate registrado". |
+| GEN-SUP-10 | Registrar la solicitud de reserva > entrada | Retirado (discrepancia 13): el precio por día llega con "Yate registrado". |
+| GEN-SUP-11 | Registrar la solicitud de reserva > entrada | Retirado (discrepancia 13): la marina llega con "Yate registrado", con una correspondencia. |
 | GEN-SUP-12 | Obtener el nivel de riesgo del cliente > desde | Solo se evalúa un arriendo en "reserva solicitada"; el README no lista los estados. |
 | GEN-SUP-13 | Confirmar la reserva > desde | Solo se confirma desde "reserva solicitada", por el orden del ciclo de vida de la V6.1. |
 | GEN-SUP-14 | Cancelar la reserva > desde | Tampoco se cancela un arriendo cancelado o no realizado. Que no se cancela si ya empezó es de EXC-02. |
@@ -458,8 +595,8 @@ Del YAML de Cobros y depósito y sus archivos manuales:
 | GEN-SUP-77 | servicios_sa > Contratos con propietarios y clientes > recibe | El contrato del cliente firmado trae el arriendo con sus valores (yate, propietario, cliente, fechas, días, precio por día, seguro, depósito y medio de pago). Primero se bloquea el depósito y después se cobra. |
 | GEN-SUP-78 | servicios_sa > Pólizas y reclamos de la aseguradora | Una entrada para las dos solicitudes (enum "Solicitud a la aseguradora"); valores de prueba: póliza POL-0001 por 120 y reclamo SIN-0001 recibido. |
 | GEN-SUP-79 | `ConsultarElEstadoDeCuentaDelArriendo.cs` | Quién consulta no se revisa: la aplicación no autentica (como GEN-SUP-46). |
-| GEN-SUP-80 | servicios_sa > Cobros por la pasarela de pagos | El enum se llama "Tipo de orden". Valores de prueba: un comprobante por tipo de orden, el medio de pago TARJETA-RECHAZADA se rechaza y el bloqueo vence el 2026-03-29 (28 días, V4-SUP-07). |
-| GEN-SUP-81 | eventos_de_otros_contextos > Reserva cancelada | Una reserva cancelada antes del contrato firmado no tiene depósito ni cuenta: SB-20 responde 404, el error queda en el bus y no hay nada que devolver. |
+| GEN-SUP-80 | servicios_sa > Cobros por la pasarela de pagos | El enum se llama "Tipo de orden". Valores de prueba: un comprobante y una fecha de la orden por tipo de orden, el medio de pago TARJETA-RECHAZADA se rechaza y el bloqueo vence el 2026-03-29 (28 días, V4-SUP-07). |
+| GEN-SUP-81 | eventos_de_otros_contextos > Reserva cancelada | Una reserva cancelada antes del contrato firmado no tiene depósito ni cuenta: no hay nada que liberar ni devolver, y SB-20 y SB-15 no corren (`si_existe`). |
 
 De la integración en los YAML de los otros contextos:
 
@@ -467,6 +604,15 @@ De la integración en los YAML de los otros contextos:
 |---|---|---|
 | GEN-SUP-82 | gestion-del-arriendo.yaml: servicios_sa > Contratos con propietarios y clientes > envia | Con "Riesgo aceptable obtenido", SA-02 envía los datos para el contrato del cliente (arriendo, cliente, yate, fechas y precio por día); la gestión de contratos está simulada. |
 | GEN-SUP-83 | operacion-del-arriendo.yaml: Diferencias determinadas, y `DeterminarLasDiferenciasEntreEntregaYDevolucion.cs` | El evento lleva la hora de regreso y la evidencia: las fotos del acta de entrega y las del acta de inspección. |
+| GEN-SUP-84 | operacion-del-arriendo.yaml: servicios_sa > Avisos y actas de las marinas > envia | La alerta de pérdida de señal lleva el yate y su última lectura; SA-05 la lleva a la marina que guarda el yate, porque Operación del arriendo no guarda la marina. |
+| GEN-SUP-85 | `VerificarLosRequisitosDelCliente.cs` | La licencia de navegación está vigente si vence el día del fin del arriendo o después; no se compara con la fecha de hoy (como GEN-SUP-54, sin reloj). Sin terceros autorizados, el cliente no autorizó compartir sus datos (H-19). |
+
+## Fuera de alcance
+
+El generador construye una primera versión de referencia que demuestra el camino del modelo al código. Estas cosas quedan fuera a propósito (la revisión del 9 de noviembre de 2026 está en la sección 7 de [PENDIENTES.md](PENDIENTES.md)):
+
+- **De la aplicación generada:** autenticación (por eso no se revisa quién llama: GEN-SUP-46 y 79), base de datos (todo en memoria: GEN-SUP-02), microservicios (un solo programa: D1), paginación, Swagger u OpenAPI (la página de inicio lista las rutas, y los `pruebas.http` tienen los cuerpos de cada llamada), errores en formato `ProblemDetails` (las respuestas de error tienen su propio contrato, el que afirman los escenarios) y la traducción del formato propio de cada sistema externo.
+- **Del generador:** una versión del formato del YAML (el generador y los YAML cambian juntos, en el mismo repositorio), un archivo de configuración (el puerto ya se cambia con `-Puerto`, y los prefijos y las propiedades en español son la convención misma), empaquetarlo como una herramienta instalable, integración continua y un asistente que escriba el YAML a partir de la documentación.
 
 ## Limitaciones conocidas
 
@@ -474,8 +620,9 @@ De la integración en los YAML de los otros contextos:
 - Las demás raíces de una consulta por identidad deben tener el mismo nombre de identidad que la raíz por la que se consulta.
 - Los comandos que dispara un evento o un mensaje no forman una sola operación: si uno falla, los anteriores no se deshacen (GEN-SUP-60).
 - Cada comando calcula sus valores con sus propias tarifas de prueba (archivos manuales); no hay una tabla de tarifas compartida.
-- Un mensaje que recibe un SA llega con los nombres de los datos del arriendo: la traducción del formato propio del sistema externo (SA-05, SA-07) no se genera. La alerta de señal que SA-05 le envía a la marina sale con el evento "Pérdida de señal del yate" cuando se conecte la integración (G12); el comando no llama al SA.
+- Un mensaje que recibe un SA llega con los nombres de los datos del arriendo: la traducción del formato propio del sistema externo (SA-05, SA-07) no se genera. La alerta de pérdida de señal sale por SA-05 cuando ocurre el evento "Pérdida de señal del yate" (`envia`); el comando no llama al SA.
 - Una política interna entre raíces con distinta identidad todavía no se genera (`specs.py` lo dice).
+- E2E-01 (no se cierra el arriendo antes de los ajustes de dinero) la cumple el flujo: el arriendo se cierra con "Cuenta del arriendo cerrada", que publica Cobros al cerrar las cuentas. Una llamada directa al endpoint de SB-09 con `nuevo estado: cerrado` no lo revisa, porque Gestión del arriendo no guarda el estado de la cuenta.
 - Los servicios SA se llaman antes de `ValidarReglas`, porque las reglas usan sus respuestas (REG-01 necesita el estado del contrato). Por eso una solicitud rechazada por una regla ya consultó al CRM simulado.
 - Los escenarios de cada contexto siguen enviando los eventos de otros contextos por sus endpoints de prueba; el recorrido completo por el bus se prueba en los escenarios entre contextos.
 - Si se quita el YAML de un contexto, el generador borra sus archivos generados pero no su código a mano: avisa que esa carpeta quedó suelta.

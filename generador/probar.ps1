@@ -11,11 +11,13 @@
 #   ... -Contexto "Contexto Calificaciones"   (solo ese contexto; también vale el nombre del proyecto)
 #   ... -Contexto "entre contextos"           (solo los escenarios de punta a punta entre contextos)
 #   ... -Puerto 5090                          (si el puerto está ocupado)
+#   ... -Salida ejemplo/salida                (otra carpeta generada; por defecto, salida)
 #
 # Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
 param(
     [string]$Contexto = "",
-    [int]$Puerto = 0
+    [int]$Puerto = 0,
+    [string]$Salida = "salida"
 )
 
 Set-Location $PSScriptRoot
@@ -25,7 +27,7 @@ $enWindows = [System.Environment]::OSVersion.Platform -eq "Win32NT"
 $py = if ($enWindows) { "./.venv/Scripts/python.exe" } else { "./.venv/bin/python" }
 $dotnet = "dotnet"
 if (-not $enWindows -and (Test-Path "$HOME/.dotnet/dotnet")) { $dotnet = "$HOME/.dotnet/dotnet"; $env:DOTNET_ROOT = "$HOME/.dotnet" }
-$manifiesto = "salida/contextos.json"
+$manifiesto = "$Salida/contextos.json"
 $entreContextos = "entre contextos"
 
 function Fallo([string]$texto) {
@@ -64,13 +66,13 @@ try {
 if (-not $libre) { Fallo "el puerto $Puerto está ocupado. Usa otro: .\probar.ps1 -Puerto 5090" }
 
 Write-Host "== Compilar"
-Push-Location salida
+Push-Location $Salida
 & $dotnet build -nologo -v q
 $codigo = $LASTEXITCODE
 Pop-Location
 if ($codigo -ne 0) { Fallo "la compilación falló (ver arriba)." }
 
-$salidaAbs = (Resolve-Path salida).Path
+$salidaAbs = (Resolve-Path $Salida).Path
 $url = "http://localhost:$Puerto"
 
 function Detener($app) {
@@ -119,7 +121,7 @@ foreach ($g in $grupos) {
             $codigo = 1
         } else {
             Write-Host "== Escenarios de $($g.Nombre)"
-            & $py src/probar.py (Join-Path "salida" $g.Escenarios) $url
+            & $py src/probar.py (Join-Path $Salida $g.Escenarios) $url
             if ($LASTEXITCODE -ne 0) { $codigo = 1 }
         }
     } finally {

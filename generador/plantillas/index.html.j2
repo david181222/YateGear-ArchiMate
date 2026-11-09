@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- {{ cabecera }} -->
+<!-- Página de inicio de la API: las rutas de cada contexto. Es infraestructura (no sale de un elemento del modelo).
+     No editar: el generador reescribe este archivo. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ modelo | e }}: rutas de la API</title>
+<style>
+  :root { --fondo: #ffffff; --texto: #1f2328; --suave: #59636e; --borde: #d1d9e0; --codigo: #f6f8fa; --enlace: #0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fondo: #0d1117; --texto: #e6edf3; --suave: #9198a1; --borde: #3d444d; --codigo: #151b23; --enlace: #4493f8; }
+  }
+  body { background: var(--fondo); color: var(--texto); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+         max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin-bottom: 4px; }
+  h2 { margin-top: 36px; padding-bottom: 6px; border-bottom: 1px solid var(--borde); }
+  p, li { color: var(--suave); }
+  a { color: var(--enlace); }
+  code { background: var(--codigo); padding: 1px 5px; border-radius: 4px; font-size: 13px; word-break: break-all; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--borde); }
+  th { color: var(--suave); font-weight: 600; }
+  td.metodo { font-weight: 600; white-space: nowrap; }
+</style>
+</head>
+<body>
+<h1>{{ modelo | e }}</h1>
+<p>API generada desde el modelo ArchiMate: {{ contextos | length }} contexto(s) en un solo programa, con los datos en memoria
+(se pierden al detenerla). Las rutas <strong>GET</strong> se abren aquí mismo y devuelven JSON. Las <strong>POST</strong> reciben
+un JSON: se envían con el <code>pruebas.http</code> de cada contexto (en <code>pruebas/&lt;Proyecto&gt;/</code>, con REST Client de
+VS Code o con Visual Studio) o con PowerShell, como dice el paso a paso del README del generador.</p>
+<ul>
+  <li><a href="/contextos">/contextos</a>: los contextos que levantó el programa.</li>
+  <li><a href="/eventos-entre-contextos">/eventos-entre-contextos</a>: los eventos que pasaron por el bus entre contextos y los errores de sus suscriptores.</li>
+{% for c in contextos %}
+  <li><a href="#{{ c.ancla }}">{{ c.nombre | e }}</a></li>
+{% endfor %}
+</ul>
+{% for c in contextos %}
+
+<h2 id="{{ c.ancla }}">{{ c.nombre | e }}</h2>
+<table>
+  <thead><tr><th>Método</th><th>Ruta</th><th>Qué es</th></tr></thead>
+  <tbody>
+{% for r in c.rutas %}
+    <tr><td class="metodo">{{ r.metodo }}</td><td>{% if r.enlace %}<a href="{{ r.ruta | e }}"><code>{{ r.ruta | e }}</code></a>{% else %}<code>{{ r.ruta | e }}</code>{% endif %}</td><td>{{ r.que | e }}</td></tr>
+{% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+</body>
+</html>

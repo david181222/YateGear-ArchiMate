@@ -15,6 +15,9 @@ builder.Services.AddSingleton<BusEntreContextos>();
 {% endfor %}
 
 var app = builder.Build();
+// Página de inicio (infraestructura, no sale del modelo): wwwroot/index.html, con las rutas de cada contexto.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 {% for c in contextos %}
 {{ c.ns }}.Registro.MapearEndpoints(app);
 {% endfor %}
@@ -27,5 +30,9 @@ app.MapGet("/contextos", () => new[]
 {% endfor %}
 });
 app.MapGet("/eventos-entre-contextos", (BusEntreContextos bus) => bus.Historial());
+// La ruta de cada contexto lleva a su parte de la página de inicio.
+{% for c in contextos %}
+app.MapGet({{ c.ruta_base | cadena }}, () => Results.Redirect({{ ("/#" + c.ancla) | cadena }}));
+{% endfor %}
 
 app.Run();

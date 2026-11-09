@@ -8,6 +8,25 @@
       "pasos": [
         {
           "numero": 1,
+          "nombre": "Yate registrado",
+          "tipo": "evento de otro contexto",
+          "crea": false,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/eventos-externos/yate-registrado",
+          "cuerpo": {
+            "identificadorDelYate": "YATE-0001",
+            "propietario": "PROP-0001",
+            "precioPorDia": 500,
+            "identificadorDeLaMarina": "MAR-01"
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
           "nombre": "Registrar la solicitud de reserva",
           "tipo": "comando",
           "crea": true,
@@ -16,10 +35,7 @@
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
             "cliente": "cliente",
-            "identificadorDelYate": "identificador del yate",
-            "propietario": "propietario",
-            "precioPorDia": 100,
-            "marina": "marina",
+            "identificadorDelYate": "YATE-0001",
             "inicio": "2026-02-01",
             "fin": "2026-02-01",
             "numeroDeLaLicencia": "número de la licencia",
@@ -35,7 +51,7 @@
           }
         },
         {
-          "numero": 2,
+          "numero": 3,
           "nombre": "Obtener el nivel de riesgo del cliente",
           "tipo": "comando",
           "crea": false,
@@ -52,7 +68,7 @@
           }
         },
         {
-          "numero": 3,
+          "numero": 4,
           "nombre": "Verificar los requisitos del cliente",
           "tipo": "consulta",
           "crea": false,
@@ -61,12 +77,15 @@
           "ruta": "/consultas/verificar-los-requisitos-del-cliente/ARR-0001",
           "cuerpo": null,
           "espera": {
-            "tipo": "exito",
-            "texto": "HTTP 2xx"
+            "tipo": "salida",
+            "valores": {
+              "cumple": true
+            },
+            "texto": "HTTP 2xx y cumple = True"
           }
         },
         {
-          "numero": 4,
+          "numero": 5,
           "nombre": "Alquiler y seguro cobrados",
           "tipo": "evento de otro contexto",
           "crea": false,
@@ -85,7 +104,7 @@
           }
         },
         {
-          "numero": 5,
+          "numero": 6,
           "nombre": "Depósito bloqueado",
           "tipo": "evento de otro contexto",
           "crea": false,
@@ -103,7 +122,7 @@
           }
         },
         {
-          "numero": 6,
+          "numero": 7,
           "nombre": "Consultar el arriendo",
           "tipo": "consulta",
           "crea": false,
@@ -120,7 +139,7 @@
           }
         },
         {
-          "numero": 7,
+          "numero": 8,
           "nombre": "Enviar el aviso de reserva confirmada",
           "tipo": "comando",
           "crea": false,
@@ -136,7 +155,7 @@
           }
         },
         {
-          "numero": 8,
+          "numero": 9,
           "nombre": "Yate entregado al cliente",
           "tipo": "evento de otro contexto",
           "crea": false,
@@ -154,7 +173,7 @@
           }
         },
         {
-          "numero": 9,
+          "numero": 10,
           "nombre": "Inspección de devolución registrada",
           "tipo": "evento de otro contexto",
           "crea": false,
@@ -172,7 +191,7 @@
           }
         },
         {
-          "numero": 10,
+          "numero": 11,
           "nombre": "Cuenta del arriendo cerrada",
           "tipo": "evento de otro contexto",
           "crea": false,
@@ -190,7 +209,7 @@
           }
         },
         {
-          "numero": 11,
+          "numero": 12,
           "nombre": "Consultar el arriendo",
           "tipo": "consulta",
           "crea": false,
@@ -222,10 +241,7 @@
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
             "cliente": "CLI-RIESGO-ALTO",
-            "identificadorDelYate": "identificador del yate",
-            "propietario": "propietario",
-            "precioPorDia": 100,
-            "marina": "marina",
+            "identificadorDelYate": "YATE-0001",
             "inicio": "2026-02-01",
             "fin": "2026-02-01",
             "numeroDeLaLicencia": "número de la licencia",
@@ -290,10 +306,7 @@
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
             "cliente": "cliente",
-            "identificadorDelYate": "identificador del yate",
-            "propietario": "propietario",
-            "precioPorDia": 100,
-            "marina": "marina",
+            "identificadorDelYate": "YATE-0001",
             "inicio": "2026-02-01",
             "fin": "2026-02-01",
             "numeroDeLaLicencia": "número de la licencia",
@@ -365,10 +378,7 @@
           "ruta": "/comandos/registrar-la-solicitud-de-reserva",
           "cuerpo": {
             "cliente": "cliente",
-            "identificadorDelYate": "identificador del yate",
-            "propietario": "propietario",
-            "precioPorDia": 100,
-            "marina": "marina",
+            "identificadorDelYate": "YATE-0001",
             "inicio": "2026-02-01",
             "fin": "2026-02-01",
             "numeroDeLaLicencia": "número de la licencia",
@@ -404,6 +414,90 @@
               "regla": "REG-01"
             },
             "texto": "HTTP 422 y regla = REG-01"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Yate fuera del inventario",
+      "identidad": "",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": null,
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "cliente",
+            "identificadorDelYate": "YATE-0099",
+            "inicio": "2026-02-01",
+            "fin": "2026-02-01",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-01",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "codigo",
+            "valor": 409,
+            "campos": {
+              "requiere": "Yate registrado"
+            },
+            "texto": "HTTP 409 y requiere = Yate registrado"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Licencia vencida",
+      "identidad": "ARR-0005",
+      "pasos": [
+        {
+          "numero": 1,
+          "nombre": "Registrar la solicitud de reserva",
+          "tipo": "comando",
+          "crea": true,
+          "identidad": "ARR-0005",
+          "metodo": "POST",
+          "ruta": "/comandos/registrar-la-solicitud-de-reserva",
+          "cuerpo": {
+            "cliente": "cliente",
+            "identificadorDelYate": "YATE-0001",
+            "inicio": "2026-02-01",
+            "fin": "2026-02-03",
+            "numeroDeLaLicencia": "número de la licencia",
+            "vigenciaDeLaLicencia": "2026-02-02",
+            "fechaDeLaAutorizacion": "2026-02-01",
+            "tercerosAutorizados": [
+              "terceros autorizados"
+            ]
+          },
+          "espera": {
+            "tipo": "exito",
+            "texto": "HTTP 2xx"
+          }
+        },
+        {
+          "numero": 2,
+          "nombre": "Verificar los requisitos del cliente",
+          "tipo": "consulta",
+          "crea": false,
+          "identidad": "ARR-0005",
+          "metodo": "GET",
+          "ruta": "/consultas/verificar-los-requisitos-del-cliente/ARR-0005",
+          "cuerpo": null,
+          "espera": {
+            "tipo": "salida",
+            "valores": {
+              "cumple": false,
+              "motivo": "No cumple: la licencia de navegación vence el 2026-02-02, antes del fin del arriendo (H-09, NOR-01)."
+            },
+            "texto": "HTTP 2xx y cumple = False, motivo = No cumple: la licencia de navegación vence el 2026-02-02, antes del fin del arriendo (H-09, NOR-01)."
           }
         }
       ]

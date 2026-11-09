@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationService "Avisos y actas de las marinas" (SA-05, id-2754472851d144d5b79323ab235a3f20).
-// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a YateGear por este servicio SA
+// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a la aplicación por este servicio SA
 // (recibe del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Text.Json;
@@ -25,7 +25,7 @@ public sealed record ActaDeInspeccionRecibida(
     List<DanoEncontrado> DanosEncontrados
 );
 
-/// <summary>Recibe lo que "Sistemas de las marinas" le envía a YateGear por "Avisos y actas de las marinas" (SA-05)
+/// <summary>Recibe lo que "Sistemas de las marinas" le envía a la aplicación por "Avisos y actas de las marinas" (SA-05)
 /// y dispara el comando de cada mensaje, con sus datos por nombre.</summary>
 /// <remarks>
 /// <para>Contrato de servicio: Avisos y actas de las marinas (id-b4831a192c314d018432634e6180c468). Entrada: Aviso o alerta para la marina; o acta recibida de la marina.</para>

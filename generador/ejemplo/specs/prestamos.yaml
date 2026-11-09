@@ -1,0 +1,97 @@
+# Especificaciones del Contexto Préstamos (modelo de ejemplo: ../Biblioteca.archimate)
+#
+# Es el ejemplo mínimo del generador con un modelo que no es YateGear: un agregado (Préstamo, con el objeto de valor
+# Plazo del préstamo), dos comandos, una consulta y un servicio de la capa anticorrupción. La guía de modelado
+# (GUIA-DE-MODELADO.md) explica cómo se dibuja el modelo, y la sección "Formato del YAML" del README, cada clave.
+#
+# El modelo dice qué hay; este archivo declara lo que el modelo no dice: identidad y estados de la raíz, entrada de
+# cada comando y consulta, transiciones, datos de los eventos, respuestas del sistema externo simulado y escenarios.
+#
+# Generarlo y probarlo, desde la carpeta generador:
+#   powershell -ExecutionPolicy Bypass -File .\generar.ps1 -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida
+#   powershell -ExecutionPolicy Bypass -File .\probar.ps1 -Salida ejemplo/salida
+
+contexto: Contexto Préstamos
+
+raices:
+
+  Préstamo:
+    identidad:                                    # un consecutivo: PRE-0001, PRE-0002, ...
+      nombre: número del préstamo
+      tipo: string
+      prefijo: PRE-
+      digitos: 4
+    estado: enum Estado del préstamo(prestado, devuelto)
+
+comandos:
+
+  Prestar un libro:                               # contrato SB-01
+    crea: true
+    a: prestado
+    entrada:
+      lector: string
+      libro: string
+      desde: DateOnly                             # los datos del objeto de valor "Plazo del préstamo", por su nombre
+      hasta: DateOnly
+    usa: [Catálogo de la biblioteca]              # REG-01 (escrita a mano en PrestarUnLibro.cs) usa su respuesta
+    guarda: [lector, libro, Plazo del préstamo]
+    eventos: [Libro prestado]
+
+  Devolver el libro:                              # contrato SB-02
+    desde: [prestado]                             # "solo se devuelve un libro prestado": 409 si no
+    a: devuelto
+    entrada: {}
+    eventos: [Libro devuelto]
+
+eventos:
+
+  Libro prestado:
+    datos:
+      lector: string
+      libro: string
+      hasta: DateOnly
+
+  Libro devuelto:
+    datos:
+      libro: string
+
+consultas:
+
+  Consultar el préstamo:                          # contrato SB-03
+    entrada: {}
+    salida:
+      estado: enum Estado del préstamo(prestado, devuelto)
+      lector: string
+      libro: string
+      hasta: DateOnly
+
+servicios_sa:
+
+  Catálogo de la biblioteca:                      # contrato SA-01; el sistema del catálogo está simulado
+    entrada:
+      libro: string
+    salida:
+      disponible: bool
+    respuesta_por_defecto:
+      disponible: true
+    casos:
+      - si: {libro: [LIBRO-PRESTADO]}             # libro de prueba que el catálogo da como no disponible
+        respuesta: {disponible: false}
+
+escenarios:
+
+  Préstamo y devolución:                          # PRE-0001
+    - Prestar un libro:
+        con: {lector: LEC-0001, libro: LIBRO-0001, desde: "2026-11-01", hasta: "2026-11-15"}
+        espera: Libro prestado
+    - Consultar el préstamo:
+        espera: {estado: prestado, hasta: "2026-11-15"}
+    - Devolver el libro:
+        espera: Libro devuelto
+    - Devolver el libro:                          # rechazo a propósito: ya se devolvió
+        espera: {código: 409, estado actual: devuelto}
+
+  Libro no disponible:
+    - Prestar un libro:                           # rechazo a propósito: REG-01, escrita a mano
+        con: {lector: LEC-0002, libro: LIBRO-PRESTADO}
+        espera: {código: 422, regla: REG-01}

@@ -9,6 +9,8 @@ Cómo se juzga cada paso (lo esperado sale de "espera" en el YAML):
   - en los escenarios entre contextos (S4), una lista de eventos y de envíos de los SA: la respuesta es 2xx, y
     durante el paso pasaron por el bus entre contextos todos esos eventos (de cualquier contexto) y la bitácora
     del contexto que envía registró esos envíos.
+En los escenarios entre contextos, además, un paso falla si durante él falló un suscriptor del bus (GET
+/eventos-entre-contextos, "errores"): así "ningún error en el bus" lo comprueba la prueba.
 En cada paso que crea una raíz y debe responder con éxito se revisa además que reciba la identidad esperada.
 
 Termina con código 1 si algún paso falla. Lo usa probar.ps1, que levanta y detiene la aplicación.
@@ -61,24 +63,32 @@ def main():
     def bitacora(ruta_base=esc["ruta_base"]):
         return llamar("GET", f"{raiz_url}{ruta_base}/bitacora", None)[1]
 
-    def bus():                                         # los eventos que pasaron por el bus entre contextos
-        return llamar("GET", f"{raiz_url}/eventos-entre-contextos", None)[1]["eventos"]
+    def bus():                                         # los eventos que pasaron por el bus y los errores de sus suscriptores
+        return llamar("GET", f"{raiz_url}/eventos-entre-contextos", None)[1]
 
     total = fallas = 0
+    errores_bus = []
     for e in esc["escenarios"]:
         print(f'\nEscenario "{e["nombre"]}"' + (f' ({e["identidad"]})' if e["identidad"] else ""))
         for p in e["pasos"]:
             total += 1
             if entre:
-                antes_bus = len(bus())
+                b = bus()
+                antes_bus, antes_err = len(b["eventos"]), len(b["errores"])
                 antes_ctx = {r: len(bitacora(r)) for r in esc["contextos"]}
             else:
                 antes = len(bitacora())
             codigo, cuerpo = llamar(p["metodo"], base + p["ruta"], p["cuerpo"])
             ident = p.get("identidad")
+            nuevos_err = []
             if entre:
                 # Entre contextos, los eventos de cualquier contexto (los publica el bus) y los envíos de los SA (G11).
-                eventos = [x["evento"] for x in bus()[antes_bus:]]
+                b = bus()
+                eventos = [x["evento"] for x in b["eventos"][antes_bus:]]
+                # Un suscriptor que falla no deshace el paso (GEN-SUP-04), pero el recorrido ya no es el esperado:
+                # el paso falla y se muestra el error.
+                nuevos_err = b["errores"][antes_err:]
+                errores_bus += nuevos_err
                 enviados = {(r, n["nombre"]) for r in esc["contextos"] for n in bitacora(r)[antes_ctx[r]:]
                             if n["tipo"] == "envío por servicio SA"}
             else:
@@ -114,10 +124,16 @@ def main():
                 detalle += " envíos: " + ", ".join(sorted(n for _, n in enviados))
             if not exito and isinstance(cuerpo, dict):
                 detalle += " " + json.dumps(cuerpo, ensure_ascii=False)
+            if nuevos_err:
+                ok = False
+                detalle += "  <-- error en el bus: " + "; ".join(nuevos_err)
             if not ok:
                 fallas += 1
-                detalle += f'  <-- se esperaba {esp["texto"]}'
+                if not nuevos_err:
+                    detalle += f'  <-- se esperaba {esp["texto"]}'
             print(f'  {"✓" if ok else "✗"} {p["numero"]:>2}. {p["nombre"]:<40} {detalle}')
+    if entre:
+        print(f"\nErrores en el bus entre contextos: {len(errores_bus)}.")
     print(f"\n{total} pasos: {total - fallas} bien, {fallas} con falla.")
     sys.exit(1 if fallas else 0)
 

@@ -169,7 +169,16 @@ eventos_de_otros_contextos:
 
 servicios_sa:
 
-  Avisos y actas de las marinas:                  # contrato SA-05; aquí solo entra: las actas que envía la marina
+  Avisos y actas de las marinas:                  # contrato SA-05: entran las actas que envía la marina y sale la alerta de señal
+    envia:                                        # G11: el flujo "Aviso de reserva; alerta de señal" sale por la interfaz de SA-05
+      Alerta de pérdida de señal:                 # "alerta de pérdida de señal" a la marina (V9), con la última lectura conocida (SB-27)
+        cuando: Pérdida de señal del yate
+        datos:
+          identificador del yate: string
+          latitud: decimal
+          longitud: decimal
+          nivel de combustible: decimal
+          hora de la lectura: DateTime
     recibe:                                       # supuesto: la marina ya envía las actas con los datos del arriendo (MOT-04)
       Acta de entrega recibida:
         dispara: Registrar el acta de entrega

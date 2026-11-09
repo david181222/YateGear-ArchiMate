@@ -11,17 +11,26 @@
 # Escenario 1: Principal hasta el cierre (ARR-0001)
 # ==============================================================================
 
-### Principal hasta el cierre · paso 1: Registrar la solicitud de reserva
+### Principal hasta el cierre · paso 1: Yate registrado
+# Evento de otro contexto. Espera: HTTP 2xx.
+POST {{base}}/eventos-externos/yate-registrado
+Content-Type: application/json
+
+{
+  "identificadorDelYate": "YATE-0001",
+  "propietario": "PROP-0001",
+  "precioPorDia": 500,
+  "identificadorDeLaMarina": "MAR-01"
+}
+
+### Principal hasta el cierre · paso 2: Registrar la solicitud de reserva
 # Comando. Espera: HTTP 2xx.
 POST {{base}}/comandos/registrar-la-solicitud-de-reserva
 Content-Type: application/json
 
 {
   "cliente": "cliente",
-  "identificadorDelYate": "identificador del yate",
-  "propietario": "propietario",
-  "precioPorDia": 100,
-  "marina": "marina",
+  "identificadorDelYate": "YATE-0001",
   "inicio": "2026-02-01",
   "fin": "2026-02-01",
   "numeroDeLaLicencia": "número de la licencia",
@@ -32,7 +41,7 @@ Content-Type: application/json
   ]
 }
 
-### Principal hasta el cierre · paso 2: Obtener el nivel de riesgo del cliente
+### Principal hasta el cierre · paso 3: Obtener el nivel de riesgo del cliente
 # Comando. Espera: HTTP 2xx y el evento "Riesgo aceptable obtenido".
 POST {{base}}/comandos/obtener-el-nivel-de-riesgo-del-cliente
 Content-Type: application/json
@@ -41,11 +50,11 @@ Content-Type: application/json
   "numeroDelArriendo": "ARR-0001"
 }
 
-### Principal hasta el cierre · paso 3: Verificar los requisitos del cliente
-# Consulta. Espera: HTTP 2xx.
+### Principal hasta el cierre · paso 4: Verificar los requisitos del cliente
+# Consulta. Espera: HTTP 2xx y cumple = True.
 GET {{base}}/consultas/verificar-los-requisitos-del-cliente/ARR-0001
 
-### Principal hasta el cierre · paso 4: Alquiler y seguro cobrados
+### Principal hasta el cierre · paso 5: Alquiler y seguro cobrados
 # Evento de otro contexto. Espera: HTTP 202.
 POST {{base}}/eventos-externos/alquiler-y-seguro-cobrados
 Content-Type: application/json
@@ -56,7 +65,7 @@ Content-Type: application/json
   "comprobanteDelSeguro": "comprobante del seguro"
 }
 
-### Principal hasta el cierre · paso 5: Depósito bloqueado
+### Principal hasta el cierre · paso 6: Depósito bloqueado
 # Evento de otro contexto. Espera: HTTP 2xx y el evento "Aviso de reserva enviado".
 POST {{base}}/eventos-externos/deposito-bloqueado
 Content-Type: application/json
@@ -66,11 +75,11 @@ Content-Type: application/json
   "codigoDeAutorizacionDeLaPasarela": "código de autorización de la pasarela"
 }
 
-### Principal hasta el cierre · paso 6: Consultar el arriendo
+### Principal hasta el cierre · paso 7: Consultar el arriendo
 # Consulta. Espera: HTTP 2xx y estado = reserva confirmada.
 GET {{base}}/consultas/consultar-el-arriendo/ARR-0001
 
-### Principal hasta el cierre · paso 7: Enviar el aviso de reserva confirmada
+### Principal hasta el cierre · paso 8: Enviar el aviso de reserva confirmada
 # Comando. Espera: HTTP 2xx.
 POST {{base}}/comandos/enviar-el-aviso-de-reserva-confirmada
 Content-Type: application/json
@@ -79,7 +88,7 @@ Content-Type: application/json
   "numeroDelArriendo": "ARR-0001"
 }
 
-### Principal hasta el cierre · paso 8: Yate entregado al cliente
+### Principal hasta el cierre · paso 9: Yate entregado al cliente
 # Evento de otro contexto. Espera: HTTP 2xx y el evento "Arriendo iniciado".
 POST {{base}}/eventos-externos/yate-entregado-al-cliente
 Content-Type: application/json
@@ -89,7 +98,7 @@ Content-Type: application/json
   "horaDeEntrega": "2026-02-01T09:00:00"
 }
 
-### Principal hasta el cierre · paso 9: Inspección de devolución registrada
+### Principal hasta el cierre · paso 10: Inspección de devolución registrada
 # Evento de otro contexto. Espera: HTTP 2xx y el evento "Yate devuelto".
 POST {{base}}/eventos-externos/inspeccion-de-devolucion-registrada
 Content-Type: application/json
@@ -99,7 +108,7 @@ Content-Type: application/json
   "horaDeRegreso": "2026-02-01T09:00:00"
 }
 
-### Principal hasta el cierre · paso 10: Cuenta del arriendo cerrada
+### Principal hasta el cierre · paso 11: Cuenta del arriendo cerrada
 # Evento de otro contexto. Espera: HTTP 2xx y el evento "Arriendo cerrado".
 POST {{base}}/eventos-externos/cuenta-del-arriendo-cerrada
 Content-Type: application/json
@@ -109,7 +118,7 @@ Content-Type: application/json
   "horaDelCierre": "2026-02-01T09:00:00"
 }
 
-### Principal hasta el cierre · paso 11: Consultar el arriendo
+### Principal hasta el cierre · paso 12: Consultar el arriendo
 # Consulta. Espera: HTTP 2xx y estado = cerrado.
 GET {{base}}/consultas/consultar-el-arriendo/ARR-0001
 
@@ -124,10 +133,7 @@ Content-Type: application/json
 
 {
   "cliente": "CLI-RIESGO-ALTO",
-  "identificadorDelYate": "identificador del yate",
-  "propietario": "propietario",
-  "precioPorDia": 100,
-  "marina": "marina",
+  "identificadorDelYate": "YATE-0001",
   "inicio": "2026-02-01",
   "fin": "2026-02-01",
   "numeroDeLaLicencia": "número de la licencia",
@@ -162,10 +168,7 @@ Content-Type: application/json
 
 {
   "cliente": "cliente",
-  "identificadorDelYate": "identificador del yate",
-  "propietario": "propietario",
-  "precioPorDia": 100,
-  "marina": "marina",
+  "identificadorDelYate": "YATE-0001",
   "inicio": "2026-02-01",
   "fin": "2026-02-01",
   "numeroDeLaLicencia": "número de la licencia",
@@ -209,10 +212,7 @@ Content-Type: application/json
 
 {
   "cliente": "cliente",
-  "identificadorDelYate": "identificador del yate",
-  "propietario": "propietario",
-  "precioPorDia": 100,
-  "marina": "marina",
+  "identificadorDelYate": "YATE-0001",
   "inicio": "2026-02-01",
   "fin": "2026-02-01",
   "numeroDeLaLicencia": "número de la licencia",
@@ -234,3 +234,51 @@ Content-Type: application/json
   "comprobanteDelSeguro": "comprobante del seguro",
   "autorizacionDelBloqueoDelDeposito": "autorización del bloqueo del depósito"
 }
+
+# ==============================================================================
+# Escenario 5: Yate fuera del inventario ()
+# ==============================================================================
+
+### Yate fuera del inventario · paso 1: Registrar la solicitud de reserva
+# Comando. Espera: HTTP 409 y requiere = Yate registrado.
+POST {{base}}/comandos/registrar-la-solicitud-de-reserva
+Content-Type: application/json
+
+{
+  "cliente": "cliente",
+  "identificadorDelYate": "YATE-0099",
+  "inicio": "2026-02-01",
+  "fin": "2026-02-01",
+  "numeroDeLaLicencia": "número de la licencia",
+  "vigenciaDeLaLicencia": "2026-02-01",
+  "fechaDeLaAutorizacion": "2026-02-01",
+  "tercerosAutorizados": [
+    "terceros autorizados"
+  ]
+}
+
+# ==============================================================================
+# Escenario 6: Licencia vencida (ARR-0005)
+# ==============================================================================
+
+### Licencia vencida · paso 1: Registrar la solicitud de reserva
+# Comando. Espera: HTTP 2xx.
+POST {{base}}/comandos/registrar-la-solicitud-de-reserva
+Content-Type: application/json
+
+{
+  "cliente": "cliente",
+  "identificadorDelYate": "YATE-0001",
+  "inicio": "2026-02-01",
+  "fin": "2026-02-03",
+  "numeroDeLaLicencia": "número de la licencia",
+  "vigenciaDeLaLicencia": "2026-02-02",
+  "fechaDeLaAutorizacion": "2026-02-01",
+  "tercerosAutorizados": [
+    "terceros autorizados"
+  ]
+}
+
+### Licencia vencida · paso 2: Verificar los requisitos del cliente
+# Consulta. Espera: HTTP 2xx y cumple = False, motivo = No cumple: la licencia de navegación vence el 2026-02-02, antes del fin del arriendo (H-09, NOR-01)..
+GET {{base}}/consultas/verificar-los-requisitos-del-cliente/ARR-0005

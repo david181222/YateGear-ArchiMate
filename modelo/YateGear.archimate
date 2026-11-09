@@ -1257,7 +1257,7 @@ Reglas: Las actas se reciben en el formato que ya usa cada marina, porque las ma
         <element xsi:type="archimate:Contract" name="Contrato de servicio: Cobros por la pasarela de pagos" id="id-1a2ba27625934f1c938f22171dc72916">
           <documentation>Contrato del servicio SA-06 &quot;Cobros por la pasarela de pagos&quot;.
 Entrada: Tipo de orden, arriendo, valor y medio de pago.
-Salida: Orden aprobada o rechazada, con su comprobante o código de autorización.
+Salida: Orden aprobada o rechazada, con su comprobante o código de autorización y la fecha de la orden.
 Reglas: Una orden sin confirmación de la pasarela no cuenta como pago hecho (INT-PAG).</documentation>
           <property key="Servicio" value="SA-06"/>
           <property key="Capa" value="5. Servicios de la capa anticorrupción (Anti-corruption Layer Service)"/>
@@ -1650,7 +1650,7 @@ Fuente: H-11; contratos de SB-13, SB-17, SA-03 y SA-08 (V4); conversación CTX-0
       </element>
       <element xsi:type="archimate:DataObject" name="Cobro" id="id-73b07f4ddacf4826ad340226a0e59119">
         <documentation>Entidad del agregado Cuenta del arriendo: cada cargo o devolución de dinero del arriendo (alquiler, seguro, combustible consumido, tiempo adicional o reembolso). Identidad: su comprobante de la pasarela. Estado: orden aprobada o rechazada por la pasarela.
-Campos de la entidad: concepto, valor, comprobante de la pasarela y evidencia, cuando es un cargo del cierre.
+Campos de la entidad: concepto, valor, comprobante de la pasarela, evidencia, cuando es un cargo del cierre, y fecha de la orden, que llega con la confirmación de la pasarela (SA-06).
 Realiza el objeto de negocio &quot;Cobro&quot; de la V4.
 Fuente: H-10, H-14; contratos de SB-13, SB-14, SB-15 y SA-06 (V4); conversación INT-PAG.</documentation>
         <property key="Tipo DDD" value="Entidad"/>
@@ -1658,6 +1658,7 @@ Fuente: H-10, H-14; contratos de SB-13, SB-14, SB-15 y SA-06 (V4); conversación
         <property key="Campo: valor" value="decimal"/>
         <property key="Campo: comprobante" value="string"/>
         <property key="Campo: evidencia" value="List&lt;string>"/>
+        <property key="Campo: fecha" value="DateOnly"/>
       </element>
       <element xsi:type="archimate:ApplicationProcess" name="Cerrar las cuentas del arriendo" id="id-5ef920b9e381405495dbdfe1877eb75b">
         <documentation>Comando del agregado Cuenta del arriendo. Realiza SB-17 &quot;Cerrar las cuentas del arriendo&quot; de la V4. Cierra la cuenta con el valor del alquiler, la comisión y lo que le corresponde al propietario, y lo envía a Finanzas (SA-08). No cierra el arriendo, que es de otro dominio (V5-DEC-02). Lo disparan &quot;Cargos del cierre cobrados&quot; y la decisión sobre el depósito (&quot;Depósito liberado&quot; o &quot;Daños descontados del depósito&quot;) (V6-DEC-11).

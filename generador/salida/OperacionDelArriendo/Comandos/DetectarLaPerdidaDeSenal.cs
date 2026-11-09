@@ -14,7 +14,7 @@ public sealed partial class DetectarLaPerdidaDeSenalManejador
     {
     }
 
-    // PENDIENTE: las raíces por las que se publica un evento (comando sobre todas). Por ahora, ninguna.
+    // Las raíces por las que se publica un evento (comando sobre todas).
     // Regla de la que sale: contrato SB-27, reglas (arriba).
     // Escrito a mano (SB-27): para cada yate con arriendo en curso (acta de entrega sin acta de inspección, V8), su
     // última lectura si tiene más minutos de los permitidos. Un yate sin lecturas no tiene "última lectura conocida"

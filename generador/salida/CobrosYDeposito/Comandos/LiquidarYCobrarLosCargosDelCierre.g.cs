@@ -74,8 +74,8 @@ public sealed partial class LiquidarYCobrarLosCargosDelCierreManejador(
         ValidarReglas(datos);
 
         // 6. Guardar en la raíz lo que escribe el comando y su nuevo estado (capa 2).
-        Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.CombustibleConsumido, calculadoValorDelCombustible, respuestaCobrosPorLaPasarelaDePagos1.Comprobante, comando.Evidencia));
-        if ((calculadoHayTiempoAdicional == true)) Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.TiempoAdicional, calculadoValorDelTiempoAdicional, (respuestaCobrosPorLaPasarelaDePagos2?.Comprobante ?? throw new DatoFaltante("comprobante del tiempo adicional")), comando.Evidencia));
+        Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.CombustibleConsumido, calculadoValorDelCombustible, respuestaCobrosPorLaPasarelaDePagos1.Comprobante, comando.Evidencia, respuestaCobrosPorLaPasarelaDePagos1.FechaDeLaOrden));
+        if ((calculadoHayTiempoAdicional == true)) Entidades.Agregar(cuentaDelArriendo.Cobro, new Cobro(ConceptoDelCobro.TiempoAdicional, calculadoValorDelTiempoAdicional, (respuestaCobrosPorLaPasarelaDePagos2?.Comprobante ?? throw new DatoFaltante("comprobante del tiempo adicional")), comando.Evidencia, (respuestaCobrosPorLaPasarelaDePagos2?.FechaDeLaOrden ?? throw new DatoFaltante("fecha del tiempo adicional"))));
         repositorio.Guardar(cuentaDelArriendo);
 
         // 7. Publicar los eventos.

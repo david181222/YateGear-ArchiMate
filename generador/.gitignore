@@ -4,3 +4,5 @@ obj/
 salida/intermedio/*.xml
 __pycache__/
 salida/intermedio/*.log
+ejemplo/salida/intermedio/*.xml
+ejemplo/salida/intermedio/*.log

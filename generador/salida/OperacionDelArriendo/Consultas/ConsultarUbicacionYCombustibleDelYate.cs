@@ -22,7 +22,7 @@ public sealed partial class ConsultarUbicacionYCombustibleDelYateManejador
         }
     }
 
-    // PENDIENTE: filtro de la lista que no es una igualdad (filtro_manual del YAML). Por ahora incluye todas.
+    // Filtro de la lista que no es una igualdad (filtro_manual del YAML).
     // Regla de la que sale: contrato SB-26, reglas (arriba).
     // Escrito a mano: las lecturas del yate del arriendo, desde la entrega.
     private partial bool Incluir(ConsultarUbicacionYCombustibleDelYateDatos datos, LecturaDeUbicacionYCombustible lecturaDeUbicacionYCombustible)

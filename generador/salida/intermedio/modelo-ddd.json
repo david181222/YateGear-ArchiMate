@@ -397,6 +397,14 @@
                   "lista": true,
                   "opcional": false,
                   "enum": null
+                },
+                {
+                  "nombre": "fecha",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
                 }
               ]
             }
@@ -888,7 +896,7 @@
             "id": "id-1a2ba27625934f1c938f22171dc72916",
             "nombre": "Contrato de servicio: Cobros por la pasarela de pagos",
             "entrada": "Tipo de orden, arriendo, valor y medio de pago.",
-            "salida": "Orden aprobada o rechazada, con su comprobante o código de autorización.",
+            "salida": "Orden aprobada o rechazada, con su comprobante o código de autorización y la fecha de la orden.",
             "reglas": "Una orden sin confirmación de la pasarela no cuenta como pago hecho (INT-PAG)."
           }
         },

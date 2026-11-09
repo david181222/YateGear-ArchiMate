@@ -8,7 +8,8 @@
 # valor (el yate YATE-0001, el arriendo ARR-0001); espera es un evento o una lista de eventos de cualquier contexto,
 # o de mensajes que envía un SA (G11), que deben ocurrir durante el paso; o un código, o datos de una consulta.
 #
-# Los tres escenarios recorren los 11 eventos entre dominios de la V6, el envío del contrato al cliente (SA-02) y el
+# Los cuatro escenarios recorren los 11 eventos entre dominios de la V6, la copia del yate que Gestión del arriendo toma
+# de "Yate registrado" (V8), el envío del contrato al cliente (SA-02), la alerta de señal a la marina (SA-05) y el
 # de los arriendos cerrados a Finanzas (SA-08). Corren en orden contra la aplicación recién levantada.
 
 escenarios_entre_contextos:
@@ -24,7 +25,7 @@ escenarios_entre_contextos:
         espera: {yates disponibles: 1}
     - Registrar la solicitud de reserva:           # Disponibilidad aparta las fechas
         en: Contexto Gestión del arriendo
-        con: {cliente: CLI-0001, propietario: PROP-0001, precio por día: 500, marina: MAR-01, inicio: "2026-03-10", fin: "2026-03-12"}
+        con: {cliente: CLI-0001, inicio: "2026-03-10", fin: "2026-03-12"}   # la copia del yate llegó con "Yate registrado"
         espera: [Reserva solicitada, Fechas apartadas]
     - Obtener el nivel de riesgo del cliente:      # con el riesgo aceptable, SA-02 envía los datos para el contrato
         en: Contexto Gestión del arriendo
@@ -48,6 +49,10 @@ escenarios_entre_contextos:
     - Consultar ubicación y combustible del yate:
         en: Contexto Operación del arriendo
         espera: {recorrido: 1}
+    - Detectar la pérdida de señal:                # una hora sin lecturas: Operación avisa y SA-05 envía la alerta a la marina
+        en: Contexto Operación del arriendo
+        con: {minutos sin lecturas: 30, ahora: "2026-03-10T11:00:00"}
+        espera: [Pérdida de señal del yate, Alerta de pérdida de señal]
     - Acta de inspección recibida:                 # todo el cierre: devolución, diferencias, cargos, depósito, reclamo y cuentas
         en: Contexto Operación del arriendo
         con: {fotos: [regreso-1.jpg], nivel de combustible: 60, hora de regreso: "2026-03-13T15:00:00", daños encontrados: [{descripción: Rayón en el casco, valor: 1500}]}
@@ -79,7 +84,7 @@ escenarios_entre_contextos:
   Cancelación con reembolso:                      # ARR-0002
     - Registrar la solicitud de reserva:
         en: Contexto Gestión del arriendo
-        con: {cliente: CLI-0002, identificador del yate: YATE-0001, propietario: PROP-0001, precio por día: 500, marina: MAR-01, inicio: "2026-03-20", fin: "2026-03-22"}
+        con: {cliente: CLI-0002, identificador del yate: YATE-0001, inicio: "2026-03-20", fin: "2026-03-22"}
         espera: [Reserva solicitada, Fechas apartadas]
     - Obtener el nivel de riesgo del cliente:
         en: Contexto Gestión del arriendo
@@ -99,7 +104,7 @@ escenarios_entre_contextos:
   Riesgo alto:                                    # ARR-0003
     - Registrar la solicitud de reserva:
         en: Contexto Gestión del arriendo
-        con: {cliente: CLI-RIESGO-ALTO, identificador del yate: YATE-0001, propietario: PROP-0001, marina: MAR-01, inicio: "2026-03-24", fin: "2026-03-25"}
+        con: {cliente: CLI-RIESGO-ALTO, identificador del yate: YATE-0001, inicio: "2026-03-24", fin: "2026-03-25"}
         espera: [Reserva solicitada, Fechas apartadas]
     - Obtener el nivel de riesgo del cliente:      # no se arrienda: Disponibilidad suelta las fechas
         en: Contexto Gestión del arriendo
@@ -108,3 +113,13 @@ escenarios_entre_contextos:
         en: Contexto Disponibilidad de yates
         con: {identificador de la marina: MAR-01, inicio: "2026-03-24", fin: "2026-03-25"}
         espera: {yates disponibles: 1}
+
+  Cancelación antes del pago:                     # ARR-0004: sin contrato firmado, Cobros no tiene nada que liberar ni devolver
+    - Registrar la solicitud de reserva:
+        en: Contexto Gestión del arriendo
+        con: {cliente: CLI-0003, identificador del yate: YATE-0001, inicio: "2026-04-01", fin: "2026-04-02"}
+        espera: [Reserva solicitada, Fechas apartadas]
+    - Cancelar la reserva:                         # Disponibilidad suelta las fechas; en Cobros no aplica (si_existe), sin errores en el bus
+        en: Contexto Gestión del arriendo
+        con: {fecha de la cancelación: "2026-03-20"}
+        espera: [Reserva cancelada, Fechas liberadas]

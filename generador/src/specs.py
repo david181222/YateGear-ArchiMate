@@ -9,6 +9,10 @@ No genera nada. Junta todos los errores y termina con código 1 si el YAML:
   - usa un dato que no está disponible por su nombre, con el mismo tipo, donde
     se necesita (regla de los datos, ver el comentario al inicio del YAML).
 
+Además revisa los contratos entre contextos (revisar_contratos, D2) contra los YAML de los demás contextos de su
+misma carpeta: lo que el YAML declara que recibe de otro contexto debe llegar, con el mismo tipo, en el evento que ese
+contexto publica; y lo que publica debe cubrir lo que los demás declaran recibir de él.
+
 Un YAML de escenarios entre contextos (S4, solo con escenarios_entre_contextos) se revisa contra los YAML de
 los contextos de su misma carpeta.
 
@@ -98,7 +102,7 @@ def valor_valido(v, t: dict) -> bool:
     return False
 
 
-OPCIONES_DISPARO = ("con", "correspondencias", "si", "salvo")
+OPCIONES_DISPARO = ("con", "correspondencias", "si", "salvo", "si_existe")
 OPCIONES_USO_SA = ("con", "entrada", "salida", "si", "salvo")
 
 
@@ -106,7 +110,7 @@ def disparos(x: dict) -> list[tuple[str, dict]]:
     """Los comandos que dispara un evento de otro contexto o un mensaje de un SA, en orden, con sus opciones.
 
     dispara puede ser un nombre (las opciones con y correspondencias van junto a dispara), una lista de nombres o
-    {comando: {con, correspondencias, si, salvo}, ...}. Un nombre o un elemento que no es texto se devuelve igual,
+    {comando: {con, correspondencias, si, salvo, si_existe}, ...}. Un nombre o un elemento que no es texto se devuelve igual,
     para que el revisor diga cuál está mal.
     """
     d = x.get("dispara")
@@ -448,8 +452,9 @@ class Revisor:
     def revisar_disparo(self, cmd: str, op: dict, aporta: dict, llegan: dict, entradas_cmd: dict, d: str, quien: str) -> set:
         """Un comando que dispara un evento de otro contexto o un mensaje de un SA. aporta: los datos que le llegan por
         su nombre; llegan: todos los que trae (para las correspondencias y las condiciones). con fija valores de su
-        entrada, correspondencias {dato de la entrada: dato que llega} toma un dato que llega con otro nombre (D2), y
-        si o salvo lo dispara solo si se cumple la condición. Devuelve los datos que llegan y el comando usa."""
+        entrada, correspondencias {dato de la entrada: dato que llega} toma un dato que llega con otro nombre (D2),
+        si o salvo lo dispara solo si se cumple la condición, y si_existe: true solo si su raíz existe (si no existe,
+        el evento no le aplica: no es un error). Devuelve los datos que llegan y el comando usa."""
         op = self.mapa(op, d, list(OPCIONES_DISPARO))
         ent = entradas_cmd[cmd]["entrada"]
         aporta = dict(aporta)
@@ -472,6 +477,11 @@ class Revisor:
                 aporta[k] = llegan[dato]
                 usados.add(dato)
         self.si_salvo(op, llegan, d, frozenset(llegan))
+        if "si_existe" in op:
+            if op["si_existe"] not in (True, False):
+                self.error(f"{d} > si_existe", "es true o false")
+            elif op["si_existe"] and entradas_cmd[cmd]["crea"]:
+                self.error(f"{d} > si_existe", f'"{cmd}" crea la raíz: no hay una raíz que pueda faltar')
         for k in ("si", "salvo"):
             usados |= set(op.get(k) or {}) if isinstance(op.get(k), dict) else set()
         for k, tk in aporta.items():
@@ -633,25 +643,25 @@ class Revisor:
         self.envios_crudos: dict[str, dict] = {}        # SA -> mensajes que envía (G11), se revisan con los eventos
         for n in sorted(set(sas_y) & set(sas_m)):
             d = f"servicios_sa > {n}"
-            # Un SA que llama YateGear (sale) declara entrada, salida y respuestas simuladas; uno que recibe lo que el
-            # sistema externo le envía a YateGear (G7) declara recibe. Puede tener las dos partes.
+            # Un SA que llama la aplicación (sale) declara entrada, salida y respuestas simuladas; uno que recibe lo que el
+            # sistema externo le envía a la aplicación (G7) declara recibe. Puede tener las dos partes.
             x = self.mapa(sas_y[n], d, ["entrada", "salida", "respuesta_por_defecto", "casos", "recibe", "envia"],
                           [] if {"recibe", "envia"} & set(sas_y[n] or {}) else ["entrada", "salida", "respuesta_por_defecto"])
             sale = any(k in x for k in ("entrada", "salida", "respuesta_por_defecto"))
             if sale:
                 for k in ("entrada", "salida", "respuesta_por_defecto"):
                     if k not in x:
-                        self.error(d, f'falta la clave "{k}" (un SA que YateGear llama declara entrada, salida y respuesta_por_defecto)')
+                        self.error(d, f'falta la clave "{k}" (un SA que la aplicación llama declara entrada, salida y respuesta_por_defecto)')
             direcciones = {f["direccion"] for f in sas_m[n]["flujos"]}
             if "recibe" in x and "entra" not in direcciones:
                 self.error(f"{d} > recibe", "en el modelo ningún flujo entra por la interfaz de este SA: no recibe nada")
             if "recibe" in x:
                 self.mensajes_crudos[n] = self.mapa(x["recibe"], f"{d} > recibe")
-            # G11: un SA al que YateGear llama y espera respuesta necesita un flujo que entre; uno que solo sale
+            # G11: un SA al que la aplicación llama y espera respuesta necesita un flujo que entre; uno que solo sale
             # (lenguaje publicado) se declara con envia: sus mensajes salen con un evento del contexto.
             if sale and "entra" not in direcciones:
                 self.error(d, "en el modelo ningún flujo entra por la interfaz de este SA: no responde. "
-                              "Si YateGear solo le envía datos, decláralo con envia")
+                              "Si la aplicación solo le envía datos, decláralo con envia")
             if "envia" in x:
                 if "sale" not in direcciones:
                     self.error(f"{d} > envia", "en el modelo ningún flujo sale por la interfaz de este SA: no envía nada")
@@ -770,6 +780,12 @@ class Revisor:
                         datos_ev[k] = tipos.interpretar(tx)
                     except tipos.TipoInvalido:
                         pass                              # el error se informa al revisar eventos_de_otros_contextos
+                # Si el evento solo se recuerda, sus correspondencias {dato del comando: dato del evento} le dan al
+                # comando un dato que llega con otro nombre (D2). Se revisan en eventos_de_otros_contextos.
+                corr_ev = x.get("correspondencias") if "dispara" not in x and isinstance(x.get("correspondencias"), dict) else {}
+                for local, del_ev in corr_ev.items():
+                    if isinstance(del_ev, str) and del_ev in datos_ev:
+                        datos_ev[local] = datos_ev[del_ev]
                 self.agregar(bolsa, datos_ev, f"{d} > requiere > {ev}")
                 propios |= set(datos_ev)
                 for k in datos_ev:
@@ -1218,6 +1234,7 @@ class Revisor:
             for e in o["eventos"]:
                 catalogo.setdefault(e["nombre"], []).append(o["nombre"])
         ext = self.mapa(s.get("eventos_de_otros_contextos"), "eventos_de_otros_contextos")
+        self.identidad_externos: dict[str, str] = {}      # evento de otro contexto -> dato con que llega
         for n in sorted(ext):
             d = f"eventos_de_otros_contextos > {n}"
             x = self.mapa(ext[n], d, ["de", "identidad", "dispara", "con", "correspondencias", "junto_con", "datos"], ["de", "datos"])
@@ -1244,18 +1261,25 @@ class Revisor:
                 self.error(f"{d} > identidad", "el contexto tiene varias raíces: di con qué dato llega el evento (identidad)")
             # identidad: el dato con que llega el evento (por defecto, la identidad de la raíz de este contexto).
             id_ev = x.get("identidad", self.id_nombre)
+            self.identidad_externos[n] = id_ev            # para los contratos entre contextos (revisar_contratos)
             if not isinstance(id_ev, str) or not id_ev.strip():
                 self.error(f"{d} > identidad", "es el nombre del dato con que llega el evento")
             elif id_ev in (x.get("datos") or {}):
                 self.error(f"{d} > datos", f'"{id_ev}" es la identidad del evento: se agrega sola')
             if "dispara" not in x:
-                # Sin dispara, el evento solo se recuerda, para los comandos que lo requieren (requiere).
-                for k in ("con", "correspondencias", "junto_con"):
+                # Sin dispara, el evento solo se recuerda, para los comandos que lo requieren (requiere). Puede llevar
+                # correspondencias {dato del comando: dato del evento}, para un dato que llega con otro nombre (D2).
+                for k in ("con", "junto_con"):
                     if k in x:
                         self.error(d, f"{k} solo va con dispara")
                 if n not in self.requeridos:
                     self.error(d, "no dispara ningún comando y ningún comando lo requiere (requiere): nadie lo usa")
-                self.campos(x.get("datos"), f"{d} > datos")
+                datos_ev = self.campos(x.get("datos"), f"{d} > datos")
+                for local, del_ev in self.mapa(x.get("correspondencias"), f"{d} > correspondencias").items():
+                    if not isinstance(del_ev, str) or del_ev not in datos_ev:
+                        self.error(f"{d} > correspondencias", f'"{local}" se toma de "{del_ev}", que no está en los datos del evento')
+                    elif local in datos_ev:
+                        self.error(f"{d} > correspondencias", f'"{local}" ya es un dato del evento: no necesita correspondencia')
                 continue
             # La identidad de la raíz de cada comando: la del evento o (G3) un dato del evento con su nombre.
             ids_raiz = {self.raices[entradas_cmd[c_]["raiz"]]["id_nombre"] for c_, _ in lista if c_ in entradas_cmd}
@@ -1346,7 +1370,7 @@ class Revisor:
         if "agrega" not in q:
             # Sin agregaciones, la consulta devuelve una lista: un elemento por raíz, con los datos de la salida.
             if not isinstance(q.get("lista"), str) or not q["lista"].strip():
-                self.error(d, "sin agrega, la consulta devuelve una lista: di su nombre con lista (por ejemplo, lista: yates disponibles)")
+                self.error(d, "sin agrega, la consulta devuelve una lista: di su nombre con lista (por ejemplo, lista: elementos disponibles)")
             self.pide(con_raiz, sal, f"{d} > salida", "un elemento de la lista")
             for dato in self.lista(q.get("orden"), f"{d} > orden"):      # de menor a mayor, en el orden escrito
                 if dato not in con_raiz or con_raiz[dato]["lista"]:
@@ -1695,6 +1719,80 @@ def revisores_de_contextos(modelo: dict, rutas: list[str]) -> tuple[dict[str, Re
     return revisores, errores
 
 
+def revisar_contratos(modelo: dict, revisores: dict[str, Revisor], solo: str | None = None) -> tuple[list[str], list[str]]:
+    """Contratos entre contextos (D2): lo que quien recibe un evento de otro contexto declara en
+    eventos_de_otros_contextos debe llegar en ese evento tal como lo publica el YAML del contexto que lo publica.
+
+    Por cada evento: el dato con que llega (identidad) y cada dato de datos están entre los que publica (la identidad
+    de su raíz, datos y calculados), con el mismo tipo; y un dato obligatorio para quien recibe no es opcional para
+    quien publica (podría llegar en null). Quien publica puede mandar más datos de los que se reciben.
+    Con solo, revisa únicamente los pares en que está ese contexto. Devuelve (errores, avisos).
+    """
+    errores, avisos = [], []
+    ctxs = {c["nombre"]: c for c in modelo["contextos"]}
+
+    def objetos(nombre_ctx: str) -> dict:
+        return {v["nombre"]: {c["nombre"]: c for c in v["campos"]}
+                for a in ctxs[nombre_ctx]["agregados"] for v in a["objetos_valor"]}
+
+    def tipo_en(nombre_ctx: str, texto):
+        tipos.usar_objetos(objetos(nombre_ctx))    # List<objeto de valor> se interpreta con los del contexto
+        try:
+            return tipos.interpretar(texto)
+        except tipos.TipoInvalido:
+            return None                            # el error ya lo dio el Revisor de ese contexto
+
+    def mismo_entre(tr: dict, receptor: str, tp: dict, emisor: str) -> bool:
+        """Mismo tipo entre dos contextos: una lista de objetos de valor se compara por sus campos, no por el nombre."""
+        if tr["base"] == "objeto" and tp["base"] == "objeto":
+            cr, cp = objetos(receptor)[tr["objeto"]], objetos(emisor)[tp["objeto"]]
+            return tr["lista"] == tp["lista"] and set(cr) == set(cp) and all(mismo_tipo(cr[k], cp[k]) for k in cr)
+        return mismo_tipo(tr, tp)
+
+    for receptor, rv in sorted(revisores.items()):
+        ext = rv.s.get("eventos_de_otros_contextos") if isinstance(rv.s.get("eventos_de_otros_contextos"), dict) else {}
+        for n, x in sorted(ext.items()):
+            if not isinstance(x, dict):
+                continue
+            emisor = x.get("de")
+            if solo and solo not in (receptor, emisor):
+                continue
+            d = f"{receptor} > eventos_de_otros_contextos > {n}"
+            pub = revisores.get(emisor)
+            if pub is None:
+                avisos.append(f'[{d}] "{emisor}" no tiene YAML (o tiene errores): no se revisa contra lo que publica')
+                continue
+            ev_y = (pub.s.get("eventos") or {}).get(n)
+            ev_m = next((e for e in ctxs[emisor]["eventos"] if e["nombre"] == n), None)
+            if not isinstance(ev_y, dict) or ev_m is None or ev_m["agregado_id"] not in pub.raiz_por_agregado:
+                continue                                  # lo dice el Revisor de quien publica
+            id_pub = pub.raiz_por_agregado[ev_m["agregado_id"]]["id_nombre"]
+            publica = {id_pub: tipos.interpretar("string")}
+            for k, t in {**(ev_y.get("datos") or {}), **(ev_y.get("calculados") or {})}.items():
+                tp = tipo_en(emisor, t)
+                if tp:
+                    publica[k] = tp
+            lista_pub = ", ".join(f'"{k}"' for k in sorted(publica))
+            id_rec = rv.identidad_externos.get(n)
+            if isinstance(id_rec, str) and id_rec not in publica:
+                errores.append(f'[{d} > identidad] llega con "{id_rec}", y "{emisor}" no lo publica en "{n}"; '
+                               f"publica: {lista_pub}")
+            for k, t in (x.get("datos") or {}).items():
+                tr = tipo_en(receptor, t)
+                if tr is None:
+                    continue
+                if k not in publica:
+                    errores.append(f'[{d} > datos] "{k}" no llega: "{emisor}" no lo publica en "{n}"; publica: {lista_pub}')
+                elif not mismo_entre(tr, receptor, publica[k], emisor):
+                    errores.append(f'[{d} > datos] "{k}" se recibe como {tr["tipo"]} y "{emisor}" lo publica como '
+                                   f'{publica[k]["tipo"]}')
+                elif publica[k]["opcional"] and not tr["opcional"]:
+                    errores.append(f'[{d} > datos] "{k}" es obligatorio aquí y "{emisor}" lo publica como opcional '
+                                   f'({publica[k]["tipo"]}): puede llegar en null. Recíbelo como {tr["tipo"]}?')
+    tipos.usar_objetos({})
+    return errores, avisos
+
+
 def main():
     for f in (sys.stdout, sys.stderr):
         f.reconfigure(encoding="utf-8")
@@ -1713,6 +1811,10 @@ def main():
         rev = RevisorEntreContextos(modelo, spec, ruta_yaml, revisores)
         rev.revisar()
         errores += rev.errores
+        err_c, av_c = revisar_contratos(modelo, revisores)
+        errores += err_c
+        for a in av_c:
+            print("AVISO", a)
         if errores:
             print(f"\n{len(errores)} error(es) en {ruta_yaml}:", file=sys.stderr)
             for e in errores:
@@ -1726,6 +1828,15 @@ def main():
     rev = Revisor(modelo, spec, ruta_yaml)
     rev.id_nombre = ""
     rev.revisar()
+    if not rev.errores and isinstance(spec, dict):
+        # Contratos entre contextos (D2): contra los YAML de los demás contextos de la misma carpeta. Los que tienen
+        # errores no se usan (cada uno los dice cuando se revisa).
+        rutas = sorted(str(p) for p in Path(ruta_yaml).parent.glob("*.yaml") if p.resolve() != Path(ruta_yaml).resolve())
+        otros, _ = revisores_de_contextos(modelo, rutas)
+        otros[spec["contexto"]] = rev
+        err_c, av_c = revisar_contratos(modelo, otros, solo=spec["contexto"])
+        rev.errores += err_c
+        rev.avisos += av_c
     for a in rev.avisos:
         print("AVISO", a)
     if rev.varios_origenes:

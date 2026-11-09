@@ -104,8 +104,9 @@ comandos:
 
 eventos:
 
-  Yate registrado:
+  Yate registrado:                                # lo escucha Gestión del arriendo: la copia del yate para la solicitud (V8)
     datos:
+      propietario: string
       identificador de la marina: string
       precio por día: decimal
 

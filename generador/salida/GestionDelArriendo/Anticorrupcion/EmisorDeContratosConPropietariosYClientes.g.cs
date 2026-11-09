@@ -1,10 +1,10 @@
 // Generado desde ArchiMate: ApplicationService "Contratos con propietarios y clientes" (SA-02, id-18b80ed18f3d4d43a5290e01b90ca4eb).
-// Capa anticorrupción, lo que sale (G11): lo que YateGear envía por este servicio SA cuando ocurre un evento del
+// Capa anticorrupción, lo que sale (G11): lo que la aplicación envía por este servicio SA cuando ocurre un evento del
 // contexto (envia del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 namespace YateGear.GestionDelArriendo;
 
-/// <summary>Mensaje "Datos para el contrato del cliente" que YateGear envía por "Contratos con propietarios y clientes" cuando ocurre "Riesgo aceptable obtenido".</summary>
+/// <summary>Mensaje "Datos para el contrato del cliente" que la aplicación envía por "Contratos con propietarios y clientes" cuando ocurre "Riesgo aceptable obtenido".</summary>
 public sealed record DatosParaElContratoDelCliente(
     string NumeroDelArriendo,
     string ReferenciaAlCRM,
@@ -14,7 +14,7 @@ public sealed record DatosParaElContratoDelCliente(
     decimal PrecioPorDia
 );
 
-/// <summary>Lo que YateGear envía a "Gestión de contratos" por "Contratos con propietarios y clientes" (SA-02). No espera respuesta
+/// <summary>Lo que la aplicación envía a "Gestión de contratos" por "Contratos con propietarios y clientes" (SA-02). No espera respuesta
 /// (lenguaje publicado).</summary>
 /// <remarks>
 /// <para>Interfaz: "Pantalla de registro de contratos" (id-a7b78492e6714137865f37c41eb78b19).

@@ -1,6 +1,6 @@
 {% import "_macros.j2" as m %}
 // {{ cabecera }}
-// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a YateGear por este servicio SA
+// Capa anticorrupción, lo que entra (G7): lo que el sistema externo le envía a la aplicación por este servicio SA
 // (recibe del YAML). No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Text.Json;
@@ -12,7 +12,7 @@ namespace {{ ns }};
 {{ m.record(x.clase, x.datos, ";") }}
 {% endfor %}
 
-/// <summary>Recibe lo que "{{ sa.contraparte.nombre | xml }}" le envía a YateGear por "{{ sa.nombre | xml }}" ({{ sa.codigo }})
+/// <summary>Recibe lo que "{{ sa.contraparte.nombre | xml }}" le envía a la aplicación por "{{ sa.nombre | xml }}" ({{ sa.codigo }})
 /// y dispara el comando de cada mensaje, con sus datos por nombre.</summary>
 /// <remarks>
 /// <para>{{ sa.contrato.nombre | xml }} ({{ sa.contrato.id }}). Entrada: {{ sa.contrato.entrada | xml }}</para>

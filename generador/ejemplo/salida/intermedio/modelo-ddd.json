@@ -1,0 +1,207 @@
+{
+  "generado_desde": {
+    "modelo_id": "id-2978acbbf99b509f9ea9ee63176d70ae",
+    "modelo_nombre": "Biblioteca",
+    "archivo": "Biblioteca.xml"
+  },
+  "contextos": [
+    {
+      "id": "id-ccd77ee8d6e85373b2058f86905a7b2c",
+      "nombre": "Contexto Préstamos",
+      "agregados": [
+        {
+          "id": "id-94a54a4626ed53a3bea811adf0f8258a",
+          "nombre": "Agregado Préstamo",
+          "raiz": {
+            "id": "id-8fc36207505e52cc9ef19a99e47dfca7",
+            "nombre": "Préstamo",
+            "campos": [
+              {
+                "nombre": "lector",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              },
+              {
+                "nombre": "libro",
+                "tipo": "string",
+                "base": "string",
+                "lista": false,
+                "opcional": false,
+                "enum": null
+              }
+            ]
+          },
+          "entidades": [],
+          "objetos_valor": [
+            {
+              "id": "id-23f42c26c59a58d4b094e7c17ba625f7",
+              "nombre": "Plazo del préstamo",
+              "compuesto_por": "id-8fc36207505e52cc9ef19a99e47dfca7",
+              "cardinalidad": "Uno",
+              "composicion_id": "id-86bfa95f526f5a4b8ccf361274067d5f",
+              "campos": [
+                {
+                  "nombre": "desde",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                },
+                {
+                  "nombre": "hasta",
+                  "tipo": "DateOnly",
+                  "base": "DateOnly",
+                  "lista": false,
+                  "opcional": false,
+                  "enum": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "comandos": [
+        {
+          "id": "id-5bf799b38b425df3b814b33aa2929f70",
+          "nombre": "Devolver el libro",
+          "codigo": "SB-02",
+          "agregado_id": "id-94a54a4626ed53a3bea811adf0f8258a",
+          "raiz_id": "id-8fc36207505e52cc9ef19a99e47dfca7",
+          "acceso": "lectura y escritura",
+          "acceso_id": "id-f54043eceb535aa29eac2de716f4bdf7",
+          "lee_tambien": [],
+          "eventos": [
+            "id-4baadb7858ae500cb39ea7b0dc99f59c"
+          ],
+          "servicio_negocio": {
+            "id": "id-48151143e7315060b5a0ceed638aadcf",
+            "nombre": "Devolver el libro"
+          },
+          "contrato": {
+            "id": "id-be012cf9cf7a573c8176e8e3dadd4814",
+            "nombre": "Contrato de servicio: Devolver el libro",
+            "entrada": "Número del préstamo.",
+            "salida": "Préstamo devuelto.",
+            "reglas": "Solo se devuelve un libro prestado."
+          }
+        },
+        {
+          "id": "id-adbef6a6733f58f5a9e0ba51f136a4ac",
+          "nombre": "Prestar un libro",
+          "codigo": "SB-01",
+          "agregado_id": "id-94a54a4626ed53a3bea811adf0f8258a",
+          "raiz_id": "id-8fc36207505e52cc9ef19a99e47dfca7",
+          "acceso": "escritura",
+          "acceso_id": "id-d786ef09ddd45e14b3c11ad96164d2d8",
+          "lee_tambien": [],
+          "eventos": [
+            "id-7808c0a36e435cbeb9af1243ed983bec"
+          ],
+          "servicio_negocio": {
+            "id": "id-2c4ab840149c5f6bb997fd138b8d7665",
+            "nombre": "Prestar un libro"
+          },
+          "contrato": {
+            "id": "id-ae3bbf116893597ab208483228f70381",
+            "nombre": "Contrato de servicio: Prestar un libro",
+            "entrada": "Lector, libro y plazo del préstamo (desde y hasta).",
+            "salida": "Préstamo con su número, en estado prestado.",
+            "reglas": "REG-01: se rechaza si el catálogo dice que el libro no está disponible."
+          }
+        }
+      ],
+      "eventos": [
+        {
+          "id": "id-4baadb7858ae500cb39ea7b0dc99f59c",
+          "nombre": "Libro devuelto",
+          "agregado_id": "id-94a54a4626ed53a3bea811adf0f8258a",
+          "disparado_por": [
+            "id-5bf799b38b425df3b814b33aa2929f70"
+          ]
+        },
+        {
+          "id": "id-7808c0a36e435cbeb9af1243ed983bec",
+          "nombre": "Libro prestado",
+          "agregado_id": "id-94a54a4626ed53a3bea811adf0f8258a",
+          "disparado_por": [
+            "id-adbef6a6733f58f5a9e0ba51f136a4ac"
+          ]
+        }
+      ],
+      "politicas": [],
+      "consultas": [
+        {
+          "id": "id-b3770e1c734d569ca65ced6e4d6ce41a",
+          "nombre": "Consultar el préstamo",
+          "codigo": "SB-03",
+          "lee": [
+            {
+              "raiz_id": "id-8fc36207505e52cc9ef19a99e47dfca7",
+              "acceso_id": "id-ee2e90a68c66577392479d044f78ef46"
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-a17fb94b9d105e6cb5ec8095d9d61062",
+            "nombre": "Consultar el préstamo"
+          },
+          "contrato": {
+            "id": "id-1eb53a4c5895511dba1b123b4317670e",
+            "nombre": "Contrato de servicio: Consultar el préstamo",
+            "entrada": "Número del préstamo.",
+            "salida": "Estado del préstamo, lector, libro y fecha en que vence.",
+            "reglas": ""
+          }
+        }
+      ],
+      "servicios_sa": [
+        {
+          "id": "id-ae10d4fa9958587aa03b1c8536870bb3",
+          "nombre": "Catálogo de la biblioteca",
+          "codigo": "SA-01",
+          "interfaz": {
+            "id": "id-bd12ff4c48e651eb91ff722ffd2d41fe",
+            "nombre": "Interfaz del catálogo"
+          },
+          "contraparte": {
+            "id": "id-f96fb87fb5e759699af89f8e28598a96",
+            "nombre": "Sistema del catálogo",
+            "tipo": "ApplicationComponent",
+            "externo": true,
+            "sentido_servicio": "contraparte_a_sa"
+          },
+          "flujos": [
+            {
+              "id": "id-82e9dfaeb1e95ee8bca50ff5107b6c70",
+              "nombre": "Consulta del libro",
+              "direccion": "sale",
+              "momento": null
+            },
+            {
+              "id": "id-bb752d7b8aa0564a9d2ea5cd62208367",
+              "nombre": "Estado del libro",
+              "direccion": "entra",
+              "momento": null
+            }
+          ],
+          "servicio_negocio": {
+            "id": "id-291efe88ae465b5b839afcfd422c02da",
+            "nombre": "Catálogo de la biblioteca"
+          },
+          "contrato": {
+            "id": "id-5ee7ad76766c50d7abc0cfeea3d26980",
+            "nombre": "Contrato de servicio: Catálogo de la biblioteca",
+            "entrada": "El libro.",
+            "salida": "Si el libro está disponible.",
+            "reglas": "La aplicación no cambia el catálogo; solo lo consulta."
+          }
+        }
+      ],
+      "enums": [],
+      "otros_contextos": []
+    }
+  ]
+}

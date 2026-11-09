@@ -1,0 +1,227 @@
+# Pruebas del validador (S8): cada caso rompe a propósito una copia en memoria de un YAML de specs/ y dice qué error
+# debe dar specs.py. Las corre src/probar_validador.py (y verificar.ps1). Formato: ver el comentario de ese archivo.
+#
+# Regla: cada clave nueva del YAML trae al menos un caso aquí. Si un caso deja de fallar, specs.py dejó de revisar algo.
+
+# ---- lo básico: el YAML cubre el modelo, con claves, tipos y estados válidos
+
+- caso: un comando declara un evento que en el modelo no dispara
+  base: specs/cobros-y-deposito.yaml
+  cambia: [comandos, Bloquear el depósito, eventos]
+  valor: [Depósito liberado]
+  error: 'el YAML declara "Depósito liberado" y en el modelo el comando no lo dispara'
+
+- caso: falta un comando del modelo
+  base: specs/gestion-del-arriendo.yaml
+  quita: [comandos, Cancelar la reserva]
+  error: 'falta en el YAML: comando "Cancelar la reserva"'
+
+- caso: el YAML nombra un comando que no existe
+  base: specs/calificaciones.yaml
+  cambia: [comandos, Calificar al yate]
+  valor: {entrada: {}}
+  error: '"Calificar al yate" no existe en el modelo como comando del contexto'
+
+- caso: una clave desconocida
+  base: specs/gestion-del-arriendo.yaml
+  cambia: [comandos, Cancelar la reserva, guardar]
+  valor: [quién cancela]
+  error: 'clave desconocida "guardar"'
+
+- caso: un tipo no permitido
+  base: specs/calificaciones.yaml
+  cambia: [comandos, Calificar al cliente, entrada, calificación dada]
+  valor: float
+  error: 'tipo no permitido: "float"'
+
+- caso: un estado que no está en la lista cerrada
+  base: specs/gestion-del-arriendo.yaml
+  cambia: [comandos, Cancelar la reserva, desde]
+  valor: [borrado]
+  error: '"borrado" no es un estado de la raíz'
+
+- caso: un valor fijo que no es del enum
+  base: specs/calificaciones.yaml
+  cambia: [comandos, Calificar al cliente, valores, quién califica]
+  valor: nadie
+  error: "el valor 'nadie' no es válido para \"quién califica\""
+
+# ---- la regla de los datos
+
+- caso: un objeto de valor que se guarda sin uno de sus datos
+  base: specs/gestion-del-arriendo.yaml
+  quita: [comandos, Registrar la solicitud de reserva, entrada, inicio]
+  error: 'el objeto de valor "Fechas del arriendo" necesita "inicio"'
+
+- caso: un servicio SA que el contexto no tiene
+  base: specs/disponibilidad-de-yates.yaml
+  cambia: [comandos, Registrar yate en el inventario, usa]
+  valor: [Pasarela inventada]
+  error: '"Pasarela inventada" no es un servicio SA del contexto'
+
+- caso: un calculado que no dice de qué datos sale
+  base: specs/cobros-y-deposito.yaml
+  cambia: [comandos, Cobrar alquiler y seguro, calculados, valor del alquiler, de]
+  valor: []
+  error: 'di de qué datos sale el calculado'
+
+# ---- identidades y varios agregados (G2, G3)
+
+- caso: una identidad que es consecutivo y se forma con datos a la vez (G3)
+  base: specs/calificaciones.yaml
+  cambia: [raices, Calificación, identidad, prefijo]
+  valor: CAL-
+  error: 'la identidad es un consecutivo (prefijo y digitos) o se forma con datos (de); una de las dos'
+
+- caso: crea si_no_existe sobre una raíz con consecutivo (G2)
+  base: specs/disponibilidad-de-yates.yaml
+  cambia: [comandos, Registrar yate en el inventario, crea]
+  valor: si_no_existe
+  error: 'crea: si_no_existe necesita una identidad recibida'
+
+# ---- listas de objetos de valor (G4)
+
+- caso: quitar de una lista con una clave que no es campo del objeto de valor (G4)
+  base: specs/disponibilidad-de-yates.yaml
+  cambia: [comandos, Definir las fechas bloqueadas del yate, resultados, Fechas desbloqueadas, guarda]
+  valor: [{Rango de fechas: {quitar: [color]}}]
+  error: 'la clave "color" no es un campo de "Rango de fechas"'
+
+# ---- consultas (G5)
+
+- caso: el promedio de un dato que no es un número (G5)
+  base: specs/calificaciones.yaml
+  cambia: [consultas, Consultar calificaciones promedio, agrega, calificación promedio]
+  valor: promedio de calificado
+  error: 'el promedio es de números; "calificado" es string'
+
+- caso: un filtro por un dato que no está en la entrada (G5)
+  base: specs/calificaciones.yaml
+  cambia: [consultas, Consultar calificaciones promedio, filtro]
+  valor: [quién califica]
+  error: '"quién califica" no está en la entrada de la consulta'
+
+- caso: una consulta por identidad que lee dos raíces y no dice de cuál (G5)
+  base: specs/cobros-y-deposito.yaml
+  quita: [consultas, Consultar el estado de cuenta del arriendo, de]
+  error: 'lee 2 raíces'
+
+# ---- mensajes que reciben y envían los SA (G7, G11)
+
+- caso: un mensaje que no trae la identidad de la raíz del comando que dispara (G7)
+  base: specs/operacion-del-arriendo.yaml
+  quita: [servicios_sa, Avisos y actas de las marinas, recibe, Acta de entrega recibida, datos, número del arriendo]
+  error: 'necesita "número del arriendo" y el mensaje no lo trae'
+
+- caso: un SA que recibe sin un flujo que entre en el modelo (G7)
+  base: specs/cobros-y-deposito.yaml
+  cambia: [servicios_sa, Envío de arriendos cerrados a Finanzas, recibe]
+  valor: {Respuesta de Finanzas: {dispara: Cerrar las cuentas del arriendo, datos: {número del arriendo: string}}}
+  error: 'ningún flujo entra por la interfaz de este SA'
+
+- caso: un envío con un dato que no trae su evento (G11)
+  base: specs/operacion-del-arriendo.yaml
+  cambia: [servicios_sa, Avisos y actas de las marinas, envia, Alerta de pérdida de señal, datos, marina]
+  valor: string
+  error: '"marina" no lo trae "Pérdida de señal del yate"'
+
+- caso: un envío cuando ocurre un evento que no es del contexto (G11)
+  base: specs/cobros-y-deposito.yaml
+  cambia: [servicios_sa, Envío de arriendos cerrados a Finanzas, envia, Arriendo cerrado para Finanzas, cuando]
+  valor: Arriendo cerrado
+  error: '"Arriendo cerrado" no es un evento especificado del contexto'
+
+# ---- comandos sobre todas las raíces (G8)
+
+- caso: un temporizador que no da un dato obligatorio de la entrada (G8)
+  base: specs/operacion-del-arriendo.yaml
+  quita: [comandos, Detectar la pérdida de señal, temporizador, con]
+  error: 'el comando necesita "minutos sin lecturas" y el temporizador no lo da'
+
+# ---- entidades (G9)
+
+- caso: una entidad cuya identidad no es uno de sus campos (G9)
+  base: specs/cobros-y-deposito.yaml
+  cambia: [raices, Cuenta del arriendo, entidades, Cobro, identidad]
+  valor: número del cobro
+  error: '"número del cobro" no es un campo de la entidad'
+
+# ---- políticas con varios disparos (G10, D7)
+
+- caso: una política con varios disparos que no nombra todos los eventos del modelo (G10)
+  base: specs/cobros-y-deposito.yaml
+  quita: [politicas, Cerrar las cuentas del arriendo, uno_de, Depósito liberado]
+  error: 'junto_con y uno_de nombran, sin repetir, los eventos que disparan "Cerrar las cuentas del arriendo"'
+
+# ---- eventos de otros contextos (D5, G12, D2)
+
+- caso: requiere un evento que no está declarado (D5)
+  base: specs/calificaciones.yaml
+  cambia: [comandos, Calificar al cliente, requiere]
+  valor: [Arriendo archivado]
+  error: '"Arriendo archivado" no está en eventos_de_otros_contextos'
+
+- caso: una correspondencia con un dato que no llega en el evento (G12, D2)
+  base: specs/gestion-del-arriendo.yaml
+  cambia: [eventos_de_otros_contextos, Yate entregado al cliente, correspondencias]
+  valor: {fecha y hora del cambio: hora de llegada}
+  error: 'se toma de "hora de llegada"'
+
+- caso: una correspondencia de un evento que solo se recuerda, con un dato que no trae (discrepancia 13)
+  base: specs/gestion-del-arriendo.yaml
+  cambia: [eventos_de_otros_contextos, Yate registrado, correspondencias]
+  valor: {marina: marina del yate}
+  error: '"marina" se toma de "marina del yate", que no está en los datos del evento'
+
+- caso: si_existe en un comando que crea la raíz
+  base: specs/cobros-y-deposito.yaml
+  cambia: [servicios_sa, Contratos con propietarios y clientes, recibe, Contrato del cliente firmado, dispara]
+  valor: {Bloquear el depósito: {si_existe: true}, Cobrar alquiler y seguro: {}}
+  error: '"Bloquear el depósito" crea la raíz: no hay una raíz que pueda faltar'
+
+# ---- contratos entre contextos (S6, D2)
+
+- caso: quien recibe declara un dato que quien publica no manda (S6)
+  base: specs/gestion-del-arriendo.yaml
+  cambios:
+    - {quita: [eventos_de_otros_contextos, Depósito bloqueado, datos, código de autorización de la pasarela]}
+    - {cambia: [eventos_de_otros_contextos, Depósito bloqueado, datos, código de la pasarela], valor: string}
+    - {cambia: [eventos_de_otros_contextos, Depósito bloqueado, correspondencias], valor: {autorización del bloqueo del depósito: código de la pasarela}}
+  error: '"código de la pasarela" no llega: "Contexto Cobros y depósito" no lo publica en "Depósito bloqueado"'
+
+- caso: quien publica deja de mandar un dato que otro contexto recibe (S6)
+  base: specs/cobros-y-deposito.yaml
+  quita: [eventos, Depósito bloqueado, datos, código de autorización de la pasarela]
+  error: '"código de autorización de la pasarela" no llega: "Contexto Cobros y depósito" no lo publica'
+
+- caso: quien publica manda como opcional un dato que otro contexto recibe como obligatorio (S6)
+  base: specs/disponibilidad-de-yates.yaml
+  cambia: [eventos, Yate registrado, datos, propietario]
+  valor: string?
+  error: '"propietario" es obligatorio aquí y "Contexto Disponibilidad de yates" lo publica como opcional'
+
+# ---- escenarios
+
+- caso: un paso espera un evento que no puede publicar
+  base: specs/gestion-del-arriendo.yaml
+  cambia: [escenarios, Cancelación, 1, Cancelar la reserva, espera]
+  valor: Arriendo cerrado
+  error: '"Arriendo cerrado" no es un evento que publique "Cancelar la reserva"'
+
+- caso: un paso con un dato que no está en su entrada
+  base: specs/calificaciones.yaml
+  cambia: [escenarios, Sin calificaciones, 0, Consultar calificaciones promedio, con, color]
+  valor: rojo
+  error: '"color" no está en la entrada'
+
+- caso: un paso que espera un código HTTP no permitido
+  base: specs/gestion-del-arriendo.yaml
+  cambia: [escenarios, Cancelación, 1, Cancelar la reserva, espera]
+  valor: 500
+  error: 'el código 500 no se permite'
+
+- caso: un paso entre contextos en un contexto que no tiene YAML (S4)
+  base: specs/entre-contextos.yaml
+  cambia: [escenarios_entre_contextos, Riesgo alto, 0, Registrar la solicitud de reserva, en]
+  valor: Contexto Inventado
+  error: '"Contexto Inventado" no es un contexto con YAML'
