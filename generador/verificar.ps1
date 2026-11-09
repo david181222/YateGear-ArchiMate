@@ -1,0 +1,96 @@
+﻿# Verifica que el generador y lo generado están bien, con un solo comando: lo de "Cuándo está terminado un
+# contexto" (PENDIENTES.md). En orden:
+#   1. generar.ps1: exporta, extrae, revisa los YAML (y los contratos entre contextos), genera y compila sin
+#      advertencias (las advertencias son errores de compilación).
+#   2. Determinismo: generar.ps1 otra vez y la misma huella de la carpeta de salida.
+#   3. Trazabilidad completa: cada elemento de los contextos generados está en su CSV.
+#   4. Pruebas del validador: cada copia rota a propósito de un YAML da el error esperado (pruebas-validador/casos.yaml).
+#   5. probar.ps1: los escenarios de cada contexto y los de punta a punta, sin errores en el bus.
+# Al final muestra una tabla con cada revisión y termina con código 1 si alguna falla.
+#
+# Uso (desde la carpeta generador):
+#   powershell -ExecutionPolicy Bypass -File .\verificar.ps1     (Windows)
+#   pwsh ./verificar.ps1                                          (Linux)
+#   ... -Modelo, -Specs, -Archi, -Salida y -Puerto pasan a generar.ps1 y probar.ps1.
+#   ... -Casos ""     (sin las pruebas del validador; por ejemplo, para el modelo de ejemplo)
+#
+# Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
+param(
+    [string]$Modelo = "",
+    [string[]]$Specs = @(),
+    [string]$Archi = "",
+    [string]$Salida = "salida",
+    [int]$Puerto = 0,
+    [string]$Casos = "pruebas-validador/casos.yaml"
+)
+
+Set-Location $PSScriptRoot
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$enWindows = [System.Environment]::OSVersion.Platform -eq "Win32NT"
+$py = if ($enWindows) { "./.venv/Scripts/python.exe" } else { "./.venv/bin/python" }
+$shell = (Get-Process -Id $PID).Path                  # el mismo PowerShell que corre este script
+$resultados = @()
+
+function Revision([string]$nombre, [bool]$ok, [string]$detalle) {
+    $script:resultados += [pscustomobject]@{ Revision = $nombre; Resultado = $(if ($ok) { "✓" } else { "✗" }); Detalle = $detalle }
+    $color = if ($ok) { "Green" } else { "Red" }
+    Write-Host ""
+    Write-Host "== $(if ($ok) { '✓' } else { '✗' }) $nombre. $detalle" -ForegroundColor $color
+}
+
+function Generar {
+    $argumentos = @("-ExecutionPolicy", "Bypass", "-File", "./generar.ps1", "-Salida", $Salida)
+    if ($Modelo) { $argumentos += @("-Modelo", $Modelo) }
+    if ($Specs.Count -gt 0) { $argumentos += @("-Specs", ($Specs -join ",")) }
+    if ($Archi) { $argumentos += @("-Archi", $Archi) }
+    & $shell @argumentos | Out-Host
+    return $LASTEXITCODE -eq 0
+}
+
+function Huella {
+    $linea = & $py src/huella.py $Salida
+    return ($linea -split "\s+")[2]
+}
+
+# 1. Generar y compilar.
+$ok = Generar
+Revision "Generar y compilar sin advertencias" $ok $(if ($ok) { "generar.ps1 terminó bien." } else { "generar.ps1 falló (ver arriba)." })
+if (-not $ok) {
+    $resultados | Format-Table -AutoSize | Out-Host
+    exit 1
+}
+
+# 2. Determinismo: dos generaciones seguidas dan la misma huella.
+$h1 = Huella
+$ok = Generar
+$h2 = Huella
+$ok = $ok -and $h1 -eq $h2
+Revision "Determinismo" $ok $(if ($ok) { "La misma huella en dos generaciones seguidas: $($h1.Substring(0, 12))..." } else { "Huellas distintas: $h1 y $h2." })
+
+# 3. Trazabilidad.
+& $py src/revisar_trazabilidad.py "$Salida/intermedio/modelo-ddd.json" $Salida | Out-Host
+$ok = $LASTEXITCODE -eq 0
+Revision "Trazabilidad completa" $ok $(if ($ok) { "Todos los elementos de los contextos generados tienen su fila." } else { "Faltan filas o archivos (ver arriba)." })
+
+# 4. Pruebas del validador.
+if ($Casos) {
+    & $py src/probar_validador.py "$Salida/intermedio/modelo-ddd.json" $Casos | Out-Host
+    $ok = $LASTEXITCODE -eq 0
+    Revision "Pruebas del validador" $ok $(if ($ok) { "specs.py detecta cada copia rota de $Casos." } else { "Algún caso no da el error esperado (ver arriba)." })
+}
+
+# 5. Escenarios.
+$argumentos = @("-ExecutionPolicy", "Bypass", "-File", "./probar.ps1", "-Salida", $Salida)
+if ($Puerto) { $argumentos += @("-Puerto", $Puerto) }
+& $shell @argumentos | Out-Host
+$ok = $LASTEXITCODE -eq 0
+Revision "Escenarios" $ok $(if ($ok) { "Todos los pasos en verde y ningún error en el bus." } else { "Algún paso falló (ver arriba)." })
+
+Write-Host ""
+$resultados | Format-Table -AutoSize | Out-Host
+if ($resultados | Where-Object { $_.Resultado -eq "✗" }) {
+    Write-Host "Hay revisiones con falla." -ForegroundColor Red
+    exit 1
+}
+Write-Host "Todo bien." -ForegroundColor Green
+exit 0

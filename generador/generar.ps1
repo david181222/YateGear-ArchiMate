@@ -7,15 +7,21 @@
 #   powershell -ExecutionPolicy Bypass -File .\generar.ps1     (Windows)
 #   pwsh ./generar.ps1                                          (Linux)
 #   ... -Specs specs/uno.yaml,specs/otro.yaml                   (solo esos contextos)
+#   ... -SoloValidar                                            (exporta, extrae y revisa los YAML; no genera ni compila)
+#   ... -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida   (otro modelo)
 #
 # -Modelo: por defecto, el único .archimate de ../modelo. -Specs: por defecto, todos los specs/*.yaml.
+# -Salida: la carpeta de lo generado, por defecto salida. -SoloValidar no toca esa carpeta: el XML y el JSON
+# intermedios van a una carpeta temporal.
 #
 # Las rutas van con "/", que sirve en Windows y en Linux.
 # Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
 param(
     [string]$Modelo = "",
     [string[]]$Specs = @(),
-    [string]$Archi = ""
+    [string]$Archi = "",
+    [string]$Salida = "salida",
+    [switch]$SoloValidar
 )
 
 Set-Location $PSScriptRoot
@@ -32,7 +38,10 @@ if (-not $Archi) {
     $Archi = $candidatos | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
     if (-not $Archi) { $Archi = $candidatos[-1] }
 }
-$json = "salida/intermedio/modelo-ddd.json"
+# Los intermedios (el XML exportado y modelo-ddd.json) van en <Salida>/intermedio; con -SoloValidar, a una carpeta temporal.
+$intermedio = if ($SoloValidar) { Join-Path ([System.IO.Path]::GetTempPath()) "generador-solo-validar" } else { "$Salida/intermedio" }
+New-Item -ItemType Directory -Force $intermedio | Out-Null
+$json = "$intermedio/modelo-ddd.json"
 
 function Paso([string]$numero, [string]$texto) {
     Write-Host ""
@@ -73,8 +82,8 @@ if (-not $Modelo) {
     $Modelo = $modelos[0].FullName
 }
 if (-not (Test-Path $Modelo)) { Fallo "no existe el modelo $Modelo." }
-# El XML se llama como el modelo: salida/intermedio/<modelo>.xml (no se versiona).
-$xml = Join-Path $PSScriptRoot ("salida/intermedio/" + [System.IO.Path]::GetFileNameWithoutExtension($Modelo) + ".xml")
+# El XML se llama como el modelo: <Salida>/intermedio/<modelo>.xml (no se versiona).
+$xml = Join-Path (Resolve-Path $intermedio).Path ([System.IO.Path]::GetFileNameWithoutExtension($Modelo) + ".xml")
 if (-not (Test-Path $Archi)) { Fallo "no existe $Archi. Usa el parámetro -Archi con la ruta del ejecutable de Archi." }
 $modeloAbs = (Resolve-Path $Modelo).Path
 # El "| Out-Host" hace que PowerShell espere a que Archi termine.
@@ -97,13 +106,19 @@ foreach ($s in $Specs) {
     if ($LASTEXITCODE -ne 0) { Fallo "$s no cumple con el modelo (ver arriba)." }
 }
 
+if ($SoloValidar) {
+    Write-Host ""
+    Write-Host "Listo: el modelo y los YAML están bien. No se generó nada (-SoloValidar)." -ForegroundColor Green
+    exit 0
+}
+
 Paso 5 "Generar la solución C#"
-& $py src/generar.py $json salida @Specs
+& $py src/generar.py $json $Salida @Specs
 if ($LASTEXITCODE -ne 0) { Fallo "la generación falló (ver arriba)." }
 
 Paso 6 "Compilar con .NET 8"
-# Desde salida, para que dotnet use el global.json (SDK 8).
-Push-Location salida
+# Desde la carpeta de salida, para que dotnet use el global.json (SDK 8).
+Push-Location $Salida
 & $dotnet build -nologo
 $codigo = $LASTEXITCODE
 Pop-Location

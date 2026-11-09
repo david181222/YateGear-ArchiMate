@@ -5,6 +5,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
+    <!-- Cero advertencias: una advertencia, también en el código a mano, detiene la compilación. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>YateGear.GestionDelArriendo</RootNamespace>
   </PropertyGroup>
