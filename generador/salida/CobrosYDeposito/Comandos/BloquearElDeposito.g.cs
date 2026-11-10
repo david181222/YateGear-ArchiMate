@@ -43,7 +43,13 @@ public sealed partial class BloquearElDepositoManejador(
         // 2. Servicios SA que usa, en orden.
         var respuestaCobrosPorLaPasarelaDePagos = cobrosPorLaPasarelaDePagos.Llamar(new CobrosPorLaPasarelaDePagosEntrada(TipoDeOrden.BloqueoDelDeposito, comando.NumeroDelArriendo, comando.ValorDelDeposito, comando.MedioDePago));
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if (!(respuestaCobrosPorLaPasarelaDePagos.Aprobada == true))
+        {
+            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó el bloqueo del depósito.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new BloquearElDepositoDatos(comando, respuestaCobrosPorLaPasarelaDePagos);
         ValidarReglas(datos);
 

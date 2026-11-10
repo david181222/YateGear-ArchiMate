@@ -151,7 +151,19 @@ public sealed partial class {{ c.manejador }}(
 {% endif %}
 {% endif %}
 
+{% if c.reglas_declaradas %}
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+{% for g in c.reglas_declaradas %}
+        if ({{ g.condicion }})
+        {
+            throw new ReglaIncumplida({{ g.codigo }}, {{ g.motivo }});
+        }
+{% endfor %}
+
+        // 4b. Las demás reglas del contrato (archivo manual).
+{% else %}
         // 4. Reglas del contrato (archivo manual).
+{% endif %}
         var datos = new {{ c.datos }}({{ c.datos_args | join(", ") }});
         ValidarReglas(datos);
 {% if c.crea %}

@@ -54,7 +54,17 @@ public sealed partial class ReclamarElExcedenteDeDanosALaAseguradoraManejador(
         var calculadoNumeroDePoliza = NumeroDePoliza(cuentaDelArriendo);
         var respuestaPolizasYReclamosDeLaAseguradora = polizasYReclamosDeLaAseguradora.Llamar(new PolizasYReclamosDeLaAseguradoraEntrada(SolicitudALaAseguradora.Reclamo, comando.NumeroDelArriendo, null, null, null, null, calculadoNumeroDePoliza, comando.ValorDeLosDanos, comando.ValorDescontadoDelDeposito, comando.Evidencia));
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if ((comando.ValorQueExcedeElDeposito <= 0m))
+        {
+            throw new ReglaIncumplida("REG-01", "El daño no supera el depósito: no hay nada que reclamar a la aseguradora.");
+        }
+        if (comando.Evidencia is not { Count: > 0 })
+        {
+            throw new ReglaIncumplida("EXC-02", "Falta la evidencia de la entrega y de la inspección.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new ReclamarElExcedenteDeDanosALaAseguradoraDatos(comando, cuentaDelArriendo, calculadoNumeroDePoliza, respuestaPolizasYReclamosDeLaAseguradora);
         ValidarReglas(datos);
 

@@ -12,17 +12,7 @@ public sealed partial class ReclamarElExcedenteDeDanosALaAseguradoraManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(ReclamarElExcedenteDeDanosALaAseguradoraDatos datos)
     {
-        // REG-01, escrita a mano: solo se reclama lo que el daño supera el depósito. La política tampoco dispara el
-        // comando en ese caso (salvo, en el YAML); la regla cubre la llamada directa.
-        if (datos.Comando.ValorQueExcedeElDeposito <= 0m)
-        {
-            throw new ReglaIncumplida("REG-01", "El daño no supera el depósito: no hay nada que reclamar a la aseguradora.");
-        }
-        // EXC-02, escrita a mano: el reclamo va con la evidencia de la entrega y de la inspección.
-        if (datos.Comando.Evidencia.Count == 0)
-        {
-            throw new ReglaIncumplida("EXC-02", "Falta la evidencia de la entrega y de la inspección.");
-        }
+        // REG-01 y EXC-02: declaradas en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 
     // Escrito a mano: el número de la póliza que emitió la aseguradora al reservar, que guarda la cuenta (discrepancia 11).

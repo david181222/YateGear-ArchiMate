@@ -12,11 +12,7 @@ public sealed partial class ReembolsarUnaCancelacionManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(ReembolsarUnaCancelacionDatos datos)
     {
-        // INT-PAG, escrita a mano: un reembolso sin confirmación de la pasarela no cuenta como hecho.
-        if (datos.CobrosPorLaPasarelaDePagos is { Aprobada: false })
-        {
-            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó el reembolso.");
-        }
+        // INT-PAG: declarada en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 
     // Escrito a mano: se devuelve lo cobrado por el alquiler; el seguro no, porque la póliza ya se emitió

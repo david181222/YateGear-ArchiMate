@@ -225,3 +225,29 @@
   cambia: [escenarios_entre_contextos, Riesgo alto, 0, Registrar la solicitud de reserva, en]
   valor: Contexto Inventado
   error: '"Contexto Inventado" no es un contexto con YAML'
+
+# ---- reglas declaradas en el YAML (comandos > reglas)
+
+- caso: una regla que usa un dato que el comando no tiene
+  base: specs/cobros-y-deposito.yaml
+  cambia: [comandos, Reembolsar una cancelación, reglas]
+  valor: [{regla: INT-PAG, rechaza: {pago aprobado: [false]}, motivo: La pasarela no aprobó el reembolso.}]
+  error: 'la condición usa "pago aprobado", que no está disponible'
+
+- caso: una regla sin motivo
+  base: specs/operacion-del-arriendo.yaml
+  cambia: [comandos, Registrar el acta de entrega, reglas]
+  valor: [{regla: H-13, no_vacio: [fotos]}]
+  error: 'falta la clave "motivo"'
+
+- caso: una regla que compara un dato que no es un número ni una fecha
+  base: specs/disponibilidad-de-yates.yaml
+  cambia: [comandos, Registrar yate en el inventario, reglas]
+  valor: [{regla: NOR-01, exige: {nombre: {mayor_que: 0}}, motivo: El nombre no sirve.}]
+  error: 'solo se comparan números y fechas'
+
+- caso: no_vacio con un dato que siempre llega
+  base: specs/disponibilidad-de-yates.yaml
+  cambia: [comandos, Registrar yate en el inventario, reglas]
+  valor: [{regla: NOR-01, no_vacio: [capacidad], motivo: Falta la capacidad.}]
+  error: 'no_vacio va con una lista, un texto o un dato opcional'

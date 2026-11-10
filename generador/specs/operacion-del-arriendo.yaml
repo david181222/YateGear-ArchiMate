@@ -59,6 +59,10 @@ comandos:
       observaciones: string?
     requiere: [Reserva confirmada]                # CIE-01: se rechaza si el arriendo no tiene la reserva confirmada
     guarda: [identificador del yate, fotos, nivel de combustible, hora de entrega, observaciones]
+    reglas:
+      - regla: H-13                               # el acta debe traer fotos
+        no_vacio: [fotos]
+        motivo: "El acta de entrega no trae fotos."
     eventos: [Yate entregado al cliente]
 
   Registrar la inspección de devolución:          # contrato SB-23; lo inicia la marina por SA-05 (V4-SUP-06)
@@ -75,6 +79,10 @@ comandos:
       - nivel de combustible
       - hora de regreso
       - Daño encontrado: {todos: daños encontrados}
+    reglas:
+      - regla: H-13                               # la inspección debe traer fotos
+        no_vacio: [fotos]
+        motivo: "El acta de inspección no trae fotos."
     eventos: [Inspección de devolución registrada]
 
   Determinar las diferencias entre entrega y devolución:   # contrato SB-24; lo dispara la política de la inspección

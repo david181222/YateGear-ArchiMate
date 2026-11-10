@@ -54,7 +54,17 @@ public sealed partial class LiberarElDepositoManejador(
         var calculadoFechaDeLaLiberacion = FechaDeLaLiberacion(comando.HoraDeRegreso, comando.FechaDeLaCancelacion);
         var respuestaCobrosPorLaPasarelaDePagos = cobrosPorLaPasarelaDePagos.Llamar(new CobrosPorLaPasarelaDePagosEntrada(TipoDeOrden.LiberacionDelDeposito, depositoParaDanos.NumeroDelArriendo, depositoParaDanos.ValorDelDeposito, null));
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if ((comando.ValorDeLosDanos > 0m))
+        {
+            throw new ReglaIncumplida("REG-01", "La inspección registró daños: el depósito se descuenta, no se libera.");
+        }
+        if (!(respuestaCobrosPorLaPasarelaDePagos.Aprobada == true))
+        {
+            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó la liberación del depósito.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new LiberarElDepositoDatos(comando, depositoParaDanos, calculadoFechaDeLaLiberacion, respuestaCobrosPorLaPasarelaDePagos);
         ValidarReglas(datos);
 

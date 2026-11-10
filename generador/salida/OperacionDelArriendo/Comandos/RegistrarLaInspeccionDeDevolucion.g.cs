@@ -39,7 +39,13 @@ public sealed partial class RegistrarLaInspeccionDeDevolucionManejador(
         if (string.IsNullOrEmpty(comando.NumeroDelArriendo)) throw new DatoFaltante("número del arriendo");
         // 1. El comando crea la raíz: se arma en el paso 6, después de ValidarReglas.
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if (comando.Fotos is not { Count: > 0 })
+        {
+            throw new ReglaIncumplida("H-13", "El acta de inspección no trae fotos.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new RegistrarLaInspeccionDeDevolucionDatos(comando);
         ValidarReglas(datos);
 

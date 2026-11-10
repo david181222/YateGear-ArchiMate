@@ -12,10 +12,6 @@ public sealed partial class RegistrarLaInspeccionDeDevolucionManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(RegistrarLaInspeccionDeDevolucionDatos datos)
     {
-        // H-13, escrita a mano: la inspección debe traer fotos.
-        if (datos.Comando.Fotos is null || datos.Comando.Fotos.Count == 0)
-        {
-            throw new ReglaIncumplida("H-13", "El acta de inspección no trae fotos.");
-        }
+        // H-13: declarada en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 }

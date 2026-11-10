@@ -42,7 +42,13 @@ public sealed partial class PrestarUnLibroManejador(
         // 2. Servicios SA que usa, en orden.
         var respuestaCatalogoDeLaBiblioteca = catalogoDeLaBiblioteca.Llamar(new CatalogoDeLaBibliotecaEntrada(comando.Libro));
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if (!(respuestaCatalogoDeLaBiblioteca.Disponible == true))
+        {
+            throw new ReglaIncumplida("REG-01", "El catálogo dice que el libro no está disponible.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new PrestarUnLibroDatos(comando, respuestaCatalogoDeLaBiblioteca);
         ValidarReglas(datos);
 

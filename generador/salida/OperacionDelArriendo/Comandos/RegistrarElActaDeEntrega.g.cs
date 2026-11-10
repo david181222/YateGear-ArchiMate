@@ -46,7 +46,13 @@ public sealed partial class RegistrarElActaDeEntregaManejador(
         var reservaConfirmada = memoria.Buscar<ReservaConfirmada>("Reserva confirmada", comando.NumeroDelArriendo)
             ?? throw new FaltaEventoRequerido("Registrar el acta de entrega", "Reserva confirmada", comando.NumeroDelArriendo);
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if (comando.Fotos is not { Count: > 0 })
+        {
+            throw new ReglaIncumplida("H-13", "El acta de entrega no trae fotos.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new RegistrarElActaDeEntregaDatos(comando, reservaConfirmada);
         ValidarReglas(datos);
 

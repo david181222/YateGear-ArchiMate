@@ -11,10 +11,6 @@ public sealed partial class PrestarUnLibroManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(PrestarUnLibroDatos datos)
     {
-        // Escrito a mano: la respuesta del catálogo (SA-01) llega en los datos del comando.
-        if (!datos.CatalogoDeLaBiblioteca.Disponible)
-        {
-            throw new ReglaIncumplida("REG-01", "El catálogo dice que el libro no está disponible.");
-        }
+        // REG-01: declarada en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 }

@@ -13,16 +13,7 @@ public sealed partial class LiberarElDepositoManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(LiberarElDepositoDatos datos)
     {
-        // REG-01, escrita a mano: con daños el depósito no se libera; se descuenta (SB-21).
-        if (datos.Comando.ValorDeLosDanos is > 0m)
-        {
-            throw new ReglaIncumplida("REG-01", "La inspección registró daños: el depósito se descuenta, no se libera.");
-        }
-        // INT-PAG, escrita a mano: una orden sin confirmación de la pasarela no cuenta como hecha.
-        if (!datos.CobrosPorLaPasarelaDePagos.Aprobada)
-        {
-            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó la liberación del depósito.");
-        }
+        // REG-01 e INT-PAG: declaradas en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 
     // Escrito a mano: se libera el mismo día de la devolución o, si la reserva se canceló, el de la cancelación

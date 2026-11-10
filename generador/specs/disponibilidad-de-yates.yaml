@@ -57,6 +57,13 @@ comandos:
       - precio por día
       - documentos al día ante la DIMAR
       - referencia del contrato del propietario   # sale de SA-02
+    reglas:
+      - regla: INT-CON                            # el propietario debe tener el contrato firmado (lo dice SA-02)
+        exige: {estado del contrato: [firmado]}
+        motivo: "El propietario no tiene contrato firmado."
+      - regla: NOR-01                             # los documentos del yate ante la DIMAR deben estar al día
+        exige: {documentos al día ante la DIMAR: [true]}
+        motivo: "Los documentos del yate ante la DIMAR no están al día."
     eventos: [Yate registrado]
 
   Definir las fechas bloqueadas del yate:         # contrato SB-03; lo inicia el propietario (V4-SUP-06)

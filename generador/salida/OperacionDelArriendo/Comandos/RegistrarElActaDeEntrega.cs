@@ -11,10 +11,7 @@ public sealed partial class RegistrarElActaDeEntregaManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(RegistrarElActaDeEntregaDatos datos)
     {
-        // H-13, escrita a mano: el acta debe traer fotos. CIE-01 (reserva confirmada) ya lo revisa "requiere".
-        if (datos.Comando.Fotos is null || datos.Comando.Fotos.Count == 0)
-        {
-            throw new ReglaIncumplida("H-13", "El acta de entrega no trae fotos.");
-        }
+        // H-13: declarada en el YAML (reglas); la revisa el código generado antes de llamar aquí.
+        // CIE-01 (reserva confirmada) ya lo revisa "requiere".
     }
 }

@@ -13,21 +13,7 @@ public sealed partial class DescontarDanosDelDepositoManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(DescontarDanosDelDepositoDatos datos)
     {
-        // V1 y H-13, escrita a mano: el descuento exige evidencia.
-        if (datos.Comando.Evidencia.Count == 0)
-        {
-            throw new ReglaIncumplida("V1", "Todo cobro va con evidencia: el descuento no trae las fotos de la inspección.");
-        }
-        // REG-01, escrita a mano: sin daños no hay nada que descontar; el depósito se libera (SB-20).
-        if (datos.Comando.ValorDeLosDanos <= 0m)
-        {
-            throw new ReglaIncumplida("REG-01", "La inspección no registró daños: el depósito se libera, no se descuenta.");
-        }
-        // INT-PAG, escrita a mano: una orden sin confirmación de la pasarela no cuenta como hecha.
-        if (!datos.CobrosPorLaPasarelaDePagos.Aprobada)
-        {
-            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó el descuento del depósito.");
-        }
+        // V1, REG-01 e INT-PAG: declaradas en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 
     // Escrito a mano: H-10 y SB-21, se descuenta hasta el valor del depósito; lo que sobra se libera en la misma operación

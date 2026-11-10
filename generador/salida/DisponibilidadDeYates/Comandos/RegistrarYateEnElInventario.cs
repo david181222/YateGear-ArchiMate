@@ -12,15 +12,6 @@ public sealed partial class RegistrarYateEnElInventarioManejador
     //   throw new ReglaIncumplida("REG-01", "motivo");
     partial void ValidarReglas(RegistrarYateEnElInventarioDatos datos)
     {
-        // INT-CON, escrita a mano: el propietario debe tener el contrato firmado (lo dice SA-02).
-        if (datos.ContratosConPropietariosYClientes.EstadoDelContrato != EstadoDelContrato.Firmado)
-        {
-            throw new ReglaIncumplida("INT-CON", "El propietario no tiene contrato firmado.");
-        }
-        // NOR-01, escrita a mano: los documentos del yate ante la DIMAR deben estar al día.
-        if (!datos.Comando.DocumentosAlDiaAnteLaDIMAR)
-        {
-            throw new ReglaIncumplida("NOR-01", "Los documentos del yate ante la DIMAR no están al día.");
-        }
+        // INT-CON y NOR-01: declaradas en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 }

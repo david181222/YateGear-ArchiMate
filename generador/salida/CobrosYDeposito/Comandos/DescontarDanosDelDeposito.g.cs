@@ -63,7 +63,21 @@ public sealed partial class DescontarDanosDelDepositoManejador(
         var calculadoValorQueExcedeElDeposito = ValorQueExcedeElDeposito(comando.ValorDeLosDanos, depositoParaDanos.ValorDelDeposito);
         var respuestaCobrosPorLaPasarelaDePagos = cobrosPorLaPasarelaDePagos.Llamar(new CobrosPorLaPasarelaDePagosEntrada(TipoDeOrden.DescuentoDelDeposito, depositoParaDanos.NumeroDelArriendo, calculadoValorDescontadoDelDeposito, null));
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if (comando.Evidencia is not { Count: > 0 })
+        {
+            throw new ReglaIncumplida("V1", "Todo cobro va con evidencia: el descuento no trae las fotos de la inspección.");
+        }
+        if ((comando.ValorDeLosDanos <= 0m))
+        {
+            throw new ReglaIncumplida("REG-01", "La inspección no registró daños: el depósito se libera, no se descuenta.");
+        }
+        if (!(respuestaCobrosPorLaPasarelaDePagos.Aprobada == true))
+        {
+            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó el descuento del depósito.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new DescontarDanosDelDepositoDatos(comando, depositoParaDanos, calculadoValorDescontadoDelDeposito, calculadoSaldoLiberado, calculadoValorQueExcedeElDeposito, respuestaCobrosPorLaPasarelaDePagos);
         ValidarReglas(datos);
 

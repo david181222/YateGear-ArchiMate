@@ -15,14 +15,10 @@ public sealed partial class BloquearElDepositoManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(BloquearElDepositoDatos datos)
     {
-        // INT-PAG, escrita a mano: una orden sin confirmación de la pasarela no cuenta como hecha.
-        var pasarela = datos.CobrosPorLaPasarelaDePagos;
-        if (!pasarela.Aprobada)
-        {
-            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó el bloqueo del depósito.");
-        }
+        // INT-PAG: declarada en el YAML (reglas); la revisa el código generado antes de llamar aquí.
         // V4-SUP-07, escrita a mano: el depósito se libera o se descuenta hasta 3 días después de la devolución
         // (resultado de la V1), así que el bloqueo no puede vencer antes de esa fecha.
+        var pasarela = datos.CobrosPorLaPasarelaDePagos;
         var cierre = datos.Comando.Fin.AddDays(3);
         if (pasarela.VencimientoDelBloqueo is not { } vence || vence < cierre)
         {

@@ -38,6 +38,8 @@ def valor_valido(v, t: dict) -> bool:
     return basico is not None and basico.valido(v)
 
 
+# Comparaciones de una regla declarada (comandos > reglas): {dato: {comparación: valor}}, y su operador en C#.
+COMPARACIONES = {"mayor_que": ">", "menor_que": "<", "minimo": ">=", "maximo": "<="}
 OPCIONES_DISPARO = ("con", "correspondencias", "si", "salvo", "si_existe")
 OPCIONES_USO_SA = ("con", "entrada", "salida", "si", "salvo")
 

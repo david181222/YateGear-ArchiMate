@@ -33,8 +33,12 @@ comandos:
       libro: string
       desde: DateOnly                             # los datos del objeto de valor "Plazo del préstamo", por su nombre
       hasta: DateOnly
-    usa: [Catálogo de la biblioteca]              # REG-01 (escrita a mano en PrestarUnLibro.cs) usa su respuesta
+    usa: [Catálogo de la biblioteca]              # REG-01 usa su respuesta
     guarda: [lector, libro, Plazo del préstamo]
+    reglas:                                       # la regla del contrato, declarada: el generador escribe su código
+      - regla: REG-01
+        exige: {disponible: [true]}               # "disponible" es la respuesta del catálogo (SA-01)
+        motivo: "El catálogo dice que el libro no está disponible."
     eventos: [Libro prestado]
 
   Devolver el libro:                              # contrato SB-02
@@ -92,6 +96,6 @@ escenarios:
         espera: {código: 409, estado actual: devuelto}
 
   Libro no disponible:
-    - Prestar un libro:                           # rechazo a propósito: REG-01, escrita a mano
+    - Prestar un libro:                           # rechazo a propósito: REG-01, declarada en reglas
         con: {lector: LEC-0002, libro: LIBRO-PRESTADO}
         espera: {código: 422, regla: REG-01}

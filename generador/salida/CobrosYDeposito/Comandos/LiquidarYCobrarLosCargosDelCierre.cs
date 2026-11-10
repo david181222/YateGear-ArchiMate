@@ -16,16 +16,7 @@ public sealed partial class LiquidarYCobrarLosCargosDelCierreManejador
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas(LiquidarYCobrarLosCargosDelCierreDatos datos)
     {
-        // V1, escrita a mano: todo cargo del cierre va con evidencia (las actas y fotos de entrega e inspección).
-        if (datos.Comando.Evidencia.Count == 0)
-        {
-            throw new ReglaIncumplida("V1", "Todo cobro va con evidencia: no llegaron las actas ni las fotos de la entrega y la inspección.");
-        }
-        // INT-PAG, escrita a mano: un cobro sin confirmación de la pasarela no cuenta como pagado.
-        if (!datos.CobrosPorLaPasarelaDePagos1.Aprobada || datos.CobrosPorLaPasarelaDePagos2 is { Aprobada: false })
-        {
-            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó un cargo del cierre.");
-        }
+        // V1 e INT-PAG: declaradas en el YAML (reglas); la revisa el código generado antes de llamar aquí.
     }
 
     // Escrito a mano: REG-01, el combustible consumido siempre lo paga el cliente; nunca negativo.

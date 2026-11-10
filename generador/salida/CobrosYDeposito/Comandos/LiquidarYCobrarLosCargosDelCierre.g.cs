@@ -69,7 +69,17 @@ public sealed partial class LiquidarYCobrarLosCargosDelCierreManejador(
             ? cobrosPorLaPasarelaDePagos.Llamar(new CobrosPorLaPasarelaDePagosEntrada(TipoDeOrden.TiempoAdicional, cuentaDelArriendo.NumeroDelArriendo, calculadoValorDelTiempoAdicional, null))
             : null;
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if (comando.Evidencia is not { Count: > 0 })
+        {
+            throw new ReglaIncumplida("V1", "Todo cobro va con evidencia: no llegaron las actas ni las fotos de la entrega y la inspección.");
+        }
+        if ((respuestaCobrosPorLaPasarelaDePagos1.Aprobada == false) || (respuestaCobrosPorLaPasarelaDePagos2?.Aprobada == false))
+        {
+            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó un cargo del cierre.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new LiquidarYCobrarLosCargosDelCierreDatos(comando, cuentaDelArriendo, calculadoValorDelCombustible, calculadoValorDelTiempoAdicional, calculadoHayTiempoAdicional, respuestaCobrosPorLaPasarelaDePagos1, respuestaCobrosPorLaPasarelaDePagos2);
         ValidarReglas(datos);
 

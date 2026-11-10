@@ -78,7 +78,13 @@ public sealed partial class ReembolsarUnaCancelacionManejador(
             (calculadoReembolsable == false) ? ReembolsarUnaCancelacionResultado.CancelacionNoReembolsada :
             throw new ReglaIncumplida("resultados", "Ningún resultado de \"Reembolsar una cancelación\" se cumple con estos datos.");
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if ((respuestaCobrosPorLaPasarelaDePagos?.Aprobada == false))
+        {
+            throw new ReglaIncumplida("INT-PAG", "La pasarela no aprobó el reembolso.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new ReembolsarUnaCancelacionDatos(comando, cuentaDelArriendo, calculadoValorDelReembolso, respuestaContratosConPropietariosYClientes, calculadoReembolsable, respuestaCobrosPorLaPasarelaDePagos, resultado);
         ValidarReglas(datos);
 

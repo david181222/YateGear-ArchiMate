@@ -45,7 +45,17 @@ public sealed partial class RegistrarYateEnElInventarioManejador(
         // 2. Servicios SA que usa, en orden.
         var respuestaContratosConPropietariosYClientes = contratosConPropietariosYClientes.Llamar(new ContratosConPropietariosYClientesEntrada(comando.Propietario));
 
-        // 4. Reglas del contrato (archivo manual).
+        // 4. Reglas del contrato declaradas en el YAML (reglas), en orden.
+        if (!(respuestaContratosConPropietariosYClientes.EstadoDelContrato == EstadoDelContrato.Firmado))
+        {
+            throw new ReglaIncumplida("INT-CON", "El propietario no tiene contrato firmado.");
+        }
+        if (!(comando.DocumentosAlDiaAnteLaDIMAR == true))
+        {
+            throw new ReglaIncumplida("NOR-01", "Los documentos del yate ante la DIMAR no están al día.");
+        }
+
+        // 4b. Las demás reglas del contrato (archivo manual).
         var datos = new RegistrarYateEnElInventarioDatos(comando, respuestaContratosConPropietariosYClientes);
         ValidarReglas(datos);
 

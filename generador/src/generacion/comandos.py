@@ -177,6 +177,7 @@ class Comandos:
         else:
             eventos_cmd = list(sc.get("eventos") or [])
         self.revisar_miembros(n["datos"], [p["prop"] for p in datos_props])
+        reglas = self.reglas_declaradas(sc, antes)
 
         # Lo que guarda (después de ValidarReglas): el comando y, si tiene resultados, cada resultado.
         asignaciones, operaciones = self.guardar(sc.get("guarda"), antes, r)
@@ -221,7 +222,7 @@ class Comandos:
                "asignaciones": asignaciones, "eventos": [publicar[e] for e in eventos_cmd],
                "calculados": calculados, "calculados_comando": calc_metodos,
                "con_calculos": any(x["tipo"] == "calculo" for x in llamadas),
-               "contrato": k, "servicio_negocio": mc["servicio_negocio"],
+               "contrato": k, "servicio_negocio": mc["servicio_negocio"], "reglas_declaradas": reglas,
                "reglas": lineas(k["reglas"]) if k["reglas"] else ["El contrato no tiene reglas."],
                "salida_contrato": lineas(k["salida"]),
                "ruta": f'{self.ruta_base}/comandos/{nombres.ruta(mc["nombre"])}',
@@ -233,6 +234,38 @@ class Comandos:
         self.render("comando.g.cs.j2", com["archivo"], c=com, raiz=r, cabecera=cab)
         self.render("comando_manual.cs.j2", com["manual"], manual=True, c=com, raiz=r, cabecera=cab)
         self.trazar_comando(mc, com, n, r)
+
+    @staticmethod
+    def reglas_declaradas(sc: dict, antes: Ambito) -> list[dict]:
+        """Las reglas del contrato declaradas en el YAML (reglas), en orden: de cada una, su código, su motivo y la
+        condición de C# con que se incumple. exige pide que el dato esté entre sus valores (o cumpla su comparación),
+        rechaza, que no; no_vacio, que la lista tenga elementos, el texto no esté en blanco o el dato opcional haya
+        llegado. Un dato que no llegó (null) no cumple un exige y no cae en un rechaza."""
+        reglas = []
+        for regla in sc.get("reglas") or []:
+            incumple = []
+            for clave, exigido in (("exige", True), ("rechaza", False)):
+                for dato, x in (regla.get(clave) or {}).items():
+                    f = antes.buscar(dato)
+                    if f is None:
+                        raise ErrorDeGeneracion(f'la regla {regla["regla"]} usa "{dato}", que no está disponible')
+                    t, e = {**f["tipo"], "opcional": False}, antes.expr(dato, True)
+                    if isinstance(x, dict):
+                        comparacion, valor = next(iter(x.items()))
+                        cumple = f"{e} {valores.COMPARACIONES[comparacion]} {cs_literal(valor, t)}"
+                    else:
+                        cumple = " || ".join(f"{e} == {cs_literal(v, t)}" for v in x)
+                    incumple.append(f"!({cumple})" if exigido else f"({cumple})")
+            for dato in regla.get("no_vacio") or []:
+                f = antes.buscar(dato)
+                if f is None:
+                    raise ErrorDeGeneracion(f'la regla {regla["regla"]} usa "{dato}", que no está disponible')
+                e = antes.expr(dato, True)
+                incumple.append(f"{e} is not {{ Count: > 0 }}" if f["tipo"]["lista"]
+                                else f"string.IsNullOrWhiteSpace({e})" if f["tipo"]["base"] == "string" else f"{e} is null")
+            reglas.append({"regla": regla["regla"], "codigo": cs_cadena(regla["regla"]), "motivo": cs_cadena(regla["motivo"]),
+                           "condicion": " || ".join(incumple)})
+        return reglas
 
     def eventos_requeridos(self, sc: dict, r: dict, antes: Ambito, datos_props: list, datos_args: list):
         """Eventos de otros contextos que el comando requiere (YAML: requiere): se buscan en la memoria por su

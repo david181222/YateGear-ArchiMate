@@ -9,6 +9,10 @@ public sealed partial class {{ c.manejador }}
     //   {{ l }}
 {% endfor %}
     //
+{% if c.reglas_declaradas %}
+    // Ya las revisa el código generado, porque están declaradas en el YAML (reglas): {{ c.reglas_declaradas | map(attribute="regla") | unique | join(", ") }}.
+    // Aquí van solo las que el YAML no puede declarar.
+{% endif %}
     // Se llama antes de la transición de estado. Para rechazar la operación:
     //   throw new ReglaIncumplida("<código de la regla>", "motivo");
     partial void ValidarReglas({{ c.datos }} datos)

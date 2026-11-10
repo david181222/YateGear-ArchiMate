@@ -67,6 +67,10 @@ comandos:
           entrada: {valor: valor del depósito}
           salida: {comprobante: código de autorización de la pasarela, vencimiento del bloqueo: fecha de vencimiento del bloqueo}
     guarda: [valor del depósito, código de autorización de la pasarela, fecha de vencimiento del bloqueo]
+    reglas:                                       # V4-SUP-07 (el vencimiento del bloqueo) va a mano: compara dos fechas
+      - regla: INT-PAG                            # una orden sin confirmación de la pasarela no cuenta como hecha
+        exige: {aprobada: [true]}
+        motivo: "La pasarela no aprobó el bloqueo del depósito."
     eventos: [Depósito bloqueado]
 
   Cobrar alquiler y seguro:                       # contrato SB-13; lo dispara el contrato del cliente firmado (SA-02, V6)
@@ -131,6 +135,13 @@ comandos:
           agregar: {valor: valor del tiempo adicional, comprobante: comprobante del tiempo adicional, fecha: fecha del tiempo adicional}
           valores: {concepto: tiempo adicional}
           si: {hay tiempo adicional: [true]}
+    reglas:
+      - regla: V1                                 # todo cargo del cierre va con evidencia (actas y fotos)
+        no_vacio: [evidencia]
+        motivo: "Todo cobro va con evidencia: no llegaron las actas ni las fotos de la entrega y la inspección."
+      - regla: INT-PAG                            # un cobro sin confirmación de la pasarela no cuenta como pagado
+        rechaza: {combustible aprobado: [false], tiempo adicional aprobado: [false]}
+        motivo: "La pasarela no aprobó un cargo del cierre."
     eventos: [Cargos del cierre cobrados]
 
   Reembolsar una cancelación:                     # contrato SB-15; lo dispara "Reserva cancelada" (Gestión del arriendo)
@@ -147,6 +158,10 @@ comandos:
           con: {tipo de orden: reembolso}
           entrada: {valor: valor del reembolso}
           salida: {comprobante: comprobante del reembolso, aprobada: reembolso aprobado, fecha de la orden: fecha del reembolso}
+    reglas:
+      - regla: INT-PAG                            # un reembolso sin confirmación de la pasarela no cuenta como hecho
+        rechaza: {reembolso aprobado: [false]}
+        motivo: "La pasarela no aprobó el reembolso."
     resultados:                                   # V6-DEC-08: un evento por resultado
       Cancelación reembolsada:
         si: {reembolsable: [true]}
@@ -171,6 +186,13 @@ comandos:
           con: {tipo de orden: liberación del depósito}
           entrada: {valor: valor del depósito}
           salida: {comprobante: comprobante de la liberación, aprobada: liberación aprobada}
+    reglas:
+      - regla: REG-01                             # con daños el depósito no se libera; se descuenta (SB-21)
+        rechaza: {valor de los daños: {mayor_que: 0}}
+        motivo: "La inspección registró daños: el depósito se descuenta, no se libera."
+      - regla: INT-PAG                            # una orden sin confirmación de la pasarela no cuenta como hecha
+        exige: {liberación aprobada: [true]}
+        motivo: "La pasarela no aprobó la liberación del depósito."
     eventos: [Depósito liberado]
 
   Descontar daños del depósito:                   # contrato SB-21; lo dispara "Diferencias determinadas" con daños
@@ -190,6 +212,16 @@ comandos:
           salida: {comprobante: comprobante del descuento, aprobada: descuento aprobado}
     guarda:
       - evidencia del descuento: evidencia        # H-13: el descuento exige evidencia
+    reglas:
+      - regla: V1                                 # V1 y H-13: el descuento exige evidencia
+        no_vacio: [evidencia]
+        motivo: "Todo cobro va con evidencia: el descuento no trae las fotos de la inspección."
+      - regla: REG-01                             # sin daños no hay nada que descontar; el depósito se libera (SB-20)
+        rechaza: {valor de los daños: {maximo: 0}}
+        motivo: "La inspección no registró daños: el depósito se libera, no se descuenta."
+      - regla: INT-PAG                            # una orden sin confirmación de la pasarela no cuenta como hecha
+        exige: {descuento aprobado: [true]}
+        motivo: "La pasarela no aprobó el descuento del depósito."
     eventos: [Daños descontados del depósito]
 
   Reclamar el excedente de daños a la aseguradora:   # contrato SB-16; lo dispara "Daños descontados del depósito" (política)
@@ -212,6 +244,13 @@ comandos:
       - valor de los daños
       - valor descontado del depósito
       - evidencia
+    reglas:
+      - regla: REG-01                             # solo se reclama lo que el daño supera el depósito (cubre la llamada directa)
+        rechaza: {valor que excede el depósito: {maximo: 0}}
+        motivo: "El daño no supera el depósito: no hay nada que reclamar a la aseguradora."
+      - regla: EXC-02                             # el reclamo va con la evidencia de la entrega y de la inspección
+        no_vacio: [evidencia]
+        motivo: "Falta la evidencia de la entrega y de la inspección."
     eventos: [Reclamo enviado a la aseguradora]
 
   Cerrar las cuentas del arriendo:                # contrato SB-17; lo disparan los cargos del cierre y la decisión sobre el depósito (D7)

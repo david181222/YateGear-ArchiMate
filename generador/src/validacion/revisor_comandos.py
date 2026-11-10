@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from comun import tipos
-from validacion.valores import ESCRIBEN, mismo_tipo, opcional, OPCIONES_USO_SA, ubicar_calculados, uso_sa, valor_valido
+from validacion.valores import COMPARACIONES, ESCRIBEN, mismo_tipo, opcional, OPCIONES_USO_SA, ubicar_calculados, uso_sa, valor_valido
 
 
 class RevisionDeComandos:
@@ -37,7 +37,7 @@ class RevisionDeComandos:
             return
         con_raiz, todos, campos_raiz, vos, base, estado_t, nombre_raiz = self.usar(rc)
         c = self.mapa(c_yaml, d, ["crea", "desde", "a", "entrada", "valores", "requiere", "usa", "calculados", "guarda",
-                                     "eventos", "resultados", "sobre", "temporizador"], ["entrada"])
+                                     "eventos", "resultados", "sobre", "temporizador", "reglas"], ["entrada"])
         todas = c.get("sobre") == "todas"             # G8: revisa todas las raíces y publica un evento por cada elegida
         if "sobre" in c and not todas:
             self.error(f"{d} > sobre", 'en un comando solo se permite "sobre: todas"')
@@ -92,6 +92,7 @@ class RevisionDeComandos:
 
         self.revisar_requiere(n, c, d, bolsa, propios, origenes_cmd)
         self.revisar_calculados_y_sas(n, m, c, d, crea, todas, bolsa, propios, origenes_cmd)
+        self.revisar_reglas(c, d, todas, bolsa, propios)
         for k, lista_o in sorted(origenes_cmd.items()):
             if len(lista_o) > 1 and k != self.id_nombre:
                 self.varios_origenes.append(f'{n}: "{k}" llega de {", ".join(lista_o)}; se usa {lista_o[-1]}')
@@ -264,6 +265,56 @@ class RevisionDeComandos:
             for k in salida:
                 origenes_cmd.setdefault(k, []).append(f'SA "{sa}"')
             calcular(puntos[i])
+
+    def revisar_reglas(self, c: dict, d: str, todas: bool, bolsa: dict, propios: set):
+        """Reglas del contrato declaradas en el YAML (reglas): una lista, en el orden en que se revisan. Cada una lleva
+        su código (regla), su motivo y lo que pide de los datos del comando (entrada, raíz, servicios SA y calculados):
+        exige {dato: [valores]} (el dato debe estar entre esos valores), rechaza {dato: [valores]} (no debe estar),
+        con {dato: {comparación: valor}} en lugar de la lista para comparar un número o una fecha, y no_vacio [datos]
+        (una lista con elementos, un texto que no está en blanco o un dato opcional que llegó)."""
+        if "reglas" not in c:
+            return
+        if todas:
+            self.error(f"{d} > reglas", "un comando sobre todas las raíces no lleva reglas: las elige su archivo manual")
+            return
+        for i, regla in enumerate(self.lista(c.get("reglas"), f"{d} > reglas"), 1):
+            dr = f"{d} > reglas {i}"
+            regla = self.mapa(regla, dr, ["regla", "exige", "rechaza", "no_vacio", "motivo"], ["regla", "motivo"])
+            for k in ("regla", "motivo"):
+                if k in regla and (not isinstance(regla[k], str) or not regla[k].strip()):
+                    self.error(f"{dr} > {k}", "es un texto")
+            if not any(k in regla for k in ("exige", "rechaza", "no_vacio")):
+                self.error(dr, "di qué pide la regla: exige, rechaza o no_vacio")
+            for k in ("exige", "rechaza"):
+                pedidos = self.mapa(regla.get(k), f"{dr} > {k}")
+                self.condicion({dato: x for dato, x in pedidos.items() if not isinstance(x, dict)}, bolsa, f"{dr} > {k}", propios)
+                for dato, x in pedidos.items():
+                    if isinstance(x, dict):
+                        self.revisar_comparacion(dato, x, bolsa, propios, f"{dr} > {k}")
+            for dato in self.lista(regla.get("no_vacio"), f"{dr} > no_vacio"):
+                t = self.dato_de_regla(dato, bolsa, propios, f"{dr} > no_vacio")
+                if t and not (t["lista"] or t["opcional"] or t["base"] == "string"):
+                    self.error(f"{dr} > no_vacio", f'"{dato}" es {t["tipo"]}: no_vacio va con una lista, un texto o un dato opcional')
+
+    def dato_de_regla(self, dato, bolsa: dict, propios: set, donde: str) -> dict | None:
+        """El tipo de un dato que usa una regla, o None (con su error) si no está disponible o puede venir de dos lugares."""
+        if dato in self.ambiguos and dato not in propios:
+            self.error(donde, f'la regla usa "{dato}", que puede venir de {" y de ".join(self.ambiguos[dato])}')
+        elif dato not in bolsa:
+            self.error(donde, f'la regla usa "{dato}", que no está disponible')
+        else:
+            return bolsa[dato]
+        return None
+
+    def revisar_comparacion(self, dato, x: dict, bolsa: dict, propios: set, donde: str):
+        """{dato: {comparación: valor}}: una sola comparación, de un número o una fecha con un valor fijo de su tipo."""
+        t = self.dato_de_regla(dato, bolsa, propios, donde)
+        if len(x) != 1 or next(iter(x)) not in COMPARACIONES:
+            self.error(f"{donde} > {dato}", f'se escribe una lista de valores o una comparación: {", ".join(COMPARACIONES)}')
+        elif t and (t["lista"] or t["base"] not in ("int", "decimal", "DateOnly", "DateTime")):
+            self.error(f"{donde} > {dato}", f'"{dato}" es {t["tipo"]}: solo se comparan números y fechas')
+        elif t and not valor_valido(next(iter(x.values())), {**t, "opcional": False}):
+            self.error(f"{donde} > {dato}", f'el valor {next(iter(x.values()))!r} no es válido para "{dato}" ({t["tipo"]})')
 
     def revisar_eventos_del_comando(self, n: str, m: dict, c: dict, d: str, crea: bool, todas: bool, bolsa: dict,
                                     propios: set, guardados: dict, desde):
