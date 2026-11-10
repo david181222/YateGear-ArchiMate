@@ -8,7 +8,7 @@
 #   ... -Salida ejemplo/salida    (otra carpeta generada; por defecto, salida)
 #
 # Con -Puerto el cambio es solo para esta vez: cambia también @base en salida/pruebas/<Proyecto>/pruebas.http.
-# Para cambiarlo siempre, cambia PUERTO en src/generar.py y vuelve a generar.
+# Para cambiarlo siempre, genera con otro puerto: generar.ps1 -Puerto 5090.
 #
 # Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
 param(

@@ -16,7 +16,7 @@ from generacion.constantes import (
     INFRAESTRUCTURA,
     INTEGRACION,
     MIEMBROS_RESERVADOS,
-    PUERTO,
+    PUERTO_POR_DEFECTO,
 )
 from generacion.consultas import Consultas
 from generacion.csharp import cs_cadena, cs_tipo, ErrorDeGeneracion, xml
@@ -30,8 +30,8 @@ from generacion.servicios_sa import ServiciosSA
 class Generador(Raices, ServiciosSA, Eventos, Comandos, Consultas, Politicas, Escenarios):
     """Genera un contexto. Cada parte (raíces, comandos, consultas...) está en su módulo."""
 
-    def __init__(self, modelo: dict, spec: dict, salida: Path):
-        self.m, self.s, self.salida = modelo, spec, salida
+    def __init__(self, modelo: dict, spec: dict, salida: Path, puerto: int = PUERTO_POR_DEFECTO):
+        self.m, self.s, self.salida, self.puerto = modelo, spec, salida, puerto
         self.ctx = next(c for c in modelo["contextos"] if c["nombre"] == spec["contexto"])
         dominio = self.ctx["nombre"].removeprefix("Contexto ")
         self.proyecto = nombres.pascal(dominio)
@@ -100,7 +100,7 @@ class Generador(Raices, ServiciosSA, Eventos, Comandos, Consultas, Politicas, Es
 
     def render(self, plantilla: str, destino: str, manual: bool = False, **datos):
         texto = self.env.get_template(plantilla).render(ns=self.ns, ns_integracion=self.ns_integracion,
-                                                        puerto=PUERTO, **datos)
+                                                        puerto=self.puerto, **datos)
         if "\r" in texto:
             raise ErrorDeGeneracion(f"{plantilla}: la salida tiene fin de línea CRLF")
         (self.manuales if manual else self.archivos)[destino] = texto

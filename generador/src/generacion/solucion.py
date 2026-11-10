@@ -6,7 +6,7 @@ from pathlib import Path
 import uuid
 
 from comun import nombres
-from generacion.constantes import ARCHIVOS_GENERADOS, INTEGRACION, PRUEBAS_ENTRE_CONTEXTOS, PUERTO, TIPO_PROYECTO_CS
+from generacion.constantes import ARCHIVOS_GENERADOS, INTEGRACION, PRUEBAS_ENTRE_CONTEXTOS, PUERTO_POR_DEFECTO, TIPO_PROYECTO_CS
 from generacion.contexto import Generador
 from generacion.csharp import ErrorDeGeneracion
 from generacion.escenarios import es_rechazo, espera_de_salida, espera_sin_datos
@@ -16,12 +16,13 @@ from validacion import valores
 class Solucion:
     """Junta los contextos en una solución: host, bus entre contextos (Integracion), .sln y contextos.json."""
 
-    def __init__(self, modelo: dict, specs_: list[dict], salida: Path, entre_contextos: list[dict] | None = None):
-        self.m, self.salida = modelo, salida
+    def __init__(self, modelo: dict, specs_: list[dict], salida: Path, entre_contextos: list[dict] | None = None,
+                 puerto: int = PUERTO_POR_DEFECTO):
+        self.m, self.salida, self.puerto = modelo, salida, puerto
         self.entre_contextos = entre_contextos or []
         self.modelo_nombre = modelo["generado_desde"]["modelo_nombre"]
         self.host = nombres.pascal(self.modelo_nombre)
-        self.generadores = [Generador(modelo, s, salida) for s in specs_]
+        self.generadores = [Generador(modelo, s, salida, puerto) for s in specs_]
         proyectos = [g.proyecto for g in self.generadores]
         for nombre in sorted(set(proyectos)):
             if proyectos.count(nombre) > 1:
@@ -33,7 +34,7 @@ class Solucion:
         self.env = self.generadores[0].env if self.generadores else None
 
     def render(self, plantilla: str, **datos) -> str:
-        texto = self.env.get_template(plantilla).render(puerto=PUERTO, **datos)
+        texto = self.env.get_template(plantilla).render(puerto=self.puerto, **datos)
         if "\r" in texto:
             raise ErrorDeGeneracion(f"{plantilla}: la salida tiene fin de línea CRLF")
         return texto
@@ -110,7 +111,7 @@ class Solucion:
                            key=lambda x: x["nombre"])
         sln = f"{h}.sln"
         archivos[sln] = self.render("solucion.sln.j2", cabecera=cab, proyectos=proyectos, tipo_proyecto=TIPO_PROYECTO_CS)
-        manifiesto = {"generado_desde": cab, "host": h, "puerto": PUERTO,
+        manifiesto = {"generado_desde": cab, "host": h, "puerto": self.puerto,
                       "contextos": [{"nombre": g.ctx["nombre"], "proyecto": g.proyecto, "ruta_base": g.ruta_base,
                                      "escenarios": g.escenarios_json, "trazabilidad": f"trazabilidad/{g.proyecto}.csv"}
                                     for g in gs]}

@@ -13,16 +13,19 @@ Escribe:
   - pruebas/EntreContextos/, si entre los YAML hay escenarios entre contextos (S4).
 Borra los archivos generados que ya no corresponden y avisa de los manuales huérfanos.
 
-uso: python src/generar.py <modelo-ddd.json> <carpeta de salida> <specs.yaml> [<specs.yaml> ...]
+uso: python src/generar.py [--puerto N] <modelo-ddd.json> <carpeta de salida> <specs.yaml> [<specs.yaml> ...]
+--puerto: el puerto de la aplicación generada (por defecto 5080).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import sys
 
 from comun import nombres
+from generacion.constantes import PUERTO_POR_DEFECTO
 from generacion.csharp import ErrorDeGeneracion
 from generacion.solucion import Solucion
 from validacion import carga, valores
@@ -34,9 +37,15 @@ from validacion.revisor import Revisor
 def main():
     for f in (sys.stdout, sys.stderr):
         f.reconfigure(encoding="utf-8")
-    if len(sys.argv) < 4:
-        sys.exit(__doc__)
-    ruta_json, ruta_salida, *rutas_yaml = sys.argv[1:]
+    analizador = argparse.ArgumentParser(description="Genera la solución C# desde modelo-ddd.json y los YAML de especificaciones.")
+    analizador.add_argument("modelo", help="modelo-ddd.json, el que escribe extraer.py")
+    analizador.add_argument("salida", help="carpeta de lo generado")
+    analizador.add_argument("specs", nargs="+", help="un YAML por contexto, y el de los escenarios entre contextos")
+    analizador.add_argument("--puerto", type=int, default=PUERTO_POR_DEFECTO, help="puerto de la aplicación generada")
+    args = analizador.parse_args()
+    ruta_json, ruta_salida, rutas_yaml, puerto = args.modelo, args.salida, args.specs, args.puerto
+    if not 1 <= puerto <= 65535:
+        sys.exit(f"ERROR: el puerto {puerto} no es válido (de 1 a 65535)")
     modelo = json.loads(Path(ruta_json).read_text(encoding="utf-8"))
     specs_, errores, entre, revisores = [], [], [], {}
     for ruta_yaml in rutas_yaml:
@@ -68,7 +77,7 @@ def main():
             print("  ERROR", e, file=sys.stderr)
         sys.exit(1)
     try:
-        res = Solucion(modelo, specs_, Path(ruta_salida), [s for _, s in entre]).generar()
+        res = Solucion(modelo, specs_, Path(ruta_salida), [s for _, s in entre], puerto).generar()
     except (ErrorDeGeneracion, nombres.NombreInvalido) as e:
         sys.exit(f"ERROR de generación: {e}")
     generados = {n for n, _, _ in res["contextos"]}

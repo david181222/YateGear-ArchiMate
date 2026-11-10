@@ -1,7 +1,7 @@
 // Generado desde ArchiMate: Model "Biblioteca" (id-2978acbbf99b509f9ea9ee63176d70ae).
 // Programa (host): levanta los contextos generados en un solo proceso, con el bus entre contextos (D1).
-// No editar: el generador reescribe este archivo. El puerto (5080) sale de PUERTO en src/generar.py;
-// para una sola vez: ejecutar.ps1 -Puerto.
+// No editar: el generador reescribe este archivo. El puerto (5080) se elige al generar
+// (generar.ps1 -Puerto); para una sola vez: ejecutar.ps1 -Puerto.
 #nullable enable
 using Biblioteca.Integracion;
 

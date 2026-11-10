@@ -11,7 +11,7 @@
 #   ... -Modelo ejemplo/Biblioteca.archimate -Specs ejemplo/specs/prestamos.yaml -Salida ejemplo/salida   (otro modelo)
 #
 # -Modelo: por defecto, el único .archimate de ../modelo. -Specs: por defecto, todos los specs/*.yaml.
-# -Salida: la carpeta de lo generado, por defecto salida. -SoloValidar no toca esa carpeta: el XML y el JSON
+# -Salida: la carpeta de lo generado, por defecto salida. -Puerto: el puerto de la aplicación generada, por defecto 5080. -SoloValidar no toca esa carpeta: el XML y el JSON
 # intermedios van a una carpeta temporal.
 #
 # Las rutas van con "/", que sirve en Windows y en Linux.
@@ -21,6 +21,7 @@ param(
     [string[]]$Specs = @(),
     [string]$Archi = "",
     [string]$Salida = "salida",
+    [int]$Puerto = 5080,
     [switch]$SoloValidar
 )
 
@@ -113,7 +114,7 @@ if ($SoloValidar) {
 }
 
 Paso 5 "Generar la solución C#"
-& $py src/generar.py $json $Salida @Specs
+& $py src/generar.py --puerto $Puerto $json $Salida @Specs
 if ($LASTEXITCODE -ne 0) { Fallo "la generación falló (ver arriba)." }
 
 Paso 6 "Compilar con .NET 8"
