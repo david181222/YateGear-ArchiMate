@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 from comun import tipos
-from validacion.valores import CAMPOS_DE_ERROR, CLAVE_ENTRE_CONTEXTOS, es_entre_contextos, valor_valido
-
 from validacion.carga import cargar_yaml
 from validacion.revisor import Revisor
+from validacion.valores import CAMPOS_DE_ERROR, CLAVE_ENTRE_CONTEXTOS, es_entre_contextos, valor_valido
+
 
 class RevisorEntreContextos:
     """Revisa los escenarios de punta a punta entre contextos (S4) contra los YAML de los contextos que usan.

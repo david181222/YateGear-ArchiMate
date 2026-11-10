@@ -17,11 +17,12 @@ uso: python src/extraer.py <modelo.xml | modelo.archimate> <salida.json> ["<Cont
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 from lectura import leer
 from lectura.extractor import NOMBRE_SB, Extractor, resumen
+
 
 def main():
     for s in (sys.stdout, sys.stderr):

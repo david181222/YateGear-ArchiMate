@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from comun import tipos
+from validacion.revisor import Revisor
 from validacion.valores import mismo_tipo
 
-from validacion.revisor import Revisor
 
 def revisar_contratos(modelo: dict, revisores: dict[str, Revisor], solo: str | None = None) -> tuple[list[str], list[str]]:
     """Contratos entre contextos (D2): lo que quien recibe un evento de otro contexto declara en

@@ -6,6 +6,7 @@ import textwrap
 
 from comun import nombres, tipos
 
+
 class ErrorDeGeneracion(Exception):
     pass
 

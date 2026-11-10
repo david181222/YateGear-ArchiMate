@@ -10,12 +10,13 @@ si es de acceso, su tipo de acceso.
 """
 from __future__ import annotations
 
-import logging
-import xml.etree.ElementTree as ET
 from collections import defaultdict
 from dataclasses import dataclass, field
+import logging
+import xml.etree.ElementTree as ET
 
 from pyArchimate.model import Model
+
 
 # Cómo nombra cada lectura el tipo de acceso, llevado a una sola forma.
 # .archimate: sin atributo = escritura, "1" = lectura, "2" = acceso, "3" = lectura y escritura.

@@ -1,17 +1,16 @@
 """Revisor del YAML de un contexto. Cada sección del YAML se revisa en su módulo."""
 from __future__ import annotations
 
-from comun import tipos
-from validacion.valores import mismo_tipo, valor_valido
-
 from pathlib import Path
 
+from comun import tipos
 from validacion.revisor_comandos import RevisionDeComandos
 from validacion.revisor_consultas import RevisionDeConsultas
 from validacion.revisor_escenarios import RevisionDeEscenarios
 from validacion.revisor_eventos import RevisionDeEventos
 from validacion.revisor_raices import RevisionDeRaices
 from validacion.revisor_servicios_sa import RevisionDeServiciosSA
+from validacion.valores import mismo_tipo, valor_valido
 
 
 class Revisor(RevisionDeRaices, RevisionDeServiciosSA, RevisionDeComandos, RevisionDeEventos, RevisionDeConsultas,

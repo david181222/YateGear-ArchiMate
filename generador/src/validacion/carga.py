@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import yaml
 
+
 class _Cargador(yaml.SafeLoader):
     pass
 

@@ -1,7 +1,15 @@
 """Generador de un contexto: prepara en memoria todos sus archivos."""
 from __future__ import annotations
 
+import csv
+import io
+import json
+from pathlib import Path
+
+import jinja2
+
 from comun import nombres, tipos
+from generacion.comandos import Comandos
 from generacion.constantes import (
     CARPETAS_MANUALES,
     DIR_PLANTILLAS,
@@ -10,17 +18,8 @@ from generacion.constantes import (
     MIEMBROS_RESERVADOS,
     PUERTO,
 )
-from generacion.csharp import cs_cadena, cs_tipo, ErrorDeGeneracion, xml
-
-import csv
-import io
-import json
-from pathlib import Path
-
-import jinja2
-
-from generacion.comandos import Comandos
 from generacion.consultas import Consultas
+from generacion.csharp import cs_cadena, cs_tipo, ErrorDeGeneracion, xml
 from generacion.escenarios import Escenarios
 from generacion.eventos import Eventos
 from generacion.politicas import Politicas

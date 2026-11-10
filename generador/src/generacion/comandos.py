@@ -55,25 +55,7 @@ class Comandos:
         elif not crea:
             datos_props.append({"cs": r["clase"], "prop": r["clase"]})
             datos_args.append(v)
-        # Eventos de otros contextos que el comando requiere (D5): se buscan en la memoria por su identidad.
-        requeridos, capas_req = [], []
-        for nombre_ev in sc.get("requiere") or []:
-            x = self.s["eventos_de_otros_contextos"][nombre_ev]
-            ev_clase, var_ev = nombres.pascal(nombre_ev), nombres.camel(nombre_ev)
-            id_ev = x.get("identidad") or r["id_nombre"]
-            requeridos.append({"var": var_ev, "clase": ev_clase, "nombre": cs_cadena(nombre_ev),
-                               "identidad": antes.expr(id_ev, False)})
-            capa = {k: fuente(f"{var_ev}.{nombres.pascal(k)}", tipos.interpretar(tx))
-                    for k, tx in (x.get("datos") or {}).items()}
-            # Un evento que solo se recuerda puede traer un dato con otro nombre (correspondencias, D2): el comando
-            # lo toma con su nombre, {dato del comando: dato del evento}.
-            if "dispara" not in x:
-                for local, del_ev in (x.get("correspondencias") or {}).items():
-                    capa[local] = fuente(f"{var_ev}.{nombres.pascal(del_ev)}", tipos.interpretar(x["datos"][del_ev]))
-            antes.agregar(capa)
-            capas_req.append(capa)
-            datos_props.append({"cs": ev_clase, "prop": ev_clase})
-            datos_args.append(var_ev)
+        requeridos, capas_req = self.eventos_requeridos(sc, r, antes, datos_props, datos_args)
         if requeridos:
             deps.append({"cs": "MemoriaDeEventos", "var": "memoria"})
         # Otras raíces que el comando lee (G6): se cargan por el dato con el nombre de su identidad; 404 si no existen.
@@ -197,52 +179,10 @@ class Comandos:
                                         for k, val in (rr.get("valores") or {}).items()}
             x["asignaciones"], x["operaciones"] = self.guardar(rr.get("guarda"), antes.con(capas_val_r[x["evento"]]), r)
 
-        # Identidad formada con datos (G3): sus partes que no son campos se guardan en la raíz, y la identidad
-        # se arma uniéndolas con "/". Al agregarla, el repositorio responde 409 si ya existe.
-        identidad_expr, partes_obligatorias = None, []
-        if crea and not r["consecutivo"]:
-            # Las partes de texto que llegan en la entrada no pueden faltar (si no, la identidad quedaría a medias).
-            for parte in r["id_de"]:
-                f_parte = antes.buscar(parte)
-                if f_parte and f_parte["tipo"]["base"] == "string" and f_parte["requerido"].startswith("comando."):
-                    partes_obligatorias.append({"expr": f_parte["requerido"], "nombre": cs_cadena(parte)})
-            for comp in r["componentes"]:
-                asignaciones.append({"prop": comp["prop"], "expr": antes.expr(comp["nombre"], False)})
-            partes = []
-            for parte in r["id_de"]:
-                fuente_parte = antes.buscar(parte)
-                if fuente_parte is None:              # campo de la raíz que solo se guarda: se toma de la raíz nueva
-                    fuente_parte = self.fuentes_raiz[parte]
-                    e = fuente_parte["requerido"]
-                else:
-                    e = antes.expr(parte, False)
-                # Las fechas, en formato fijo e independiente del idioma del equipo (2026-03-10T10:00:00).
-                formato = {"DateTime": '"s"', "DateOnly": '"yyyy-MM-dd"'}.get(fuente_parte["tipo"]["base"])
-                partes.append(f"({e}).ToString({formato}, System.Globalization.CultureInfo.InvariantCulture)" if formato else e)
-            identidad_expr = '$"' + "/".join("{(" + x + ")}" for x in partes) + '"'
-
+        identidad_expr, partes_obligatorias = self.identidad_con_datos(r, crea, antes, asignaciones)
         # Eventos (después de guardar: ya hay raíz e identidad).
-        despues = Ambito()
-        despues.agregar(dict(self.fuentes_raiz))
-        despues.agregar(capa_ent)
-        despues.agregar(capa_val)
-        for capa in capas_req + capas_sa + [capa_calc]:
-            despues.agregar(capa)
-        calculados, vistos = [], set()
-        publicar = {}
-        for nombre_ev in eventos_cmd:
-            ev = self.eventos[nombre_ev]
-            amb_ev = despues.con(capas_val_r.get(nombre_ev, {}))     # con los valores de su resultado
-            args = [f'{v}.{r["id_prop"]}']
-            args += [amb_ev.expr(d["nombre"], d["tipo"]["opcional"]) for d in ev["datos"]]
-            for k in ev["calculados"]:
-                if k["prop"] not in vistos:
-                    vistos.add(k["prop"])
-                    calculados.append({"nombre": k["nombre"], "metodo": k["prop"], "cs": k["cs"],
-                                       "tipo_yaml": k["tipo"]["tipo"], "evento": nombre_ev,
-                                       "provisional": provisional(k["tipo"])})
-                args.append(f'{k["prop"]}(datos)')
-            publicar[nombre_ev] = {"clase": ev["clase"], "args": args}
+        publicar, calculados = self.publicaciones(r, eventos_cmd, [capa_ent, capa_val] + capas_req + capas_sa + [capa_calc],
+                                                  capas_val_r)
         for x in resultados:
             x["publicar"] = [publicar[x["evento"]]]
         self.revisar_miembros(n["manejador"], [k["metodo"] for k in calculados + calc_metodos])
@@ -281,6 +221,86 @@ class Comandos:
         cab = self.cabecera("ApplicationProcess", mc["nombre"], mc["id"], mc["codigo"])
         self.render("comando.g.cs.j2", com["archivo"], c=com, raiz=r, cabecera=cab)
         self.render("comando_manual.cs.j2", com["manual"], manual=True, c=com, raiz=r, cabecera=cab)
+        self.trazar_comando(mc, com, n, r)
+
+    def eventos_requeridos(self, sc: dict, r: dict, antes: Ambito, datos_props: list, datos_args: list):
+        """Eventos de otros contextos que el comando requiere (YAML: requiere): se buscan en la memoria por su
+        identidad, y sus datos quedan disponibles para el comando. Devuelve los requeridos y la capa de datos de cada uno."""
+        requeridos, capas_req = [], []
+        for nombre_ev in sc.get("requiere") or []:
+            x = self.s["eventos_de_otros_contextos"][nombre_ev]
+            ev_clase, var_ev = nombres.pascal(nombre_ev), nombres.camel(nombre_ev)
+            id_ev = x.get("identidad") or r["id_nombre"]
+            requeridos.append({"var": var_ev, "clase": ev_clase, "nombre": cs_cadena(nombre_ev),
+                               "identidad": antes.expr(id_ev, False)})
+            capa = {k: fuente(f"{var_ev}.{nombres.pascal(k)}", tipos.interpretar(tx))
+                    for k, tx in (x.get("datos") or {}).items()}
+            # Un evento que solo se recuerda puede traer un dato con otro nombre (correspondencias, D2): el comando
+            # lo toma con su nombre, {dato del comando: dato del evento}.
+            if "dispara" not in x:
+                for local, del_ev in (x.get("correspondencias") or {}).items():
+                    capa[local] = fuente(f"{var_ev}.{nombres.pascal(del_ev)}", tipos.interpretar(x["datos"][del_ev]))
+            antes.agregar(capa)
+            capas_req.append(capa)
+            datos_props.append({"cs": ev_clase, "prop": ev_clase})
+            datos_args.append(var_ev)
+        return requeridos, capas_req
+
+    def identidad_con_datos(self, r: dict, crea: bool, antes: Ambito, asignaciones: list):
+        """Identidad formada con datos: sus partes que no son campos se guardan en la raíz (se agregan a asignaciones),
+        y la identidad se arma uniéndolas con "/". Al agregarla, el repositorio responde 409 si ya existe.
+        Devuelve la expresión de la identidad (None si es un consecutivo o el comando no crea) y sus partes obligatorias."""
+        identidad_expr, partes_obligatorias = None, []
+        if crea and not r["consecutivo"]:
+            # Las partes de texto que llegan en la entrada no pueden faltar (si no, la identidad quedaría a medias).
+            for parte in r["id_de"]:
+                f_parte = antes.buscar(parte)
+                if f_parte and f_parte["tipo"]["base"] == "string" and f_parte["requerido"].startswith("comando."):
+                    partes_obligatorias.append({"expr": f_parte["requerido"], "nombre": cs_cadena(parte)})
+            for comp in r["componentes"]:
+                asignaciones.append({"prop": comp["prop"], "expr": antes.expr(comp["nombre"], False)})
+            partes = []
+            for parte in r["id_de"]:
+                fuente_parte = antes.buscar(parte)
+                if fuente_parte is None:              # campo de la raíz que solo se guarda: se toma de la raíz nueva
+                    fuente_parte = self.fuentes_raiz[parte]
+                    e = fuente_parte["requerido"]
+                else:
+                    e = antes.expr(parte, False)
+                # Las fechas, en formato fijo e independiente del idioma del equipo (2026-03-10T10:00:00).
+                formato = {"DateTime": '"s"', "DateOnly": '"yyyy-MM-dd"'}.get(fuente_parte["tipo"]["base"])
+                partes.append(f"({e}).ToString({formato}, System.Globalization.CultureInfo.InvariantCulture)" if formato else e)
+            identidad_expr = '$"' + "/".join("{(" + x + ")}" for x in partes) + '"'
+        return identidad_expr, partes_obligatorias
+
+    def publicaciones(self, r: dict, eventos_cmd: list[str], capas: list[dict], capas_val_r: dict):
+        """Los eventos que publica el comando, con sus argumentos, y los datos calculados de esos eventos (a mano).
+        capas: los datos disponibles después de guardar, además de los de la raíz; la última gana."""
+        v = r["var"]
+        despues = Ambito()
+        despues.agregar(dict(self.fuentes_raiz))
+        for capa in capas:
+            despues.agregar(capa)
+        calculados, vistos = [], set()
+        publicar = {}
+        for nombre_ev in eventos_cmd:
+            ev = self.eventos[nombre_ev]
+            amb_ev = despues.con(capas_val_r.get(nombre_ev, {}))     # con los valores de su resultado
+            args = [f'{v}.{r["id_prop"]}']
+            args += [amb_ev.expr(d["nombre"], d["tipo"]["opcional"]) for d in ev["datos"]]
+            for k in ev["calculados"]:
+                if k["prop"] not in vistos:
+                    vistos.add(k["prop"])
+                    calculados.append({"nombre": k["nombre"], "metodo": k["prop"], "cs": k["cs"],
+                                       "tipo_yaml": k["tipo"]["tipo"], "evento": nombre_ev,
+                                       "provisional": provisional(k["tipo"])})
+                args.append(f'{k["prop"]}(datos)')
+            publicar[nombre_ev] = {"clase": ev["clase"], "args": args}
+        return publicar, calculados
+
+    def trazar_comando(self, mc: dict, com: dict, n: dict, r: dict):
+        """Las filas de trazabilidad del comando: su proceso, sus accesos, su servicio de negocio y su contrato."""
+        k = mc["contrato"]
         for x in ("clase", "datos", "manejador"):
             self.traza_de(mc["id"], "ApplicationProcess", mc["nombre"], com["archivo"], n[x])
         self.traza_de(mc["id"], "ApplicationProcess", mc["nombre"], com["manual"], f'{n["manejador"]} (manual)')

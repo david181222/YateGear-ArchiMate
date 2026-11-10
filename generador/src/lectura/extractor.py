@@ -140,8 +140,40 @@ class Extractor:
         sas = [r.origen for r in self.llegan(ctx, "Serving", "ApplicationService")
                if self.codigo(r.origen, P_CODIGO_SA)]
 
-        # Agregados: los "Agregado ..." que agregan los comandos del contexto (las agrupaciones de la V11 no cuentan).
-        agrupaciones_agr = {c.id for c in g.elementos("Grouping") if c.nombre.startswith(PREFIJO_AGREGADO)}
+        agrupaciones = {c.id for c in g.elementos("Grouping") if c.nombre.startswith(PREFIJO_AGREGADO)}
+        agregado_de, agregados, raiz_de, agregados_json, enums = self.agregados(comandos, agrupaciones)
+        raices_ctx = set(raiz_de.values())
+        codigos: dict[str | None, list[str]] = {}          # código -> elementos que lo tienen (no se repite)
+        comandos_json, eventos_por_cmd = self.comandos(comandos, agregado_de, raiz_de, raices_ctx, codigos)
+        eventos, eventos_json = self.eventos(agregados, agrupaciones, eventos_por_cmd)
+        politicas = self.politicas(eventos, comandos)
+        consultas_json = self.consultas(consultas, raices_ctx, codigos)
+        sas_json = self.servicios_sa(sas, codigos)
+
+        for codigo, ids in sorted(codigos.items(), key=lambda kv: str(kv[0])):
+            if len(ids) > 1:
+                self.error("código", f"el código {codigo} se repite en " + ", ".join(self.ref(i) for i in ids))
+
+        ids_ctx = {ctx, *agregados, *raices_ctx, *comandos, *eventos, *consultas, *sas}
+        self.revisar_nombres(ids_ctx, agregados_json, comandos_json + consultas_json + sas_json, sas_json)
+
+        return {
+            "id": ctx, "nombre": nombre_ctx,
+            "agregados": agregados_json,
+            "comandos": comandos_json,
+            "eventos": eventos_json,
+            "politicas": politicas,
+            "consultas": consultas_json,
+            "servicios_sa": sas_json,
+            "enums": sorted(enums.values(), key=lambda e: e["nombre"]),
+            "otros_contextos": self.otros_contextos(ctx),
+        }
+
+    # ------------------------------------------------------------ partes del contexto
+    def agregados(self, comandos: list[str], agrupaciones_agr: set[str]):
+        """Los "Agregado ..." que agregan los comandos del contexto, cada uno con su raíz, sus entidades y sus objetos
+        de valor. Las demás agrupaciones no cuentan."""
+        g = self.g
         agregado_de = {}
         for i in comandos:
             ags = [r.origen for r in self.llegan(i, "Aggregation", "Grouping") if r.origen in agrupaciones_agr]
@@ -197,12 +229,12 @@ class Extractor:
                         e["usado_en"].append({"objeto_id": obj["id"], "campo": campo["nombre"]})
             agregados_json.append({"id": ag, "nombre": self.c(ag).nombre, "raiz": raiz_json,
                                    "entidades": ents_json, "objetos_valor": vos_json})
+        return agregado_de, agregados, raiz_de, agregados_json, enums
 
-        raices_ctx = set(raiz_de.values())
-
-        # Comandos: acceso a su raíz, lecturas de otras raíces, eventos, contrato.
+    def comandos(self, comandos: list[str], agregado_de: dict, raiz_de: dict, raices_ctx: set[str], codigos: dict):
+        """Cada comando: el acceso a su raíz, las otras raíces que lee, sus eventos y su contrato."""
+        g = self.g
         comandos_json, eventos_por_cmd = [], {}
-        codigos = {}
         for i in self.por_nombre(comandos, g):
             cmd = self.c(i)
             codigos.setdefault(self.codigo(i, P_CODIGO_SB), []).append(i)
@@ -234,8 +266,11 @@ class Extractor:
                 "lee_tambien": sorted(lee_tambien, key=lambda x: x["acceso_id"]),
                 "eventos": sorted(eventos), "servicio_negocio": sn, "contrato": k,
             })
+        return comandos_json, eventos_por_cmd
 
-        # Eventos: los de los agregados del contexto más los que disparan sus comandos.
+    def eventos(self, agregados: list[str], agrupaciones_agr: set[str], eventos_por_cmd: dict):
+        """Los eventos de los agregados del contexto más los que disparan sus comandos."""
+        g = self.g
         eventos = set()
         for ag in agregados:
             eventos |= {r.destino for r in self.salen(ag, "Aggregation", "ApplicationEvent")}
@@ -253,8 +288,10 @@ class Extractor:
                 self.aviso(f"{self.ref(e)} lo disparan {len(disparan)} comandos: " + ", ".join(self.c(i).nombre for i in disparan))
             eventos_json.append({"id": e, "nombre": self.c(e).nombre,
                                  "agregado_id": ags[0] if len(ags) == 1 else None, "disparado_por": disparan})
+        return eventos, eventos_json
 
-        # Políticas internas: evento del contexto -> dispara -> comando del contexto.
+    def politicas(self, eventos: set[str], comandos: list[str]) -> list[dict]:
+        """Políticas internas: evento del contexto -> dispara -> comando del contexto."""
         politicas = []
         for e in eventos:
             for r in self.salen(e, "Triggering"):
@@ -263,8 +300,11 @@ class Extractor:
                 else:
                     self.aviso(f"{self.ref(e)} dispara a {self.ref(r.destino)}, que no es comando del contexto: no se genera como política")
         politicas.sort(key=lambda p: p["relacion_id"])
+        return politicas
 
-        # Consultas: leen raíces del contexto; no escriben.
+    def consultas(self, consultas: list[str], raices_ctx: set[str], codigos: dict) -> list[dict]:
+        """Las consultas leen raíces del contexto; no escriben."""
+        g = self.g
         consultas_json = []
         for i in self.por_nombre(consultas, g):
             q = self.c(i)
@@ -279,7 +319,11 @@ class Extractor:
             consultas_json.append({"id": i, "nombre": q.nombre, "codigo": self.codigo(i, P_CODIGO_SB),
                                    "lee": sorted(lee, key=lambda x: x["acceso_id"]),
                                    "servicio_negocio": sn, "contrato": k})
+        return consultas_json
 
+    def servicios_sa(self, sas: list[str], codigos: dict) -> list[dict]:
+        """Cada servicio SA con su interfaz, su contraparte, sus flujos y su contrato."""
+        g = self.g
         # Servicios SA: interfaz asignada al SA; contraparte = el único elemento con el que la
         # interfaz intercambia flujos (V9-DEC-02); entre el SA y la contraparte hay una relación
         # de servicio, en el sentido que diga el modelo (en SA-08 el SA le sirve a la contraparte).
@@ -317,16 +361,13 @@ class Extractor:
                 "flujos": sorted(flujos, key=lambda f: (f["nombre"], f["id"])),
                 "servicio_negocio": sn, "contrato": k,
             })
+        return sas_json
 
-        for codigo, ids in sorted(codigos.items(), key=lambda kv: str(kv[0])):
-            if len(ids) > 1:
-                self.error("código", f"el código {codigo} se repite en " + ", ".join(self.ref(i) for i in ids))
-
-        # Nombres repetidos dentro del mismo tipo, entre los elementos del contexto.
-        ids_ctx = {ctx, *agregados, *raices_ctx, *comandos, *eventos, *consultas, *sas}
+    def revisar_nombres(self, ids_ctx: set[str], agregados_json: list[dict], con_contrato: list[dict], sas_json: list[dict]):
+        """Nombres repetidos dentro del mismo tipo, entre los elementos del contexto."""
         for a in agregados_json:
             ids_ctx |= {x["id"] for x in a["entidades"] + a["objetos_valor"]}
-        for x in comandos_json + consultas_json + sas_json:
+        for x in con_contrato:
             ids_ctx |= {y["id"] for y in (x["servicio_negocio"], x["contrato"]) if y}
         for x in sas_json:
             ids_ctx |= {y["id"] for y in (x["interfaz"], x["contraparte"]) if y}
@@ -337,8 +378,10 @@ class Extractor:
             if len(ids) > 1:
                 self.error("nombre repetido", f'{len(ids)} elementos {t} se llaman "{n}": {", ".join(ids)}')
 
-        # Catálogo de los eventos de los otros contextos (componentes asignados a comandos con código SB),
-        # para revisar en el YAML los eventos que llegan de afuera.
+    def otros_contextos(self, ctx: str) -> list[dict]:
+        """Catálogo de los eventos de los otros contextos (componentes asignados a comandos con código), para revisar
+        en el YAML los eventos que llegan de afuera."""
+        g = self.g
         otros = []
         for comp in g.elementos("ApplicationComponent"):
             if comp.id == ctx:
@@ -349,18 +392,7 @@ class Extractor:
                 evs = {r.destino for i in cmds for r in self.salen(i, "Triggering", "ApplicationEvent")}
                 otros.append({"id": comp.id, "nombre": comp.nombre,
                               "eventos": [{"id": e, "nombre": self.c(e).nombre} for e in self.por_nombre(evs, g)]})
-
-        return {
-            "id": ctx, "nombre": nombre_ctx,
-            "agregados": agregados_json,
-            "comandos": comandos_json,
-            "eventos": eventos_json,
-            "politicas": politicas,
-            "consultas": consultas_json,
-            "servicios_sa": sas_json,
-            "enums": sorted(enums.values(), key=lambda e: e["nombre"]),
-            "otros_contextos": otros,
-        }
+        return otros
 
 
 def resumen(ctx: dict) -> list[str]:

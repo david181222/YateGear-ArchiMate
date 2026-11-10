@@ -22,8 +22,8 @@ uso: python src/specs.py <modelo-ddd.json> <specs.yaml>
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 import yaml
 
@@ -32,6 +32,7 @@ from validacion.contratos import revisar_contratos
 from validacion.entre_contextos import RevisorEntreContextos, revisores_de_contextos
 from validacion.revisor import Revisor
 from validacion.valores import CLAVE_ENTRE_CONTEXTOS, es_entre_contextos
+
 
 def main():
     for f in (sys.stdout, sys.stderr):

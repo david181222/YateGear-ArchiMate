@@ -30,8 +30,7 @@ class RevisionDeComandos:
 
     def revisar_comando(self, n: str, m: dict, c_yaml):
         """Un comando: m es el del modelo y c_yaml, el del YAML."""
-        sas, ext_y, ev_por_id = self.sas, self.externos_crudos, self.ev_por_id
-        entradas_cmd, crean_por_raiz, bolsas_evento = self.entradas_cmd, self.crean_por_raiz, self.bolsas_evento
+        entradas_cmd, crean_por_raiz = self.entradas_cmd, self.crean_por_raiz
         d = f"comandos > {n}"
         rc = self.raiz_por_id.get(m["raiz_id"])
         if rc is None:
@@ -91,8 +90,43 @@ class RevisionDeComandos:
             propios.add(k)
             origenes_cmd.setdefault(k, []).append("valores")
 
-        # Eventos de otros contextos que el comando requiere (D5): si no han llegado para su identidad, 409.
-        # Sus datos entran a la bolsa del comando.
+        self.revisar_requiere(n, c, d, bolsa, propios, origenes_cmd)
+        self.revisar_calculados_y_sas(n, m, c, d, crea, todas, bolsa, propios, origenes_cmd)
+        for k, lista_o in sorted(origenes_cmd.items()):
+            if len(lista_o) > 1 and k != self.id_nombre:
+                self.varios_origenes.append(f'{n}: "{k}" llega de {", ".join(lista_o)}; se usa {lista_o[-1]}')
+
+        # Lo que guarda en la raíz. Cada dato debe tener un solo destino (regla de los datos).
+        guarda = self.lista(c.get("guarda"), f"{d} > guarda")
+        if guarda and m["acceso"] not in ESCRIBEN:
+            self.error(f"{d} > guarda", f"el comando guarda datos pero en el modelo su acceso a la raíz es de {m['acceso']}")
+        guardados = self.revisar_guarda(guarda, bolsa, propios, f"{d} > guarda", campos_raiz, vos, nombre_raiz)
+        if crea:
+            for v in vos.values():
+                if v["cardinalidad"] == "Uno" and v["nombre"] not in guarda:
+                    self.error(f"{d} > guarda", f'crea la raíz y no guarda "{v["nombre"]}", que tiene Cardinalidad Uno')
+            for campo in campos_raiz.values():
+                if not campo["opcional"] and not campo["lista"] and campo["nombre"] not in guardados:
+                    self.error(f"{d} > guarda", f'crea la raíz y no guarda su campo obligatorio "{campo["nombre"]}"')
+            # Identidad formada con datos: cada parte que no es campo debe estar en la bolsa (los campos ya se guardan).
+            for parte in self.id_de or []:
+                if parte in self.componentes:
+                    self.pide(bolsa, {parte: self.componentes[parte]}, d, "la identidad de la raíz", propios)
+
+        # Transiciones.
+        if crea and ("desde" in c or "resultados" in c):
+            self.error(d, "el comando que crea la raíz no lleva desde ni resultados")
+        if crea and "a" not in c:
+            self.error(d, "el comando que crea la raíz debe decir su estado inicial (a)")
+        desde = self.estados_validos(c["desde"], f"{d} > desde") if "desde" in c else None
+        if "a" in c:
+            self.estados_validos(c["a"], f"{d} > a")
+        self.revisar_eventos_del_comando(n, m, c, d, crea, todas, bolsa, propios, guardados, desde)
+
+    def revisar_requiere(self, n: str, c: dict, d: str, bolsa: dict, propios: set, origenes_cmd: dict):
+        """Eventos de otros contextos que el comando requiere: si no han llegado para su identidad, 409. Sus datos
+        entran a la bolsa del comando."""
+        ext_y = self.externos_crudos
         for ev in self.lista(c.get("requiere"), f"{d} > requiere"):
             x = ext_y.get(ev)
             if not isinstance(x, dict):
@@ -121,6 +155,11 @@ class RevisionDeComandos:
             for k in datos_ev:
                 origenes_cmd.setdefault(k, []).append(f'evento "{ev}"')
 
+    def revisar_calculados_y_sas(self, n: str, m: dict, c: dict, d: str, crea: bool, todas: bool, bolsa: dict,
+                                 propios: set, origenes_cmd: dict):
+        """Las otras raíces que lee, sus datos calculados y los servicios SA que usa, en orden. Lo que dejan queda
+        en la bolsa del comando."""
+        sas, nombre_raiz = self.sas, self.rc["nombre"]
         # Otras raíces que el comando lee en el modelo (G6): se cargan por el dato con el nombre de su identidad.
         if not todas:
             for lt in m["lee_tambien"]:
@@ -225,38 +264,15 @@ class RevisionDeComandos:
             for k in salida:
                 origenes_cmd.setdefault(k, []).append(f'SA "{sa}"')
             calcular(puntos[i])
-        for k, lista_o in sorted(origenes_cmd.items()):
-            if len(lista_o) > 1 and k != self.id_nombre:
-                self.varios_origenes.append(f'{n}: "{k}" llega de {", ".join(lista_o)}; se usa {lista_o[-1]}')
 
-        # Lo que guarda en la raíz. Cada dato debe tener un solo destino (regla de los datos).
-        guarda = self.lista(c.get("guarda"), f"{d} > guarda")
-        if guarda and m["acceso"] not in ESCRIBEN:
-            self.error(f"{d} > guarda", f"el comando guarda datos pero en el modelo su acceso a la raíz es de {m['acceso']}")
-        guardados = self.revisar_guarda(guarda, bolsa, propios, f"{d} > guarda", campos_raiz, vos, nombre_raiz)
-        if crea:
-            for v in vos.values():
-                if v["cardinalidad"] == "Uno" and v["nombre"] not in guarda:
-                    self.error(f"{d} > guarda", f'crea la raíz y no guarda "{v["nombre"]}", que tiene Cardinalidad Uno')
-            for campo in campos_raiz.values():
-                if not campo["opcional"] and not campo["lista"] and campo["nombre"] not in guardados:
-                    self.error(f"{d} > guarda", f'crea la raíz y no guarda su campo obligatorio "{campo["nombre"]}"')
-            # Identidad formada con datos: cada parte que no es campo debe estar en la bolsa (los campos ya se guardan).
-            for parte in self.id_de or []:
-                if parte in self.componentes:
-                    self.pide(bolsa, {parte: self.componentes[parte]}, d, "la identidad de la raíz", propios)
-
-        # Transiciones.
-        if crea and ("desde" in c or "resultados" in c):
-            self.error(d, "el comando que crea la raíz no lleva desde ni resultados")
-        if crea and "a" not in c:
-            self.error(d, "el comando que crea la raíz debe decir su estado inicial (a)")
-        desde = self.estados_validos(c["desde"], f"{d} > desde") if "desde" in c else None
-        if "a" in c:
-            self.estados_validos(c["a"], f"{d} > a")
+    def revisar_eventos_del_comando(self, n: str, m: dict, c: dict, d: str, crea: bool, todas: bool, bolsa: dict,
+                                    propios: set, guardados: dict, desde):
+        """Los eventos del comando son exactamente los que dispara en el modelo: con eventos, o con resultados (un
+        evento por resultado, cada uno con su condición, sus transiciones y lo que guarda)."""
+        rc, ev_por_id, bolsas_evento = self.rc, self.ev_por_id, self.bolsas_evento
+        todos, campos_raiz, vos, nombre_raiz = rc["todos"], rc["campos_raiz"], rc["vos"], rc["nombre"]
+        base, estado_t = rc["base"], rc["estado_t"]
         lectura = m["acceso"] not in ESCRIBEN
-
-        # Eventos: exactamente los que el comando dispara en el modelo.
         bolsas_resultado = {}                         # evento -> (bolsa, guardados, propios) de su resultado
         del_modelo = {ev_por_id[i] for i in m["eventos"]}
         if ("eventos" in c) == ("resultados" in c):

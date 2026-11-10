@@ -1,16 +1,17 @@
 """La solución completa: junta los contextos y escribe los archivos."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
+import uuid
+
 from comun import nombres
 from generacion.constantes import ARCHIVOS_GENERADOS, INTEGRACION, PRUEBAS_ENTRE_CONTEXTOS, PUERTO, TIPO_PROYECTO_CS
-from generacion.csharp import ErrorDeGeneracion, valor_json
+from generacion.contexto import Generador
+from generacion.csharp import ErrorDeGeneracion
+from generacion.escenarios import es_rechazo, espera_de_salida, espera_sin_datos
 from validacion import valores
 
-import json
-import uuid
-from pathlib import Path
-
-from generacion.contexto import Generador
 
 class Solucion:
     """Junta los contextos en una solución: host, bus entre contextos (Integracion), .sln y contextos.json."""
@@ -55,29 +56,18 @@ class Solucion:
                     nombre, op = next(iter(paso.items()))
                     g = por_contexto[op["en"]]
                     esp = op.get("espera")
-                    rechazo = isinstance(esp, int) or (isinstance(esp, dict) and "código" in esp)
+                    rechazo = es_rechazo(esp)
                     p = g.paso_entre_contextos(nombre, op.get("con") or {}, actual, contador, rechazo)
                     if p["identidad"] and not rechazo:
                         actual[p["id_nombre"]] = p["identidad"]
-                    if esp is None:
-                        espera = {"tipo": "exito", "texto": "HTTP 2xx"}
-                    elif isinstance(esp, int):
-                        espera = {"tipo": "codigo", "valor": esp, "texto": f"HTTP {esp}"}
-                    elif isinstance(esp, dict) and "código" in esp:
-                        campos_e = {valores.CAMPOS_DE_ERROR[k]: (nombres.pascal(v) if k == "estado actual" else v)
-                                    for k, v in esp.items() if k != "código"}
-                        espera = {"tipo": "codigo", "valor": esp["código"], "campos": campos_e,
-                                  "texto": f'HTTP {esp["código"]} y ' + ", ".join(f"{k} = {v}" for k, v in esp.items() if k != "código")}
-                    elif isinstance(esp, (str, list)):
+                    espera = espera_sin_datos(esp)
+                    if espera is None and isinstance(esp, (str, list)):
                         nombres_e = [esp] if isinstance(esp, str) else list(esp)
                         espera = {"tipo": "eventos", "eventos": [x for x in nombres_e if x not in envios],
                                   "envios": [envios[x] for x in nombres_e if x in envios],
                                   "texto": "HTTP 2xx y " + ", ".join(f'"{x}"' for x in nombres_e)}
-                    else:
-                        q = next(q_ for q_ in g.consultas if q_["nombre"] == nombre)
-                        tipos_salida = {s_["nombre"]: s_["tipo"] for s_ in q["salida_campos"]}
-                        espera = {"tipo": "salida", "valores": {nombres.camel(k): valor_json(v, tipos_salida[k]) for k, v in esp.items()},
-                                  "texto": "HTTP 2xx y " + ", ".join(f"{k} = {v}" for k, v in esp.items())}
+                    elif espera is None:
+                        espera = espera_de_salida(esp, next(q for q in g.consultas if q["nombre"] == nombre))
                     lista.append({"numero": i, "nombre": nombre, "contexto": op["en"], "tipo": p["tipo"], "crea": p["crea"],
                                   "identidad": p["identidad"], "metodo": p["metodo"], "ruta": p["ruta"],
                                   "cuerpo": p["cuerpo"], "espera": espera})
@@ -142,8 +132,17 @@ class Solucion:
                 g.traza_de(g.ctx["id"], "ApplicationComponent", g.ctx["nombre"], archivo, "")
             archivos[f"trazabilidad/{g.proyecto}.csv"] = g.trazabilidad_csv()
 
-        # Escribir. Lo generado se reescribe siempre; un manual solo si no existe.
-        escritos, creados, conservados, borrados = 0, [], [], []
+        escritos, creados, conservados = self.escribir(archivos, manuales)
+        borrados = self.borrar_sobrantes(archivos, manuales, gs)
+        sueltas = self.carpetas_sueltas(gs)
+        return {"escritos": escritos, "creados": creados, "conservados": conservados, "borrados": borrados,
+                "huerfanos": [x for g in gs for x in g.huerfanos], "sueltas": sueltas,
+                "avisos_escenarios": [(g.ctx["nombre"], a) for g in gs for a in getattr(g, "avisos_escenarios", [])],
+                "contextos": [(g.ctx["nombre"], g.proyecto, len(set(g.traza))) for g in gs]}
+
+    def escribir(self, archivos: dict[str, str], manuales: dict[str, str]):
+        """Escribe los archivos. Lo generado se reescribe siempre; un manual, solo si no existe."""
+        escritos, creados, conservados = 0, [], []
         for rel, texto in sorted(archivos.items()):
             destino = self.salida / rel
             destino.parent.mkdir(parents=True, exist_ok=True)
@@ -157,9 +156,12 @@ class Solucion:
                 destino.parent.mkdir(parents=True, exist_ok=True)
                 destino.write_bytes(texto.encode("utf-8"))
                 creados.append(rel)
+        return escritos, creados, conservados
 
-        # Borrar lo generado que ya no corresponde: lo de la generación anterior que ya no se genera,
-        # y los .g.cs sueltos en las carpetas de los proyectos. Los manuales nunca se borran.
+    def borrar_sobrantes(self, archivos: dict[str, str], manuales: dict[str, str], gs: list["Generador"]) -> list[str]:
+        """Borra lo generado que ya no corresponde: lo de la generación anterior que ya no se genera y los .g.cs
+        sueltos en las carpetas de los proyectos. Los manuales nunca se borran."""
+        borrados = []
         lista = self.salida / ARCHIVOS_GENERADOS
         anteriores = lista.read_text(encoding="utf-8").splitlines() if lista.is_file() else []
         sobran = {a for a in anteriores if a and a not in archivos and a not in manuales}
@@ -175,13 +177,10 @@ class Solucion:
                 borrados.append(rel)
         lista.parent.mkdir(parents=True, exist_ok=True)
         lista.write_bytes(("\n".join(sorted(archivos)) + "\n").encode("utf-8"))
+        return borrados
 
-        # Carpetas con código a mano de un contexto que ya no se genera (se quitó su YAML): no se borran.
-        proyectos = {g.proyecto for g in gs} | {h, i}
-        sueltas = sorted(d.name for d in self.salida.iterdir()
-                         if d.is_dir() and d.name not in proyectos and any(d.rglob("*.cs")))
-
-        return {"escritos": escritos, "creados": creados, "conservados": conservados, "borrados": borrados,
-                "huerfanos": [x for g in gs for x in g.huerfanos], "sueltas": sueltas,
-                "avisos_escenarios": [(g.ctx["nombre"], a) for g in gs for a in getattr(g, "avisos_escenarios", [])],
-                "contextos": [(g.ctx["nombre"], g.proyecto, len(set(g.traza))) for g in gs]}
+    def carpetas_sueltas(self, gs: list["Generador"]) -> list[str]:
+        """Carpetas con código a mano de un contexto que ya no se genera (se quitó su YAML): no se borran."""
+        proyectos = {g.proyecto for g in gs} | {self.host, INTEGRACION}
+        return sorted(d.name for d in self.salida.iterdir()
+                      if d.is_dir() and d.name not in proyectos and any(d.rglob("*.cs")))

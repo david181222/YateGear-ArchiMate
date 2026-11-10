@@ -1,11 +1,38 @@
 """Escenarios de prueba: la llamada HTTP de cada paso, su identidad y lo que se espera."""
 from __future__ import annotations
 
+import json
+
 from comun import nombres, tipos
 from generacion.csharp import ejemplo, ErrorDeGeneracion, valor_json
 from validacion import valores
 
-import json
+
+def es_rechazo(esp) -> bool:
+    """Un paso espera un rechazo si espera un código HTTP, solo o con su motivo."""
+    return isinstance(esp, int) or (isinstance(esp, dict) and "código" in esp)
+
+
+def espera_sin_datos(esp) -> dict | None:
+    """Lo esperado de un paso cuando no depende de lo que el paso devuelve: nada (2xx), un código o un rechazo con
+    su motivo (campos de la respuesta de error). None si espera eventos o datos de una consulta."""
+    if esp is None:
+        return {"tipo": "exito", "texto": "HTTP 2xx"}
+    if isinstance(esp, int):
+        return {"tipo": "codigo", "valor": esp, "texto": f"HTTP {esp}"}
+    if isinstance(esp, dict) and "código" in esp:
+        campos = {valores.CAMPOS_DE_ERROR[k]: (nombres.pascal(v) if k == "estado actual" else v)
+                  for k, v in esp.items() if k != "código"}
+        return {"tipo": "codigo", "valor": esp["código"], "campos": campos,
+                "texto": f'HTTP {esp["código"]} y ' + ", ".join(f"{k} = {v}" for k, v in esp.items() if k != "código")}
+    return None
+
+
+def espera_de_salida(esp: dict, consulta: dict) -> dict:
+    """Lo esperado de una consulta: {dato de la salida: valor, ...}; en una lista, cuántos elementos tiene."""
+    tipos_salida = {s["nombre"]: s["tipo"] for s in consulta["salida_campos"]}
+    return {"tipo": "salida", "valores": {nombres.camel(k): valor_json(v, tipos_salida[k]) for k, v in esp.items()},
+            "texto": "HTTP 2xx y " + ", ".join(f"{k} = {v}" for k, v in esp.items())}
 
 
 class Escenarios:
@@ -37,7 +64,7 @@ class Escenarios:
                 op = op or {}
                 con = op.get("con") or {}
                 esp = op.get("espera")
-                rechazo = isinstance(esp, int) or (isinstance(esp, dict) and "código" in esp)
+                rechazo = es_rechazo(esp)
 
                 def cuerpo(campos, identidad=None, nombre_id=None):
                     b = {nombre_id: identidad} if identidad is not None else {}
@@ -158,21 +185,11 @@ class Escenarios:
                                     creadas.setdefault((cmd[otro]["raiz_nombre"], ident), donde)
                 if r and ident and not rechazo:
                     actual[r["id_nombre"]] = ident
-                if esp is None:
-                    espera = {"tipo": "exito", "texto": "HTTP 2xx"}
-                elif isinstance(esp, int):
-                    espera = {"tipo": "codigo", "valor": esp, "texto": f"HTTP {esp}"}
-                elif isinstance(esp, dict) and "código" in esp:   # rechazo con su motivo (campos de la respuesta)
-                    campos_e = {valores.CAMPOS_DE_ERROR[k]: (nombres.pascal(v) if k == "estado actual" else v)
-                                for k, v in esp.items() if k != "código"}
-                    espera = {"tipo": "codigo", "valor": esp["código"], "campos": campos_e,
-                              "texto": f'HTTP {esp["código"]} y ' + ", ".join(f"{k} = {v}" for k, v in esp.items() if k != "código")}
-                elif isinstance(esp, str):
+                espera = espera_sin_datos(esp)
+                if espera is None and isinstance(esp, str):
                     espera = {"tipo": "evento", "valor": esp, "texto": f'HTTP 2xx y el evento "{esp}"'}
-                else:                                   # {dato de la salida: valor, ...}; en una lista, su número
-                    tipos_salida = {s["nombre"]: s["tipo"] for s in qs[nombre]["salida_campos"]}
-                    espera = {"tipo": "salida", "valores": {nombres.camel(k): valor_json(v, tipos_salida[k]) for k, v in esp.items()},
-                              "texto": "HTTP 2xx y " + ", ".join(f'{k} = {v}' for k, v in esp.items())}
+                elif espera is None:
+                    espera = espera_de_salida(esp, qs[nombre])
                 lista.append({"numero": i, "nombre": nombre, "tipo": tipo, "crea": crea, "identidad": ident,
                               "metodo": metodo, "ruta": ruta, "cuerpo": datos, "espera": espera})
             escenarios.append({"nombre": nombre_e, "identidad": primera or "", "pasos": lista})

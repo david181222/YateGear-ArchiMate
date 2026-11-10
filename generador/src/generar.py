@@ -19,8 +19,8 @@ uso: python src/generar.py <modelo-ddd.json> <carpeta de salida> <specs.yaml> [<
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 from comun import nombres
 from generacion.csharp import ErrorDeGeneracion
@@ -29,6 +29,7 @@ from validacion import carga, valores
 from validacion.contratos import revisar_contratos
 from validacion.entre_contextos import RevisorEntreContextos
 from validacion.revisor import Revisor
+
 
 def main():
     for f in (sys.stdout, sys.stderr):
