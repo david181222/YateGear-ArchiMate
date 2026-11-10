@@ -1,8 +1,6 @@
 """Tipos, valores y formas del YAML que usan el revisor y el generador."""
 from __future__ import annotations
 
-import datetime
-
 from comun import tipos
 
 ESCRIBEN = ("escritura", "lectura y escritura")
@@ -36,22 +34,8 @@ def valor_valido(v, t: dict) -> bool:
             (k in v and valor_valido(v[k], ct)) or (k not in v and ct["opcional"]) for k, ct in campos.items())
     if b == "enum":
         return isinstance(v, str) and v in t["enum"]["valores"]
-    if b == "string":
-        return isinstance(v, str)
-    if b == "int":
-        return isinstance(v, int) and not isinstance(v, bool)
-    if b == "decimal":
-        return isinstance(v, (int, float)) and not isinstance(v, bool)
-    if b == "bool":
-        return isinstance(v, bool)
-    try:                                  # las fechas van como texto entre comillas
-        if b == "DateOnly":
-            return isinstance(v, str) and len(v) == 10 and bool(datetime.date.fromisoformat(v))
-        if b == "DateTime":
-            return isinstance(v, str) and "T" in v and bool(datetime.datetime.fromisoformat(v))
-    except ValueError:
-        return False
-    return False
+    basico = tipos.TIPOS_BASICOS.get(b)
+    return basico is not None and basico.valido(v)
 
 
 OPCIONES_DISPARO = ("con", "correspondencias", "si", "salvo", "si_existe")

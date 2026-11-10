@@ -1,10 +1,10 @@
 """Tipos, literales y expresiones de C# a partir de los tipos del modelo y del YAML."""
 from __future__ import annotations
 
-import datetime
 import textwrap
 
 from comun import nombres, tipos
+from comun.tipos import cs_cadena, TIPOS_BASICOS
 
 
 class ErrorDeGeneracion(Exception):
@@ -20,32 +20,15 @@ def cs_tipo(t: dict) -> str:
     return texto + ("?" if t["opcional"] else "")
 
 
-def cs_cadena(s: str) -> str:
-    return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
-
-
 def cs_literal(v, t: dict) -> str:
     if v is None:
         return "null"
     if t["lista"]:
         uno = {**t, "lista": False, "opcional": False}
         return "[" + ", ".join(cs_literal(x, uno) for x in v) + "]"
-    b = t["base"]
-    if b == "enum":
+    if t["base"] == "enum":
         return f'{nombres.pascal(t["enum"]["nombre"])}.{nombres.pascal(v)}'
-    if b == "string":
-        return cs_cadena(v)
-    if b == "int":
-        return str(v)
-    if b == "decimal":
-        return f"{v}m"
-    if b == "bool":
-        return "true" if v else "false"
-    if b == "DateOnly":
-        d = datetime.date.fromisoformat(v)
-        return f"new DateOnly({d.year}, {d.month}, {d.day})"
-    d = datetime.datetime.fromisoformat(v)
-    return f"new DateTime({d.year}, {d.month}, {d.day}, {d.hour}, {d.minute}, {d.second})"
+    return TIPOS_BASICOS[t["base"]].literal_cs(v)
 
 
 def provisional(t: dict) -> str:
@@ -54,7 +37,8 @@ def provisional(t: dict) -> str:
         return "null"
     if t["lista"]:
         return "[]"
-    return {"string": '""', "int": "0", "decimal": "0m", "bool": "false"}.get(t["base"], "default")
+    basico = TIPOS_BASICOS.get(t["base"])
+    return basico.provisional if basico else "default"        # un enum: su primer valor
 
 
 def ejemplo(nombre: str, t: dict):
@@ -66,8 +50,7 @@ def ejemplo(nombre: str, t: dict):
         return nombres.pascal(t["enum"]["valores"][0])
     if b == "objeto":                       # un elemento de List<objeto de valor>: sus campos con valores de ejemplo
         return {nombres.camel(k): ejemplo(k, c) for k, c in tipos.OBJETOS[t["objeto"]].items()}
-    return {"string": nombre, "int": 1, "decimal": 100, "bool": True,
-            "DateOnly": "2026-02-01", "DateTime": "2026-02-01T09:00:00"}[b]
+    return TIPOS_BASICOS[b].ejemplo(nombre)
 
 
 def valor_json(v, t: dict):
