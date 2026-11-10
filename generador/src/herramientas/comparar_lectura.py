@@ -12,11 +12,14 @@ uso: python src/comparar_lectura.py <modelo.archimate> <modelo.xml>
 """
 from __future__ import annotations
 
-import sys
 import xml.etree.ElementTree as ET
 from collections import Counter
+import sys
+from pathlib import Path
 
-import leer
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))     # src/, para importar los paquetes del generador
+
+from lectura import leer
 
 XSI = "{http://www.w3.org/2001/XMLSchema-instance}type"
 VISTAS = ("archimate:ArchimateDiagramModel", "archimate:SketchModel", "canvas:CanvasModel")

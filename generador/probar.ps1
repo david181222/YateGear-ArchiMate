@@ -121,7 +121,7 @@ foreach ($g in $grupos) {
             $codigo = 1
         } else {
             Write-Host "== Escenarios de $($g.Nombre)"
-            & $py src/probar.py (Join-Path $Salida $g.Escenarios) $url
+            & $py src/herramientas/probar.py (Join-Path $Salida $g.Escenarios) $url
             if ($LASTEXITCODE -ne 0) { $codigo = 1 }
         }
     } finally {

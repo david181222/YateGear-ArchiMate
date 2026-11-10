@@ -29,9 +29,15 @@ import json
 import sys
 from pathlib import Path
 
-import specs
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))     # src/, para importar los paquetes del generador
 
-RAIZ = Path(__file__).resolve().parent.parent          # la carpeta del generador
+from validacion.carga import cargar_yaml
+from validacion.contratos import revisar_contratos
+from validacion.entre_contextos import RevisorEntreContextos, revisores_de_contextos
+from validacion.revisor import Revisor
+from validacion.valores import es_entre_contextos
+
+RAIZ = Path(__file__).resolve().parent.parent.parent   # la carpeta del generador
 
 
 def ubicar(x, ruta: list, donde: str):
@@ -59,20 +65,19 @@ def aplicar(spec, cambios: list[dict], donde: str):
             cont[k] = c["valor"]
 
 
-def revisar(modelo: dict, ruta: Path, spec, sanos: dict[str, specs.Revisor]) -> list[str]:
+def revisar(modelo: dict, ruta: Path, spec, sanos: dict[str, Revisor]) -> list[str]:
     """Los errores de un YAML (ya cambiado), revisado como lo hacen specs.py y generar.py."""
-    if specs.es_entre_contextos(spec):
-        rev = specs.RevisorEntreContextos(modelo, spec, str(ruta), sanos)
+    if es_entre_contextos(spec):
+        rev = RevisorEntreContextos(modelo, spec, str(ruta), sanos)
         rev.revisar()
         return rev.errores
-    rev = specs.Revisor(modelo, spec, str(ruta))
-    rev.id_nombre = ""
+    rev = Revisor(modelo, spec, str(ruta))
     rev.revisar()
     if rev.errores or not isinstance(spec, dict):
         return rev.errores
     otros = {k: v for k, v in sanos.items() if k != spec.get("contexto")}
     otros[spec["contexto"]] = rev
-    errores, _ = specs.revisar_contratos(modelo, otros, solo=spec["contexto"])
+    errores, _ = revisar_contratos(modelo, otros, solo=spec["contexto"])
     return errores
 
 
@@ -81,19 +86,19 @@ def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
     modelo = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-    casos = specs.cargar_yaml(sys.argv[2]) or []
+    casos = cargar_yaml(sys.argv[2]) or []
 
     # Los YAML sin cambios de cada carpeta de los casos: sin errores, y sus revisores para los contratos entre contextos.
     carpetas = sorted({(RAIZ / c["base"]).parent for c in casos if isinstance(c, dict) and "base" in c})
     sanos_por_carpeta, fallas = {}, 0
     for carpeta in carpetas:
         rutas = sorted(str(p) for p in carpeta.glob("*.yaml"))
-        sanos, errores = specs.revisores_de_contextos(modelo, rutas)
+        sanos, errores = revisores_de_contextos(modelo, rutas)
         for r in rutas:
-            spec = specs.cargar_yaml(r)
-            if specs.es_entre_contextos(spec):
+            spec = cargar_yaml(r)
+            if es_entre_contextos(spec):
                 errores += revisar(modelo, Path(r), spec, sanos)
-        errores += specs.revisar_contratos(modelo, sanos)[0]
+        errores += revisar_contratos(modelo, sanos)[0]
         if errores:
             print(f"Los YAML de {carpeta.name}/ ya tienen errores sin cambiarlos: los casos no prueban nada.")
             for e in errores:
@@ -112,7 +117,7 @@ def main():
             if not cambios:
                 raise ValueError(f"{donde}: no dice qué cambiar (cambia y valor, quita o cambios)")
             ruta = RAIZ / c["base"]
-            spec = copy.deepcopy(specs.cargar_yaml(str(ruta)))
+            spec = copy.deepcopy(cargar_yaml(str(ruta)))
             aplicar(spec, cambios, donde)
             errores = revisar(modelo, ruta, spec, sanos_por_carpeta[ruta.parent])
         except ValueError as e:

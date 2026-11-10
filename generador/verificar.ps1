@@ -50,7 +50,7 @@ function Generar {
 }
 
 function Huella {
-    $linea = & $py src/huella.py $Salida
+    $linea = & $py src/herramientas/huella.py $Salida
     return ($linea -split "\s+")[2]
 }
 
@@ -70,13 +70,13 @@ $ok = $ok -and $h1 -eq $h2
 Revision "Determinismo" $ok $(if ($ok) { "La misma huella en dos generaciones seguidas: $($h1.Substring(0, 12))..." } else { "Huellas distintas: $h1 y $h2." })
 
 # 3. Trazabilidad.
-& $py src/revisar_trazabilidad.py "$Salida/intermedio/modelo-ddd.json" $Salida | Out-Host
+& $py src/herramientas/revisar_trazabilidad.py "$Salida/intermedio/modelo-ddd.json" $Salida | Out-Host
 $ok = $LASTEXITCODE -eq 0
 Revision "Trazabilidad completa" $ok $(if ($ok) { "Todos los elementos de los contextos generados tienen su fila." } else { "Faltan filas o archivos (ver arriba)." })
 
 # 4. Pruebas del validador.
 if (-not $SinPruebasDelValidador) {
-    & $py src/probar_validador.py "$Salida/intermedio/modelo-ddd.json" $casos | Out-Host
+    & $py src/herramientas/probar_validador.py "$Salida/intermedio/modelo-ddd.json" $casos | Out-Host
     $ok = $LASTEXITCODE -eq 0
     Revision "Pruebas del validador" $ok $(if ($ok) { "specs.py detecta cada copia rota de $casos." } else { "Algún caso no da el error esperado (ver arriba)." })
 }
