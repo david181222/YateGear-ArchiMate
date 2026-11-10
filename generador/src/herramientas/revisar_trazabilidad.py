@@ -8,7 +8,7 @@ Los contextos generados y su trazabilidad/<Proyecto>.csv salen de contextos.json
 
 Termina con código 1 si falta algo.
 
-uso: python src/revisar_trazabilidad.py <modelo-ddd.json> <carpeta de salida>
+uso: python src/herramientas/revisar_trazabilidad.py <modelo-ddd.json> <carpeta de salida>
 """
 from __future__ import annotations
 

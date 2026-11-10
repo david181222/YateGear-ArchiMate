@@ -15,7 +15,7 @@ En cada paso que crea una raíz y debe responder con éxito se revisa además qu
 
 Termina con código 1 si algún paso falla. Lo usa probar.ps1, que levanta y detiene la aplicación.
 
-uso: python src/probar.py <escenarios.json> <url de la aplicación, p. ej. http://localhost:5080>
+uso: python src/herramientas/probar.py <escenarios.json> <url de la aplicación, p. ej. http://localhost:5080>
 """
 from __future__ import annotations
 

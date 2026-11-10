@@ -1,5 +1,5 @@
 # Pruebas del validador (S8): cada caso rompe a propósito una copia en memoria de un YAML de specs/ y dice qué error
-# debe dar specs.py. Las corre src/probar_validador.py (y verificar.ps1). Formato: ver el comentario de ese archivo.
+# debe dar specs.py. Las corre src/herramientas/probar_validador.py (y verificar.ps1). Formato: ver el comentario de ese archivo.
 #
 # Regla: cada clave nueva del YAML trae al menos un caso aquí. Si un caso deja de fallar, specs.py dejó de revisar algo.
 

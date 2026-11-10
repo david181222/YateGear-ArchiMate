@@ -8,7 +8,7 @@ Por cada aspecto cuenta las diferencias en crudo y después de normalizar lo que
 solo es forma de escribir (ver leer.py). Termina con código 0 si C es igual a A
 después de normalizar.
 
-uso: python src/comparar_lectura.py <modelo.archimate> <modelo.xml>
+uso: python src/herramientas/comparar_lectura.py <modelo.archimate> <modelo.xml>
 """
 from __future__ import annotations
 

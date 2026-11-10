@@ -7,7 +7,7 @@ El modelo de ejemplo `ejemplo/Biblioteca.archimate` sigue cada paso de esta guí
 ## 1. Cómo lee el generador
 
 - **Por tipo, relación y propiedad, nunca por la vista.** Las vistas, los anidamientos, los colores y las carpetas no cuentan. Lo que se dibuja dentro de otra caja, pero no se une con una relación, el generador no lo ve.
-- **Los nombres son el lenguaje ubicuo.** El nombre de cada elemento pasa al código (`Prestar un libro` --> `PrestarUnLibro`, `/prestamos/comandos/prestar-un-libro`), así que se escriben como se dicen, en español y con tildes. Solo dos prefijos tienen significado: "Contexto " (se quita para el nombre del proyecto) y "Agregado ".
+- **Los nombres son el lenguaje ubicuo.** El nombre de cada elemento pasa al código (`Prestar un libro` --> `PrestarUnLibro`, `/prestamos/comandos/prestar-un-libro`) y a la documentación de la API (Swagger), así que se escriben como se dicen, en español y con tildes. Un nombre que es una palabra reservada de C# ("base") o que coincide con una variable del código generado ("Datos") se ajusta solo; ver "Nombres de C#" en el [README](README.md#nombres-de-c). Solo dos prefijos tienen significado: "Contexto " (se quita para el nombre del proyecto) y "Agregado ".
 - **Las propiedades tienen nombres fijos.** Son estas:
 
 | Propiedad | En qué elemento | Valor |
@@ -36,7 +36,7 @@ Cada paso dice qué elemento crear, con qué relación y con qué propiedad. Al 
 7. **Accesos.** Cada comando tiene exactamente un **acceso** a la raíz de su agregado, de escritura o de lectura y escritura (no "acceso" sin especificar). Si además necesita otra raíz del mismo contexto, la lee (acceso de lectura). Una consulta tiene un acceso de lectura a cada raíz que lee. (`Prestar un libro` escribe el préstamo; `Devolver el libro` lo lee y lo escribe; la consulta lo lee.)
 8. **Eventos.** Un evento de aplicación por cada hecho que publica un comando, con un **disparo** comando --> evento. Cada evento lo dispara al menos un comando del contexto. (`Libro prestado`, `Libro devuelto`.)
 9. **Políticas.** Si un evento del contexto pone en marcha otro comando del mismo contexto, un disparo evento --> comando. Los eventos que van a otro contexto no se dibujan como disparo: se declaran en el YAML de quien los recibe (`eventos_de_otros_contextos`), y el evento tiene que existir en el modelo, disparado por un comando del otro contexto. (El ejemplo no tiene políticas; YateGear tiene cuatro.)
-10. **Contratos.** Cada comando, consulta y servicio SA **realiza** un servicio de negocio con la propiedad `Código` (su mismo código). Ese servicio de negocio tiene una **asociación** con un contrato con la propiedad `Servicio` (el mismo código), y la documentación del contrato se escribe en líneas que empiezan por `Entrada:`, `Salida:` y, si hay reglas, `Reglas:`. Las reglas aparecen como comentario en el archivo manual de cada comando, donde se escriben a mano. (`Contrato de servicio: Prestar un libro`, con REG-01.)
+10. **Contratos.** Cada comando, consulta y servicio SA **realiza** un servicio de negocio con la propiedad `Código` (su mismo código). Ese servicio de negocio tiene una **asociación** con un contrato con la propiedad `Servicio` (el mismo código), y la documentación del contrato se escribe en líneas que empiezan por `Entrada:`, `Salida:` y, si hay reglas, `Reglas:`. Las reglas aparecen como comentario en el archivo manual de cada comando, donde se escriben a mano, y el contrato completo (entrada, salida y reglas) es la descripción de su endpoint en Swagger. (`Contrato de servicio: Prestar un libro`, con REG-01.)
 11. **Servicios de la capa anticorrupción.** Un servicio de aplicación con la propiedad `Código del servicio anticorrupción` y una **relación de servicio** SA --> contexto. Una interfaz de aplicación se le **asigna** (interfaz --> SA). La interfaz intercambia **flujos** con un solo elemento, la contraparte (el sistema externo, con `Externo` = `Sí`), y entre el SA y la contraparte hay una relación de servicio, en el sentido que corresponda. El nombre de cada flujo dice qué pasa y su sentido dice si entra o sale. Para llamar al sistema y esperar respuesta (`usa` en el YAML) hace falta un flujo que entra, la respuesta (conviene dibujar también el que sale, la pregunta); para recibir lo que el sistema envía (`recibe`), uno que entra; y para solo enviar (`envia`), uno que sale. `specs.py` revisa que estén. (`Catálogo de la biblioteca`, SA-01, con la interfaz `Interfaz del catálogo` y la contraparte `Sistema del catálogo`.)
 
 ## 3. Orden de trabajo
@@ -56,7 +56,7 @@ Cada paso dice qué elemento crear, con qué relación y con qué propiedad. Al 
    powershell -ExecutionPolicy Bypass -File .\verificar.ps1 -Modelo <ruta>.archimate -Specs <carpeta>/specs/<contexto>.yaml -Salida <carpeta>/salida -SinPruebasDelValidador
    ```
 
-   Genera dos veces (la misma huella), revisa la trazabilidad y prueba los escenarios. `-SinPruebasDelValidador` va porque los casos de `pruebas-validador/` son los de YateGear.
+   Genera dos veces (la misma huella), revisa la trazabilidad y prueba la documentación de la API y los escenarios. Con la aplicación levantada (`ejecutar.ps1`), Swagger está en http://localhost:5080/swagger. `-SinPruebasDelValidador` va porque los casos de `pruebas-validador/` son los de YateGear.
 5. **Cambiar el modelo.** Se cambia en Archi y se vuelve al paso 2. El generador reescribe los `.g.cs` y nunca toca los `.cs` manuales: si uno queda sin su comando, avisa.
 
 ## 4. Errores del modelo
@@ -85,6 +85,8 @@ Cada paso dice qué elemento crear, con qué relación y con qué propiedad. Al 
 | entre ... y su contraparte ... debe haber 1 relación de servicio | Falta la relación de servicio entre el SA y la contraparte (paso 11). |
 | el código ... se repite | Dos comandos, consultas o SA tienen el mismo código. |
 | N elementos ... se llaman "..." | Dos elementos del mismo tipo del contexto tienen el mismo nombre: el código necesita nombres distintos. |
+
+Al generar puede salir además "el nombre de C# \"...\" no se puede usar en ...": dos nombres del modelo o del YAML dan el mismo nombre en C#, o uno coincide con un nombre que el generador necesita (por ejemplo, una raíz llamada "Comando"). Se cambia el nombre en el modelo o en el YAML.
 
 Si la línea de comandos de Archi escribe `IllegalArgumentException` al exportar, alguna caja tiene una fuente sin nombre. La exportación termina igual; se arregla en Archi dándole una fuente explícita.
 

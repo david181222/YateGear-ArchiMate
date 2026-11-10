@@ -20,7 +20,7 @@ Cada clave nueva del YAML trae su caso: así se sabe que specs.py de verdad la r
 
 Termina con código 1 si algún caso no sale como se espera.
 
-uso: python src/probar_validador.py <modelo-ddd.json> <casos.yaml>
+uso: python src/herramientas/probar_validador.py <modelo-ddd.json> <casos.yaml>
 """
 from __future__ import annotations
 

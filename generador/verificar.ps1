@@ -1,18 +1,19 @@
-﻿# Verifica que el generador y lo generado están bien, con un solo comando: lo de "Cuándo está terminado un
-# contexto" (PENDIENTES.md). En orden:
+﻿# Verifica que el generador y lo generado están bien, con un solo comando. En orden:
 #   1. generar.ps1: exporta, extrae, revisa los YAML (y los contratos entre contextos), genera y compila sin
 #      advertencias (las advertencias son errores de compilación).
 #   2. Determinismo: generar.ps1 otra vez y la misma huella de la carpeta de salida.
 #   3. Trazabilidad completa: cada elemento de los contextos generados está en su CSV.
 #   4. Pruebas del validador: cada copia rota a propósito de un YAML da el error esperado (pruebas-validador/casos.yaml).
 #   5. Código a mano completo: ningún archivo manual conserva un valor provisional del generador (PENDIENTE).
-#   6. probar.ps1: los escenarios de cada contexto y los de punta a punta, sin errores en el bus.
+#   6. probar.ps1: la documentación de la API (OpenAPI y Swagger), los escenarios de cada contexto y los de punta
+#      a punta, sin errores en el bus.
 # Al final muestra una tabla con cada revisión y termina con código 1 si alguna falla.
 #
 # Uso (desde la carpeta generador):
 #   powershell -ExecutionPolicy Bypass -File .\verificar.ps1     (Windows)
 #   pwsh ./verificar.ps1                                          (Linux)
-#   ... -Modelo, -Specs, -Archi, -Salida y -Puerto pasan a generar.ps1 y probar.ps1.
+#   ... -Modelo, -Specs, -Archi y -Salida pasan a generar.ps1 y probar.ps1; -Puerto, solo a probar.ps1 (el puerto de
+#       las pruebas; el de lo generado se elige con generar.ps1 -Puerto).
 #   ... -SinPruebasDelValidador   (por ejemplo, con el modelo de ejemplo: los casos son de los YAML de specs/)
 #
 # Este archivo va en UTF-8 con BOM: Windows PowerShell 5.1 lee sin BOM como ANSI.
@@ -96,7 +97,7 @@ $argumentos = @("-ExecutionPolicy", "Bypass", "-File", "./probar.ps1", "-Salida"
 if ($Puerto) { $argumentos += @("-Puerto", $Puerto) }
 & $shell @argumentos | Out-Host
 $ok = $LASTEXITCODE -eq 0
-Revision "Escenarios" $ok $(if ($ok) { "Todos los pasos en verde y ningún error en el bus." } else { "Algún paso falló (ver arriba)." })
+Revision "API y escenarios" $ok $(if ($ok) { "Swagger responde, todos los pasos en verde y ningún error en el bus." } else { "Algún paso falló (ver arriba)." })
 
 Write-Host ""
 $resultados | Format-Table -AutoSize | Out-Host

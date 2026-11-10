@@ -5,9 +5,9 @@ Recorre todos los archivos de la carpeta, salvo bin/, obj/, el XML exportado
 lista ordenada "ruta  huella" de todos los archivos.
 
 uso:
-  python src/huella.py <carpeta>              huella total y número de archivos
-  python src/huella.py <carpeta> --detalle    además, la huella de cada archivo
-  python src/huella.py <carpeta A> <carpeta B>  compara: lista lo que difiere; código 1 si difieren
+  python src/herramientas/huella.py <carpeta>              huella total y número de archivos
+  python src/herramientas/huella.py <carpeta> --detalle    además, la huella de cada archivo
+  python src/herramientas/huella.py <carpeta A> <carpeta B>  compara: lista lo que difiere; código 1 si difieren
 """
 from __future__ import annotations
 
