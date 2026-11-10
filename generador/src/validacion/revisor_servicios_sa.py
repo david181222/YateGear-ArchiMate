@@ -112,7 +112,7 @@ class RevisionDeServiciosSA:
                     self.mensajes_sa[msj] = {"sa": sa, "dispara": cmds[0], "comandos": cmds, "datos": datos or {}}
         for sa, info in sorted(sas.items()):
             if not info["usado_por"]:
-                self.error("servicios_sa", f'ningún comando usa "{sa}" (V9-DEC-03)')
+                self.error("servicios_sa", f'ningún comando usa "{sa}", y tampoco recibe ni envía mensajes: nadie lo usa')
 
     def revisar_envios_sa(self):
         """Mensajes que envían los SA: salen cuando ocurre un evento del contexto, con sus datos por nombre."""

@@ -36,7 +36,7 @@ class ServiciosSA:
                 casos.append({"condicion": cond, "respuesta": respuesta(caso["respuesta"])})
             con = msa["contraparte"]
             sa = {**nombres_cs, "nombre": msa["nombre"], "codigo": msa["codigo"], "id": msa["id"], "clase": clase,
-                  "var": nombres.camel(msa["nombre"]), "entrada_campos": ent, "salida_campos": sal,
+                  "var": nombres.variable_local(msa["nombre"]), "entrada_campos": ent, "salida_campos": sal,
                   "casos": casos, "defecto": respuesta(ssa["respuesta_por_defecto"]),
                   "interfaz_modelo": msa["interfaz"], "contraparte": con, "flujos": msa["flujos"],
                   "contrato": msa["contrato"], "servicio_negocio": msa["servicio_negocio"],
@@ -123,7 +123,7 @@ class ServiciosSA:
                 for nombre_cmd, op in lista:
                     c_ = cmd_por_nombre[nombre_cmd]
                     rc = self.usar_raiz(c_["raiz_nombre"])
-                    var_c = nombres.camel(c_["nombre"])
+                    var_c = nombres.variable_local(c_["nombre"])
                     manejadores[var_c] = {"cs": c_["manejador"], "var": var_c}
                     disparos_m.append({"comando": c_["nombre"], "comando_clase": c_["clase"], "manejador_var": var_c,
                                        "args": ([] if c_["crea"] else [f'mensaje.{rc["id_prop"]}'])

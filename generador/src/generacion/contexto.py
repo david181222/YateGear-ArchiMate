@@ -67,7 +67,8 @@ class Generador(Raices, ServiciosSA, Eventos, Comandos, Consultas, Politicas, Es
         vistos = set()
         for m in miembros:
             if m == clase or m in vistos or m in MIEMBROS_RESERVADOS:
-                raise ErrorDeGeneracion(f'el miembro "{m}" de {clase} se repite, se llama como su clase o es reservado')
+                raise ErrorDeGeneracion(f'el nombre de C# "{m}" no se puede usar en {clase}: se repite, se llama como su clase '
+                                        'o lo usa el generador. Cambia en el modelo o en el YAML el nombre del que sale')
             vistos.add(m)
 
     def tipo(self, texto: str, origen: str) -> dict:
@@ -105,11 +106,15 @@ class Generador(Raices, ServiciosSA, Eventos, Comandos, Consultas, Politicas, Es
         (self.manuales if manual else self.archivos)[destino] = texto
 
     # ------------------------------------------------------------ todo el contexto
-    def generar(self) -> "Generador":
-        """Prepara en memoria los archivos del contexto. Los escribe Solucion."""
-        # Los objetos de valor del contexto se pueden usar como List<objeto de valor> en el YAML (G4).
+    def usar_objetos(self):
+        """Fija los objetos de valor y las entidades de este contexto como los que se pueden usar en List<objeto de
+        valor>. Se llama antes de interpretar tipos o valores del contexto: cada contexto tiene los suyos."""
         tipos.usar_objetos({v["nombre"]: {c["nombre"]: c for c in v["campos"]}
                             for a in self.ctx["agregados"] for v in a["objetos_valor"] + a["entidades"]})
+
+    def generar(self) -> "Generador":
+        """Prepara en memoria los archivos del contexto. Los escribe Solucion."""
+        self.usar_objetos()
         self.preparar_raiz()
         self.preparar_sas()
         self.preparar_eventos()

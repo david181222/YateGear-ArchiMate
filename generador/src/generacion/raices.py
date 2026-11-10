@@ -31,7 +31,7 @@ class Raices:
         ident = sr["identidad"]
         clase = self.tipo_cs_nuevo(nombres.pascal(r["nombre"]), f'raíz "{r["nombre"]}"')
         estado_t = self.tipo(sr["estado"], f'estado de la raíz "{r["nombre"]}" (YAML)')
-        var = nombres.camel(r["nombre"])
+        var = nombres.variable_local(r["nombre"])
         # Identidad: un consecutivo (prefijo y digitos) o formada con datos (de), G3.
         de = ident.get("de") or {}
         raiz = {"id": r["id"], "nombre": r["nombre"], "clase": clase, "var": var, "agregado": ag,

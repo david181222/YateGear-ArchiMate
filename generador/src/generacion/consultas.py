@@ -69,9 +69,9 @@ class Consultas:
             salida.append({**c, "expr": f'{c["prop"]}(datos)'})
         self.revisar_miembros(n["salida"], [c["prop"] for c in salida])
         self.revisar_miembros(n["manejador"], [k["metodo"] for k in calculados])
-        id_param = nombres.camel(r["id_nombre"])
-        lambda_params = ([] if todas else [f"string {id_param}"]) + [f'{c["cs"]} {nombres.camel(c["nombre"])}' for c in ent]
-        args = ([] if todas else [id_param]) + [nombres.camel(c["nombre"]) for c in ent]
+        id_param = nombres.variable(r["id_nombre"])
+        lambda_params = ([] if todas else [f"string {id_param}"]) + [f'{c["cs"]} {nombres.variable(c["nombre"])}' for c in ent]
+        args = ([] if todas else [id_param]) + [nombres.variable(c["nombre"]) for c in ent]
         k = mq["contrato"]
         q = {**n, "nombre": mq["nombre"], "codigo": mq["codigo"], "id": mq["id"], "parametros": params,
              "salida_campos": salida, "calculados": calculados, "contrato": k, "servicio_negocio": mq["servicio_negocio"],

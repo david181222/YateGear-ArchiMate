@@ -80,7 +80,7 @@ class Eventos:
                     cmd = cmd_por_nombre[nombre_cmd]
                     rc = self.usar_raiz(cmd["raiz_nombre"])
                     id_raiz = f"evento.{id_prop}" if id_nombre == rc["id_nombre"] else f'evento.{rc["id_prop"]}'
-                    var_m = nombres.camel(cmd["nombre"])
+                    var_m = nombres.variable_local(cmd["nombre"])
                     manejadores[var_m] = {"cs": cmd["manejador"], "var": var_m}
                     disparos_x.append({"comando": cmd["nombre"], "comando_clase": cmd["clase"], "manejador_var": var_m,
                                        "args": [id_raiz] + self.argumentos(cmd, amb, op.get("con") or {}, op.get("correspondencias") or {}),
@@ -98,8 +98,8 @@ class Eventos:
             junto = list(se.get("junto_con") or [])
             grupo = sorted([nombre] + junto)
             # De dónde sale cada dato de la entrada del comando: con (fijo) o un evento del grupo, por nombre.
-            variables = [{"var": nombres.camel(g), "clase": clases[g], "nombre": cs_cadena(g)} for g in grupo] if junto else []
-            fuentes_ev = [(nombres.camel(g) if junto else "evento", {k: tipos.interpretar(t) for k, t in (ext[g].get("datos") or {}).items()})
+            variables = [{"var": nombres.variable_local(g), "clase": clases[g], "nombre": cs_cadena(g)} for g in grupo] if junto else []
+            fuentes_ev = [(nombres.variable_local(g) if junto else "evento", {k: tipos.interpretar(t) for k, t in (ext[g].get("datos") or {}).items()})
                           for g in (grupo if junto else [nombre])]
             con = se.get("con") or {}
             # La identidad de la raíz: la del evento, o (si llega con otra, G3) el dato de la raíz por su nombre.
@@ -119,7 +119,7 @@ class Eventos:
                     args.append(f'({origen[0]}.{prop} ?? throw new DatoFaltante({cs_cadena(c["nombre"])}))')
                 else:
                     args.append(f'{origen[0]}.{prop}')
-            var_m = nombres.camel(cmd["nombre"])
+            var_m = nombres.variable_local(cmd["nombre"])
             manejadores[var_m] = {"cs": cmd["manejador"], "var": var_m}
             x.update({"comando": cmd["nombre"], "comando_clase": cmd["clase"], "manejador_var": var_m,
                       "junto_con": junto, "grupo": [cs_cadena(g) for g in grupo] if junto else [],

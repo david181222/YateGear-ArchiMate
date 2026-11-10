@@ -96,11 +96,11 @@ class Comandos:
                 params, args_c = [], []
                 for x in calc_de[k]:
                     if x in raices_cmd:               # una raíz entera
-                        params.append(f'{raices_cmd[x]["clase"]} {nombres.camel(x)}')
+                        params.append(f'{raices_cmd[x]["clase"]} {nombres.variable(x)}')
                         args_c.append(raices_cmd[x]["var"])
                     else:
                         f = antes.buscar(x)
-                        params.append(f'{cs_tipo(f["tipo"])} {nombres.camel(x)}')
+                        params.append(f'{cs_tipo(f["tipo"])} {nombres.variable(x)}')
                         args_c.append(antes.expr(x, f["tipo"]["opcional"]))
                 llamadas.append({"tipo": "calculo", "var": var_c, "metodo": nombres.pascal(k), "args": args_c})
                 calc_metodos.append({"nombre": k, "metodo": nombres.pascal(k), "cs": cs_tipo(t), "params": params,
@@ -229,7 +229,7 @@ class Comandos:
         requeridos, capas_req = [], []
         for nombre_ev in sc.get("requiere") or []:
             x = self.s["eventos_de_otros_contextos"][nombre_ev]
-            ev_clase, var_ev = nombres.pascal(nombre_ev), nombres.camel(nombre_ev)
+            ev_clase, var_ev = nombres.pascal(nombre_ev), nombres.variable_local(nombre_ev)
             id_ev = x.get("identidad") or r["id_nombre"]
             requeridos.append({"var": var_ev, "clase": ev_clase, "nombre": cs_cadena(nombre_ev),
                                "identidad": antes.expr(id_ev, False)})
@@ -319,7 +319,7 @@ class Comandos:
         x = sc.get("temporizador")
         if not x:
             return None
-        nombre = self.tipo_cs_nuevo(f"{clase}Temporizador", f'temporizador de "{sc}"')
+        nombre = self.tipo_cs_nuevo(f"{clase}Temporizador", f'temporizador de "{clase}"')
         con, ahora = x.get("con") or {}, x.get("ahora")
         args = [cs_literal(con[c["nombre"]], c["tipo"]) if c["nombre"] in con else "DateTime.Now" if c["nombre"] == ahora
                 else "null" for c in ent]

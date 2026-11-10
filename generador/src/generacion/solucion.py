@@ -55,6 +55,7 @@ class Solucion:
                 for i, paso in enumerate(pasos, 1):
                     nombre, op = next(iter(paso.items()))
                     g = por_contexto[op["en"]]
+                    g.usar_objetos()                    # cada paso, con los objetos de valor de su contexto
                     esp = op.get("espera")
                     rechazo = es_rechazo(esp)
                     p = g.paso_entre_contextos(nombre, op.get("con") or {}, actual, contador, rechazo)

@@ -41,11 +41,11 @@ class Politicas:
             uno_y = x.get("uno_de") or {}
             uno = {k: (v or {}) for k, v in uno_y.items()} if isinstance(uno_y, dict) else {k: {} for k in uno_y}
             evs = {ev["nombre"]: ev for _, ev in rels}
-            variables = [{"var": nombres.camel(n), "clase": evs[n]["clase"], "nombre": cs_cadena(n), "seguro": n in junto}
+            variables = [{"var": nombres.variable_local(n), "clase": evs[n]["clase"], "nombre": cs_cadena(n), "seguro": n in junto}
                          for n in junto + list(uno)]
             amb = Ambito()
             for n in junto:
-                amb.agregar(self.capa_evento(evs[n], nombres.camel(n)))
+                amb.agregar(self.capa_evento(evs[n], nombres.variable_local(n)))
             con, corr = x.get("con") or {}, x.get("correspondencias") or {}
             args = [] if cmd["crea"] else ["e.Identidad"]
             for c in cmd["entrada_campos"]:
@@ -58,7 +58,7 @@ class Politicas:
                     expr = "null" if c["tipo"]["opcional"] else f'throw new DatoFaltante({cs_cadena(c["nombre"])})'
                     alguno = False
                     for n in reversed(list(uno)):
-                        var = nombres.camel(n)
+                        var = nombres.variable_local(n)
                         con_n = (uno[n].get("con") or {})
                         props = {d["nombre"]: d for d in evs[n]["datos"] + evs[n]["calculados"]}
                         if c["nombre"] in con_n:

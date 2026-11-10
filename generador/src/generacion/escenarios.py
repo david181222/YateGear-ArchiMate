@@ -300,8 +300,8 @@ class Escenarios:
         pruebas = []
         en_yaml = list(self.s["comandos"])
         por_yaml = sorted(self.comandos, key=lambda c: en_yaml.index(c["nombre"]))
-        crea = next(c for c in por_yaml if c["crea"])
-        orden = [crea] + [c for c in por_yaml if not c["crea"]]
+        crea = next((c for c in por_yaml if c["crea"]), None)       # None: la raíz solo se crea con si_no_existe
+        orden = ([crea] if crea else []) + [c for c in por_yaml if not c["crea"]]
         principal = nueva_identidad()
         for c in orden:
             nota = f"Crea la raíz {principal}." if c["crea"] else f"Sobre {principal}."
@@ -315,6 +315,8 @@ class Escenarios:
         pruebas.append(bitacora)
 
         # Caminos alternativos: casos de los SA que usa el comando que crea, elegidos por su entrada.
+        if crea is None:
+            return pruebas
         ent_crea = {c["nombre"] for c in crea["entrada_campos"]}
         con_casos = [c for c in orden if not c["crea"] and any(self.sas[s]["usa_casos"] for s in c["spec"].get("usa") or [])]
         for nombre_sa in crea["spec"].get("usa") or []:
