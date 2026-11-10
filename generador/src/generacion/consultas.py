@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from comun import nombres
-from generacion.csharp import Ambito, fuente, lineas, provisional
+from generacion.csharp import Ambito, descripcion_del_contrato, fuente, lineas, provisional
 from validacion import valores
 
 
@@ -83,6 +83,7 @@ class Consultas:
              "otras": otras, "raiz_nombre": r["nombre"],
              "ruta": f'{self.ruta_base}/consultas/{nombres.ruta(mq["nombre"])}' + ("" if todas else f"/{{{id_param}}}"),
              "ruta_prueba": f'/consultas/{nombres.ruta(mq["nombre"])}',
+             "resumen": f'Consulta {mq["codigo"]}: {mq["nombre"]}', "descripcion": descripcion_del_contrato(k),
              "lambda_params": ", ".join(lambda_params), "args": ", ".join(args),
              "archivo": f'{self.proyecto}/Consultas/{clase}.g.cs', "manual": f'{self.proyecto}/Consultas/{clase}.cs',
              "entrada_campos": ent}

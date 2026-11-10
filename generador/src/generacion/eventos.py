@@ -66,6 +66,8 @@ class Eventos:
                  "id_nombre": id_nombre, "id_prop": id_prop, "id_json": nombres.camel(id_nombre), "parametros": params,
                  "recordar": nombre in requeridos, "comando": None, "grupo": [], "junto_con": [], "disparos": None,
                  "ruta": f'{self.ruta_base}/eventos-externos/{nombres.ruta(nombre)}', "datos_campos": datos,
+                 "resumen": f'Evento "{nombre}" de {se["de"]}',
+                 "descripcion": "Endpoint de prueba: entre contextos, el evento llega solo por el bus.",
                  "obligatorios": ", ".join(f"({cs_cadena(p)}, {cs_cadena(n)})" for p, n in obligatorios)}
             if "dispara" not in se:                    # solo se recuerda, para los comandos que lo requieren
                 self.registrar_externo(x)

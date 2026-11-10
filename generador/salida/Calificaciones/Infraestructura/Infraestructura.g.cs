@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationComponent "Contexto Calificaciones" (id-6f29abc193cb4f2fa1234cec80bf0675).
-// Infraestructura del piloto. No sale del modelo: repositorio en memoria, bus de eventos,
+// Infraestructura de la aplicación. No sale del modelo: repositorio en memoria, bus de eventos,
 // bitácora y errores. No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Globalization;

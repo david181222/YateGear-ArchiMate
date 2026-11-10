@@ -86,6 +86,14 @@ def xml(texto: str) -> str:
     return " ".join(texto.split("\n")).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def descripcion_del_contrato(contrato: dict) -> str:
+    """El contrato de un comando o una consulta como texto para la documentación de la API (OpenAPI)."""
+    partes = [f'Entrada: {contrato["entrada"]}', f'Salida: {contrato["salida"]}']
+    if contrato["reglas"]:
+        partes.append(f'Reglas: {contrato["reglas"]}')
+    return "\n\n".join(partes)
+
+
 def lineas(texto: str, ancho: int = 100) -> list[str]:
     out = []
     for parrafo in texto.split("\n"):

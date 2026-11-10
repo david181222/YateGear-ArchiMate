@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationComponent "Contexto Operación del arriendo" (id-909c52d6cdf845e6927af4c62d2847fb).
-// Infraestructura del piloto. No sale del modelo: repositorio en memoria, bus de eventos,
+// Infraestructura de la aplicación. No sale del modelo: repositorio en memoria, bus de eventos,
 // bitácora y errores. No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Globalization;

@@ -2,7 +2,7 @@
   <!-- Generado desde ArchiMate: Model "YateGear" (id-98e02fd4df1c4f21a8610d291649a7af). -->
   <!-- Bus entre contextos (D1): lo referencian el host y cada contexto. No conoce ningún contexto. -->
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <!-- Cero advertencias: una advertencia, también en el código a mano, detiene la compilación. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

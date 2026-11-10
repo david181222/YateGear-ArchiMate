@@ -117,8 +117,8 @@ Paso 5 "Generar la solución C#"
 & $py src/generar.py --puerto $Puerto $json $Salida @Specs
 if ($LASTEXITCODE -ne 0) { Fallo "la generación falló (ver arriba)." }
 
-Paso 6 "Compilar con .NET 8"
-# Desde la carpeta de salida, para que dotnet use el global.json (SDK 8).
+Paso 6 "Compilar con .NET"
+# Desde la carpeta de salida, para que dotnet use el SDK que fija su global.json.
 Push-Location $Salida
 & $dotnet build -nologo
 $codigo = $LASTEXITCODE

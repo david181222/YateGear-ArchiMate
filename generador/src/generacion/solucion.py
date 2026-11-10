@@ -93,7 +93,7 @@ class Solucion:
         h, i = self.host, INTEGRACION
         archivos[f"{h}/{h}.csproj"] = self.render("host.csproj.j2", cabecera=cab, contextos=contextos, integracion=i)
         archivos[f"{h}/Program.g.cs"] = self.render("host_program.g.cs.j2", cabecera=cab, contextos=contextos,
-                                                     ns_integracion=ns_integracion)
+                                                     ns_integracion=ns_integracion, modelo=self.modelo_nombre)
         archivos[f"{h}/Properties/launchSettings.json"] = self.render("launchSettings.json.j2", proyecto=h)
         # Página de inicio de la API (infraestructura): las rutas de cada contexto, servida como archivo estático.
         archivos[f"{h}/wwwroot/index.html"] = self.render("index.html.j2", cabecera=cab, contextos=contextos,

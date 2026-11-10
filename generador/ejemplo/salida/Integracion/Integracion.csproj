@@ -2,7 +2,7 @@
   <!-- Generado desde ArchiMate: Model "Biblioteca" (id-2978acbbf99b509f9ea9ee63176d70ae). -->
   <!-- Bus entre contextos (D1): lo referencian el host y cada contexto. No conoce ningún contexto. -->
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <!-- Cero advertencias: una advertencia, también en el código a mano, detiene la compilación. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

@@ -1,4 +1,4 @@
-﻿# Levanta la aplicación generada (el host, con todos los contextos) desde salida/, con el SDK 8 que fija
+﻿# Levanta la aplicación generada (el host, con todos los contextos) desde salida/, con el SDK que fija
 # salida/global.json. Lee el proyecto y el puerto de salida/contextos.json. Se detiene con Ctrl+C.
 #
 # Uso (desde la carpeta generador):
@@ -47,9 +47,10 @@ if (-not $libre) {
 
 Write-Host "Aplicación en http://localhost:$Puerto  (Ctrl+C para detener)." -ForegroundColor Green
 Write-Host "Rutas de la API, en el navegador: http://localhost:$Puerto/" -ForegroundColor Green
+Write-Host "Documentación de la API (Swagger): http://localhost:$Puerto/swagger" -ForegroundColor Green
 Write-Host "Contextos:" -ForegroundColor Green
 foreach ($c in $solucion.contextos) { Write-Host "  http://localhost:$Puerto$($c.ruta_base)  $($c.nombre)" -ForegroundColor Green }
-# Desde la carpeta de salida, para que dotnet use el global.json (SDK 8).
+# Desde la carpeta de salida, para que dotnet use el SDK que fija su global.json.
 Set-Location $Salida
 & $dotnet run --project $proyecto -- --urls "http://localhost:$Puerto"
 exit $LASTEXITCODE

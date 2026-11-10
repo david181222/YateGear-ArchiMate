@@ -2,7 +2,7 @@
   <!-- Generado desde ArchiMate: ApplicationComponent "Contexto Cobros y depósito" (id-859686865fd4465397859188d62c971c). -->
   <!-- Biblioteca del contexto: la levanta el host. Solo referencia al bus entre contextos, nunca a otro contexto (D1). -->
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <!-- Cero advertencias: una advertencia, también en el código a mano, detiene la compilación. -->

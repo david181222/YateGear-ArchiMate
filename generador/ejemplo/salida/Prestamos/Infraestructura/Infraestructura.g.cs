@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationComponent "Contexto Préstamos" (id-ccd77ee8d6e85373b2058f86905a7b2c).
-// Infraestructura del piloto. No sale del modelo: repositorio en memoria, bus de eventos,
+// Infraestructura de la aplicación. No sale del modelo: repositorio en memoria, bus de eventos,
 // bitácora y errores. No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Globalization;

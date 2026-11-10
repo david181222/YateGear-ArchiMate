@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationComponent "Contexto Cobros y depósito" (id-859686865fd4465397859188d62c971c).
-// Infraestructura del piloto. No sale del modelo: repositorio en memoria, bus de eventos,
+// Infraestructura de la aplicación. No sale del modelo: repositorio en memoria, bus de eventos,
 // bitácora y errores. No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Globalization;

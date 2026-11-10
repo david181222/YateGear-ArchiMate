@@ -15,8 +15,11 @@ from generacion.constantes import (
     DIR_PLANTILLAS,
     INFRAESTRUCTURA,
     INTEGRACION,
+    NET,
+    PAQUETES_DEL_HOST,
     MIEMBROS_RESERVADOS,
     PUERTO_POR_DEFECTO,
+    SDK,
 )
 from generacion.consultas import Consultas
 from generacion.csharp import cs_cadena, cs_tipo, ErrorDeGeneracion, xml
@@ -50,6 +53,8 @@ class Generador(Raices, ServiciosSA, Eventos, Comandos, Consultas, Politicas, Es
             trim_blocks=True, lstrip_blocks=True, keep_trailing_newline=True, autoescape=False)
         self.env.filters["xml"] = xml
         self.env.filters["cadena"] = cs_cadena
+        self.env.globals.update(net=NET, sdk=SDK, paquetes_del_host=PAQUETES_DEL_HOST)
+        self.dominio = dominio                      # el nombre del contexto sin "Contexto ": su etiqueta en la API
 
     # ------------------------------------------------------------ utilidades
     @staticmethod
@@ -134,7 +139,7 @@ class Generador(Raices, ServiciosSA, Eventos, Comandos, Consultas, Politicas, Es
         envios = [{**m_, "sa": e["sa"]["nombre"], "interfaz": e["interfaz"]} for e in self.emisores for m_ in e["mensajes"]]
         self.render("politicas.g.cs.j2", f"{p}/Politicas/Politicas.g.cs", politicas=self.politicas, grupos=self.grupos,
                     envios=envios, cabecera=cab_ctx)
-        self.render("registro.g.cs.j2", f"{p}/Registro.g.cs", cabecera=cab_ctx, contexto=ctx["nombre"],
+        self.render("registro.g.cs.j2", f"{p}/Registro.g.cs", cabecera=cab_ctx, contexto=ctx["nombre"], etiqueta=self.dominio,
                     raices=[x["raiz"] for x in self.raices.values()], emisores=self.emisores, grupos=self.grupos,
                     sas=list(self.sas.values()), comandos=self.comandos, consultas=self.consultas,
                     externos=self.externos, ruta_base=self.ruta_base, receptores_sa=self.receptores_sa,

@@ -2,12 +2,18 @@
   <!-- {{ cabecera }} -->
   <!-- Programa (host): levanta todos los contextos en un solo proceso, con el bus entre contextos (D1). -->
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>{{ net }}</TargetFramework>
     <Nullable>enable</Nullable>
     <!-- Cero advertencias: una advertencia, también en el código a mano, detiene la compilación. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <!-- Documentación de la API: el documento OpenAPI (/openapi/v1.json) y la página Swagger (/swagger). -->
+  <ItemGroup>
+{% for nombre, version in paquetes_del_host %}
+    <PackageReference Include="{{ nombre }}" Version="{{ version }}" />
+{% endfor %}
+  </ItemGroup>
   <ItemGroup>
 {% for c in contextos %}
     <ProjectReference Include="..\{{ c.proyecto }}\{{ c.proyecto }}.csproj" />

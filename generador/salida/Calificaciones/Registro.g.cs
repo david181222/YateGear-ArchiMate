@@ -10,6 +10,9 @@ namespace YateGear.Calificaciones;
 /// <summary>Registra el contexto "Contexto Calificaciones" en el programa.</summary>
 public static class Registro
 {
+    /// <summary>Nombre del contexto en la documentación de la API: agrupa sus endpoints.</summary>
+    private const string Contexto = "Calificaciones";
+
     /// <summary>Servicios del contexto.</summary>
     public static void AgregarServicios(IServiceCollection servicios)
     {
@@ -47,22 +50,46 @@ public static class Registro
 
         // Comandos: POST con el comando en JSON.
         app.MapPost("/calificaciones/comandos/calificar-al-cliente",
-            (CalificarAlCliente comando, CalificarAlClienteManejador manejador) => Ejecutar(() => manejador.Manejar(comando)));
+            (CalificarAlCliente comando, CalificarAlClienteManejador manejador) => Ejecutar(() => manejador.Manejar(comando)))
+            .Documentar<RespuestaDeComando>("Comando SB-29: Calificar al cliente",
+                "Entrada: Arriendo cerrado y calificación.\n\nSalida: Calificación registrada.\n\nReglas: Una calificación por cada parte y arriendo, al cerrar el arriendo (E2E-07); se rechaza si el arriendo no está cerrado o si el propietario ya calificó.", 404, 409, 422);
         app.MapPost("/calificaciones/comandos/calificar-al-propietario",
-            (CalificarAlPropietario comando, CalificarAlPropietarioManejador manejador) => Ejecutar(() => manejador.Manejar(comando)));
+            (CalificarAlPropietario comando, CalificarAlPropietarioManejador manejador) => Ejecutar(() => manejador.Manejar(comando)))
+            .Documentar<RespuestaDeComando>("Comando SB-28: Calificar al propietario",
+                "Entrada: Arriendo cerrado y calificación.\n\nSalida: Calificación registrada.\n\nReglas: Una calificación por cada parte y arriendo, al cerrar el arriendo (E2E-07); se rechaza si el arriendo no está cerrado o si el cliente ya calificó.", 404, 409, 422);
 
         // Consultas: GET con la identidad en la ruta.
         app.MapGet("/calificaciones/consultas/consultar-calificaciones-promedio",
-            (string calificado, ConsultarCalificacionesPromedioManejador manejador) => Ejecutar(() => manejador.Manejar(new ConsultarCalificacionesPromedio(calificado))));
+            (string calificado, ConsultarCalificacionesPromedioManejador manejador) => Ejecutar(() => manejador.Manejar(new ConsultarCalificacionesPromedio(calificado))))
+            .Documentar<ConsultarCalificacionesPromedioSalida>("Consulta SB-30: Consultar calificaciones promedio",
+                "Entrada: Propietario o cliente.\n\nSalida: Calificación promedio y número de calificaciones.", 404, 422);
 
         // Eventos de otros contextos (capa 3): POST con el evento en JSON. Si falta un dato obligatorio
         // responde 422; si faltan eventos de su grupo (junto_con), 202.
         app.MapPost("/calificaciones/eventos-externos/arriendo-cerrado",
-            (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirArriendoCerrado(evento), Recibido));
+            (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.RecibirArriendoCerrado(evento), Recibido))
+            .Accepts<ArriendoCerrado>("application/json")
+            .Documentar<RespuestaDeEventoExterno>("Evento \"Arriendo cerrado\" de Contexto Gestión del arriendo",
+                "Endpoint de prueba: entre contextos, el evento llega solo por el bus.", 202, 404, 409, 422);
 
 
         // Bitácora (infraestructura, no sale del modelo): eventos y llamadas a los servicios SA simulados, en orden.
-        app.MapGet("/calificaciones/bitacora", (Bitacora bitacora) => bitacora.Todo());
+        app.MapGet("/calificaciones/bitacora", (Bitacora bitacora) => bitacora.Todo())
+            .Documentar<IReadOnlyList<RegistroDeBitacora>>("Bitácora (infraestructura)",
+                "Eventos publicados y recibidos, llamadas a los servicios SA simulados y errores, en orden. No sale del modelo.");
+    }
+
+    /// <summary>Documenta un endpoint para OpenAPI (Swagger): su contexto, de qué elemento del modelo sale, su contrato,
+    /// lo que responde y los códigos con que puede rechazar.</summary>
+    private static RouteHandlerBuilder Documentar<TRespuesta>(this RouteHandlerBuilder endpoint, string resumen,
+        string descripcion, params int[] rechazos)
+    {
+        endpoint.WithTags(Contexto).WithSummary(resumen).WithDescription(descripcion).Produces<TRespuesta>();
+        foreach (var codigo in rechazos)
+        {
+            endpoint.Produces(codigo);
+        }
+        return endpoint;
     }
 
     private static IResult Ejecutar<T>(Func<T> accion, Func<T, IResult>? exito = null)

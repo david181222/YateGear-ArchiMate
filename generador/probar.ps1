@@ -1,6 +1,6 @@
 ﻿# Prueba los escenarios de los YAML contra la aplicación generada.
 # Compila y, por cada contexto con escenarios (salida/contextos.json dice cuáles hay y dónde están) y para los
-# escenarios entre contextos (S4), levanta el host desde salida/ (SDK 8 del global.json), ejecuta sus escenarios,
+# escenarios entre contextos (S4), levanta el host desde salida/ (con el SDK de su global.json), ejecuta sus escenarios,
 # marca cada paso con ✓ o ✗ y detiene la aplicación. Cada grupo corre con la aplicación recién levantada: con la
 # integración (G12) un evento de un contexto llega a los demás, y así los escenarios de uno no cambian los de otro.
 # Termina con código 1 si algún paso falla.
@@ -94,6 +94,7 @@ function Detener($app) {
 }
 
 $codigo = 0
+$apiRevisada = $false
 foreach ($g in $grupos) {
     Write-Host ""
     Write-Host "== Levantar la aplicación en $url para $($g.Nombre)"
@@ -120,6 +121,13 @@ foreach ($g in $grupos) {
             Write-Host "ERROR: la aplicación no respondió en 30 segundos." -ForegroundColor Red
             $codigo = 1
         } else {
+            if (-not $apiRevisada) {
+                # La documentación de la API (OpenAPI y Swagger) se revisa una vez, con la aplicación recién levantada.
+                Write-Host "== Documentación de la API"
+                & $py src/herramientas/revisar_api.py $manifiesto $url
+                if ($LASTEXITCODE -ne 0) { $codigo = 1 }
+                $apiRevisada = $true
+            }
             Write-Host "== Escenarios de $($g.Nombre)"
             & $py src/herramientas/probar.py (Join-Path $Salida $g.Escenarios) $url
             if ($LASTEXITCODE -ne 0) { $codigo = 1 }

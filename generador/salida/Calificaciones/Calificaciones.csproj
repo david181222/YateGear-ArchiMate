@@ -2,7 +2,7 @@
   <!-- Generado desde ArchiMate: ApplicationComponent "Contexto Calificaciones" (id-6f29abc193cb4f2fa1234cec80bf0675). -->
   <!-- Biblioteca del contexto: la levanta el host. Solo referencia al bus entre contextos, nunca a otro contexto (D1). -->
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <!-- Cero advertencias: una advertencia, también en el código a mano, detiene la compilación. -->

@@ -2,7 +2,17 @@
 from __future__ import annotations
 
 from comun import nombres, tipos
-from generacion.csharp import Ambito, cs_cadena, cs_literal, cs_tipo, ErrorDeGeneracion, fuente, lineas, provisional
+from generacion.csharp import (
+    Ambito,
+    cs_cadena,
+    cs_literal,
+    cs_tipo,
+    descripcion_del_contrato,
+    ErrorDeGeneracion,
+    fuente,
+    lineas,
+    provisional,
+)
 from validacion import valores
 
 
@@ -215,6 +225,7 @@ class Comandos:
                "reglas": lineas(k["reglas"]) if k["reglas"] else ["El contrato no tiene reglas."],
                "salida_contrato": lineas(k["salida"]),
                "ruta": f'{self.ruta_base}/comandos/{nombres.ruta(mc["nombre"])}',
+               "resumen": f'Comando {mc["codigo"]}: {mc["nombre"]}', "descripcion": descripcion_del_contrato(k),
                "archivo": f'{self.proyecto}/Comandos/{clase}.g.cs',
                "manual": f'{self.proyecto}/Comandos/{clase}.cs', "spec": sc, "entrada_campos": ent}
         self.comandos.append(com)

@@ -138,6 +138,8 @@ class ServiciosSA:
                      "disparos": disparos_m if not isinstance(x.get("dispara"), str) else None,
                      "comando_clase": cmd["clase"], "manejador_var": var_m, "args": args, "obligatorios": obligatorios,
                      "metodo": f"Recibir{clase}", "titulo": f'{msa["nombre"]}: {nombre}', "receptor": receptor,
+                     "resumen": f'Mensaje "{nombre}" que recibe {msa["codigo"]} {msa["nombre"]}',
+                     "descripcion": "Lo que el sistema externo le envía a la aplicación. Dispara: " + ", ".join(d_["comando"] for d_ in disparos_m) + ".",
                      "ruta": f'{self.ruta_base}/sa/{nombres.ruta(msa["nombre"])}/{nombres.ruta(nombre)}'}
                 mensajes.append(m)
                 self.mensajes.append(m)

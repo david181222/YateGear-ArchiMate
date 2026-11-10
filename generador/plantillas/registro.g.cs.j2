@@ -10,6 +10,9 @@ namespace {{ ns }};
 /// <summary>Registra el contexto "{{ contexto | xml }}" en el programa.</summary>
 public static class Registro
 {
+    /// <summary>Nombre del contexto en la documentación de la API: agrupa sus endpoints.</summary>
+    private const string Contexto = {{ etiqueta | cadena }};
+
     /// <summary>Servicios del contexto.</summary>
     public static void AgregarServicios(IServiceCollection servicios)
     {
@@ -89,13 +92,17 @@ public static class Registro
         // Comandos: POST con el comando en JSON.
 {% for c in comandos %}
         app.MapPost("{{ c.ruta }}",
-            ({{ c.clase }} comando, {{ c.manejador }} manejador) => Ejecutar(() => manejador.Manejar(comando)));
+            ({{ c.clase }} comando, {{ c.manejador }} manejador) => Ejecutar(() => manejador.Manejar(comando)))
+            .Documentar<RespuestaDeComando>({{ c.resumen | cadena }},
+                {{ c.descripcion | cadena }}, 404, 409, 422);
 {% endfor %}
 
         // Consultas: GET con la identidad en la ruta.
 {% for q in consultas %}
         app.MapGet("{{ q.ruta }}",
-            ({{ q.lambda_params }}, {{ q.manejador }} manejador) => Ejecutar(() => manejador.Manejar(new {{ q.clase }}({{ q.args }}))));
+            ({{ q.lambda_params }}, {{ q.manejador }} manejador) => Ejecutar(() => manejador.Manejar(new {{ q.clase }}({{ q.args }}))))
+            .Documentar<{{ q.salida }}>({{ q.resumen | cadena }},
+                {{ q.descripcion | cadena }}, 404, 422);
 {% endfor %}
 {% if externos %}
 
@@ -103,7 +110,10 @@ public static class Registro
         // responde 422; si faltan eventos de su grupo (junto_con), 202.
 {% for x in externos %}
         app.MapPost("{{ x.ruta }}",
-            (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.Recibir{{ x.clase }}(evento), Recibido));
+            (JsonElement evento, ReceptorDeEventosExternos receptor) => Ejecutar(() => receptor.Recibir{{ x.clase }}(evento), Recibido))
+            .Accepts<{{ x.clase }}>("application/json")
+            .Documentar<RespuestaDeEventoExterno>({{ x.resumen | cadena }},
+                {{ x.descripcion | cadena }}, 202, 404, 409, 422);
 {% endfor %}
 {% endif %}
 
@@ -113,13 +123,31 @@ public static class Registro
 {% for x in receptores_sa %}
 {% for msj in x.mensajes %}
         app.MapPost("{{ msj.ruta }}",
-            (JsonElement mensaje, {{ x.clase }} receptor) => Ejecutar(() => receptor.{{ msj.metodo }}(mensaje)));
+            (JsonElement mensaje, {{ x.clase }} receptor) => Ejecutar(() => receptor.{{ msj.metodo }}(mensaje)))
+            .Accepts<{{ msj.clase }}>("application/json")
+            .Documentar<RespuestaDeComando>({{ msj.resumen | cadena }},
+                {{ msj.descripcion | cadena }}, 404, 409, 422);
 {% endfor %}
 {% endfor %}
 {% endif %}
 
         // Bitácora (infraestructura, no sale del modelo): eventos y llamadas a los servicios SA simulados, en orden.
-        app.MapGet("{{ ruta_base }}/bitacora", (Bitacora bitacora) => bitacora.Todo());
+        app.MapGet("{{ ruta_base }}/bitacora", (Bitacora bitacora) => bitacora.Todo())
+            .Documentar<IReadOnlyList<RegistroDeBitacora>>("Bitácora (infraestructura)",
+                "Eventos publicados y recibidos, llamadas a los servicios SA simulados y errores, en orden. No sale del modelo.");
+    }
+
+    /// <summary>Documenta un endpoint para OpenAPI (Swagger): su contexto, de qué elemento del modelo sale, su contrato,
+    /// lo que responde y los códigos con que puede rechazar.</summary>
+    private static RouteHandlerBuilder Documentar<TRespuesta>(this RouteHandlerBuilder endpoint, string resumen,
+        string descripcion, params int[] rechazos)
+    {
+        endpoint.WithTags(Contexto).WithSummary(resumen).WithDescription(descripcion).Produces<TRespuesta>();
+        foreach (var codigo in rechazos)
+        {
+            endpoint.Produces(codigo);
+        }
+        return endpoint;
     }
 
     private static IResult Ejecutar<T>(Func<T> accion, Func<T, IResult>? exito = null)

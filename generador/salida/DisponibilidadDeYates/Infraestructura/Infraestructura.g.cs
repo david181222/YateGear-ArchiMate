@@ -1,5 +1,5 @@
 // Generado desde ArchiMate: ApplicationComponent "Contexto Disponibilidad de yates" (id-0d93d731f6fd4b21acbf20d3cb28cf6f).
-// Infraestructura del piloto. No sale del modelo: repositorio en memoria, bus de eventos,
+// Infraestructura de la aplicación. No sale del modelo: repositorio en memoria, bus de eventos,
 // bitácora y errores. No editar: el generador reescribe este archivo.
 #nullable enable
 using System.Globalization;
